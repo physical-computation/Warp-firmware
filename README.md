@@ -6,7 +6,7 @@ Baseline firmware for the Warp hardware platform.
 You need an arm cross-compiler such as `arm-none-eabi` installed.
 
 
-## Building the Lax firmware
+## Building the Warp firmware
 First, make sure the environment variable `ARMGCC_DIR` is set correctly. if your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`
 
 	setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
