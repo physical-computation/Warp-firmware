@@ -1,0 +1,23 @@
+-	Code indented with tabs, not spaces.
+
+-	Variable names in camelCase.
+
+-	Type names begin with Warp, e.g., WarpPhenomenon.
+
+-	Constant names and enum entries begin with kWarp, e.g., kWarpPhenomenonTemperatureCelcius.
+
+-	C-style comments, in the form
+
+	/*
+	 *	Comment
+	 */
+
+-	No #include within header .h files if possible.
+
+-	No function definitions in header .h files.
+
+-	Files named named warp-xxxcamelCasedName.yyy (warp.h is the only special case).
+
+-	Constants in enums, not in #defines.
+
+-	Avoid #define if possible.
