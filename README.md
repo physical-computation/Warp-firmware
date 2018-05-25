@@ -3,7 +3,7 @@ Baseline firmware for the Warp hardware platform.
 
 
 ## Prerequisites
-You need an arm cross-compiler such as `arm-none-eabi` installed.
+You need an arm cross-compiler such as `arm-none-eabi-gcc` installed.
 
 
 ## Building the Warp firmware
