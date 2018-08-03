@@ -6,7 +6,7 @@ Baseline firmware for the Warp hardware platform.
 You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., via [MacPorts](https://www.macports.org)) and an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/) (direct link for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)) (`JlinkExe`) which is available for Linux, macOS, and Windows.
 
 ## Building the Warp firmware
-First, make sure the environment variable `ARMGCC_DIR` is set correctly (if this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). if your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
+First, make sure the environment variable `ARMGCC_DIR` is set correctly (e.g., via `echo $ARMGCC_DIR`. If this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). if your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
 
 	setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
 
