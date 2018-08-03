@@ -12,7 +12,7 @@ First, make sure the environment variable `ARMGCC_DIR` is set correctly (e.g., v
 
 Alternatively, if your shell is `bash`
 
-	export ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
+	export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
 
 Second, edit the jlink command file, `tools/scripts/jlink.commands` to include the correct path.
 
