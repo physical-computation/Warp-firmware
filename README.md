@@ -1,5 +1,5 @@
 # Warp
-Baseline firmware for the Warp hardware platform.
+Baseline firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) platform.
 
 
 ## Prerequisites
