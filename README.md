@@ -36,9 +36,33 @@ In the second shell window, launch the JLink RTT client. On MacOS, this will be:
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
 
 ## Interacting with the boot menu.
-You can probe around the menus to figure out what to do. **NOTE: The menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)**.
+When the firmware boots, you will be dropped into a menu:
+````
+[ *				W	a	r	p			* ]
+[ *			      Cambridge / Physcomplab / PSM			* ]
 
-In brief, you will likely want:
+	Supply=0mV,	Default Target Read Register=0x00
+	I2C=1kb/s,	SPI=1kb/s,	UART=1kb/s,	I2C Pull-Up=1
+Select:
+- 'a': set default sensor.
+- 'b': set I2C baud rate.
+- 'c': set SPI baud rate.
+- 'd': set UART baud rate.
+- 'e': set default register address.
+- 'f': write byte to sensor.
+- 'g': set default SSSUPPLY.
+- 'h': powerdown command to all sensors.
+- 'i': set pull-up enable flag.
+- 'j': repeat read reg 0x00 on device0.
+- 'k': sleep for 30 seconds.
+- 'l': send repeated byte on I2C.
+- 'm': send repeated byte on SPI.
+- 'n': enable SSSUPPLY.
+- 'o': disable SSSUPPLY.
+- 'x': disable SWD and spin for 10 secs.
+Enter selection> 
+````
+You can probe around the menus to figure out what to do. In brief, you will likely want:
 
 1. Menu item `a` to set target sensor.
 
@@ -47,3 +71,18 @@ In brief, you will likely want:
 3. Menu item `e` to set the default register address to read from.
 
 4. Menu item `j` to do a series of repeated reads from the specified default register (optionally auto-incrementing, etc.).
+
+**NOTE: The menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)**.
+
+Example:
+````
+Enter selection> j
+
+    Auto-increment from base address 0x01? ['0' | '1']> 0
+    Chunk reads per address (e.g., '1')> 1
+    Chatty? ['0' | '1']> 1
+    Inter-operation spin delay in milliseconds (e.g., '0000')> 0000
+    Repetitions per address (e.g., '0000')> 0000
+    Maximum voltage for adaptive supply (e.g., '0000')> 2500
+    Reference byte for comparisons (e.g., '3e')> 00
+```
