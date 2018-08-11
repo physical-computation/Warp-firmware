@@ -34,3 +34,16 @@ In the second shell window, launch the JLink RTT client. On MacOS, this will be:
 
 ## Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
+
+## Interacting with the boot menu.
+You can probe around the menus to figure out what to do. **NOTE: The menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)**.
+
+In brief, you will likely want:
+
+1. Menu item `a` to set target sensor.
+
+2. Menu item `g` to set sensor supply voltage on Warp board.
+
+3. Menu item `e` to set the default register address to read from.
+
+4. Menu item `j` to do a series of repeated reads from the specified default register (optionally auto-incrementing, etc.).
