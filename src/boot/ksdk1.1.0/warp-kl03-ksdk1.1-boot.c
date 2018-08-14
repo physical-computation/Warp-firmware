@@ -934,7 +934,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							&slave,
 							cmdBuf,
 							1,
-							(uint8_t *)deviceL3GD20HState.i2cBuffer,
+							(uint8_t *)deviceAS7262State.i2cBuffer,
 							1,
 							500 /* timeout in milliseconds */);
 
