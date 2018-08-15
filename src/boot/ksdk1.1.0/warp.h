@@ -21,6 +21,12 @@ typedef enum
 
 	kWarpTypeMaskFMStationID	= (1 << 14),
 
+	kWarpTypeMaskLambda450V		= (1 << 15),
+	kWarpTypeMaskLambda500B		= (1 << 16),
+	kWarpTypeMaskLambda550G		= (1 << 17),
+	kWarpTypeMaskLambda570Y		= (1 << 18),
+	kWarpTypeMaskLambda600O		= (1 << 19),
+	kWarpTypeMaskLambda650R		= (1 << 20),
 
 
 	/*
@@ -128,6 +134,7 @@ typedef enum
 	kWarpSensorHDC1000,
 	kWarpSensorSI7021,
 	kWarpSensorPAN1326,
+	kWarpSensorAS7262,
 } WarpSensorDevice;
 
 
