@@ -1071,7 +1071,7 @@ void
 initSCD30(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer)
 {
 	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (	kWarpTypeMaskTemperature	|
+	deviceStatePointer->signalType	= (	kWarpTypeMaskTemperature|
 						kWarpTypeMaskHumidity	|
 						kWarpTypeMaskC02Concentration
 					);
@@ -1081,7 +1081,7 @@ initSCD30(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePoi
 WarpStatus
 readSensorRegisterSCD30(uint8_t deviceRegister)
 {
-	uint8_t		cmdBuf	= {0xFF};
+	uint8_t		cmdBuf[1]	= {0xFF};
 	
 	i2c_status_t	returnValue;
 
