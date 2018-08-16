@@ -58,8 +58,8 @@
 #define					kWarpConstantStringInvalidVoltage	"\r\n\n\nInvalid supply voltage [%d] mV\n\n\n"
 
 enum {
-	kWarpI2C_AS726x_SLAVE_WRITE_REG = 0x01,
-	kWarpI2C_AS726x_SLAVE_READ_REG = 0x02
+	kWarpI2C_AS726x_SLAVE_WRITE_REG	= 0x01,
+	kWarpI2C_AS726x_SLAVE_READ_REG	= 0x02
 };
 
 volatile WarpSPIDeviceState		deviceADXL362State;
