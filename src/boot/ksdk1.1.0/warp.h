@@ -1,32 +1,41 @@
 typedef enum
 {
-	kWarpTypeMaskTemperature	= (1 <<  0),
-	kWarpTypeMaskPressure		= (1 <<  1),
-	kWarpTypeMaskHumidity		= (1 <<  2),
+	kWarpTypeMaskTemperature		= (1 << 0),
+	kWarpTypeMaskPressure			= (1 << 1),
+	kWarpTypeMaskHumidity			= (1 << 2),
+	kWarpTypeMaskC02Concentration	= (1 << 3),
 
-	kWarpTypeMaskInfrared		= (1 <<  3),
-	kWarpTypeMaskColor		= (1 <<  4),
+	kWarpTypeMaskInfrared			= (1 << 4),
+	kWarpTypeMaskColor				= (1 << 5),
 
-	kWarpTypeMaskAccelerationX	= (1 <<  5),
-	kWarpTypeMaskAccelerationY	= (1 <<  6),
-	kWarpTypeMaskAccelerationZ	= (1 <<  7),
+	kWarpTypeMaskAccelerationX		= (1 << 6),
+	kWarpTypeMaskAccelerationY		= (1 << 7),
+	kWarpTypeMaskAccelerationZ		= (1 << 8),
 
-	kWarpTypeMaskAngularRateX	= (1 <<  8),
-	kWarpTypeMaskAngularRateY	= (1 <<  9),
-	kWarpTypeMaskAngularRateZ	= (1 << 10),
+	kWarpTypeMaskAngularRateX		= (1 << 9),
+	kWarpTypeMaskAngularRateY		= (1 << 10),
+	kWarpTypeMaskAngularRateZ		= (1 << 11),
 
-	kWarpTypeMaskMagneticX		= (1 << 11),
-	kWarpTypeMaskMagneticY		= (1 << 12),
-	kWarpTypeMaskMagneticZ		= (1 << 13),
+	kWarpTypeMaskMagneticX			= (1 << 12),
+	kWarpTypeMaskMagneticY			= (1 << 13),
+	kWarpTypeMaskMagneticZ			= (1 << 14),
 
-	kWarpTypeMaskFMStationID	= (1 << 14),
+	kWarpTypeMaskFMStationID		= (1 << 15),
 
-	kWarpTypeMaskLambda450V		= (1 << 15),
-	kWarpTypeMaskLambda500B		= (1 << 16),
-	kWarpTypeMaskLambda550G		= (1 << 17),
-	kWarpTypeMaskLambda570Y		= (1 << 18),
-	kWarpTypeMaskLambda600O		= (1 << 19),
-	kWarpTypeMaskLambda650R		= (1 << 20),
+	kWarpTypeMaskLambda450V			= (1 << 16),
+	kWarpTypeMaskLambda500B			= (1 << 17),
+	kWarpTypeMaskLambda550G			= (1 << 18),
+	kWarpTypeMaskLambda570Y			= (1 << 19),
+	kWarpTypeMaskLambda600O			= (1 << 20),
+	kWarpTypeMaskLambda650R			= (1 << 21),
+	
+	kWarpTypeMaskLambda610R			= (1 << 22),
+	kWarpTypeMaskLambda680S			= (1 << 23),
+	kWarpTypeMaskLambda730T			= (1 << 24),
+	kWarpTypeMaskLambda760U			= (1 << 25),
+	kWarpTypeMaskLambda810V			= (1 << 26),
+	kWarpTypeMaskLambda860W			= (1 << 27),
+	
 
 
 	/*
@@ -135,6 +144,8 @@ typedef enum
 	kWarpSensorSI7021,
 	kWarpSensorPAN1326,
 	kWarpSensorAS7262,
+	kWarpSensorAS7263,
+	kWarpSensorSCD30,
 } WarpSensorDevice;
 
 
