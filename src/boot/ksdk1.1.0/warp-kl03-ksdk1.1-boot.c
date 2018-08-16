@@ -76,6 +76,7 @@ volatile WarpI2CDeviceState		deviceAS7262State;
 volatile WarpI2CDeviceState		deviceAS7263State;
 volatile WarpI2CDeviceState		deviceSCD30State;
 
+
 /*
  *	Initialization: Devices hanging off I2C
  */
@@ -1901,6 +1902,8 @@ main(void)
 	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State	);
 	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
 	initSCD30(	0x61	/* i2cAddress */,	&deviceSCD30State	);
+
+
 
 	/*
 	 *	Initialization: Devices hanging off SPI
