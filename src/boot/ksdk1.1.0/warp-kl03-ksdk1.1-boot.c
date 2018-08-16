@@ -1096,9 +1096,9 @@ readSensorRegisterSCD30(uint8_t deviceRegister)
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
-							1,
+							2,
 							NULL,
-							0,
+							1,
 							500 /* timeout in milliseconds */);
 
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
@@ -1107,7 +1107,7 @@ readSensorRegisterSCD30(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceSCD30State.i2cBuffer,
-							1,
+							18,
 							500 /* timeout in milliseconds */);
 
 	if (returnValue == kStatus_I2C_Success)
@@ -3180,53 +3180,51 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			 *	SCD30: VDD 3.3--5.5
 			 */
 			SEGGER_RTT_WriteString(0, "\r\nSCD30:\n\r");brieflyToggleEnablingSWD();
-			SCD30loop: if (address <= 0xFF)
+			SCD30loop:
+			for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
 			{
-				for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
+				voltageTrace[i] = actualSssupplyMillivolts;
+				status = readSensorRegisterSCD30(address+j);
+				if (status == kWarpStatusOK)
 				{
-					voltageTrace[i] = actualSssupplyMillivolts;
-					status = readSensorRegisterSCD30(address+j);
-					if (status == kWarpStatusOK)
+					nSuccesses++;
+					if (actualSssupplyMillivolts > sssupplyMillivolts)
 					{
-						nSuccesses++;
-						if (actualSssupplyMillivolts > sssupplyMillivolts)
-						{
-							actualSssupplyMillivolts -= 100;
-							enableSssupply(actualSssupplyMillivolts);
-						}
-						if (referenceByte == deviceSCD30State.i2cBuffer[0])
-						{
-							nCorrects++;
-						}
-						if (chatty)
-						{
-							SEGGER_RTT_printf(0, "\r0x%02x --> 0x%02x\n",
-								address+j,
-								deviceSCD30State.i2cBuffer[0]);brieflyToggleEnablingSWD();
-						}
+						actualSssupplyMillivolts -= 100;
+						enableSssupply(actualSssupplyMillivolts);
 					}
-					else if (status == kWarpStatusDeviceCommunicationFailed)
+					if (referenceByte == deviceSCD30State.i2cBuffer[0])
 					{
-						SEGGER_RTT_printf(0, "\r0x%02x --> ----\n",
-							address+j);brieflyToggleEnablingSWD();
-						nFailures++;
-						if (actualSssupplyMillivolts < adaptiveSssupplyMaxMillivolts)
-						{
-							actualSssupplyMillivolts += 100;
-							enableSssupply(actualSssupplyMillivolts);
-						}
+						nCorrects++;
 					}
-					else if (status == kWarpStatusBadDeviceCommand)
+					if (chatty)
 					{
-						nBadCommands++;
+						SEGGER_RTT_printf(0, "\r0x%02x --> 0x%02x\n",
+							address+j,
+							deviceSCD30State.i2cBuffer[0]);brieflyToggleEnablingSWD();
 					}
-					if (spinDelay > 0) OSA_TimeDelay(spinDelay);
 				}
-				if (autoIncrement)
+				else if (status == kWarpStatusDeviceCommunicationFailed)
 				{
-					address++;
-					goto SCD30loop;
+					SEGGER_RTT_printf(0, "\r0x%02x --> ----\n",
+						address+j);brieflyToggleEnablingSWD();
+					nFailures++;
+					if (actualSssupplyMillivolts < adaptiveSssupplyMaxMillivolts)
+					{
+						actualSssupplyMillivolts += 100;
+						enableSssupply(actualSssupplyMillivolts);
+					}
 				}
+				else if (status == kWarpStatusBadDeviceCommand)
+				{
+					nBadCommands++;
+				}
+				if (spinDelay > 0) OSA_TimeDelay(spinDelay);
+			}
+			if (autoIncrement)
+			{
+				address++;
+				goto SCD30loop;
 			}
 
 			break;
