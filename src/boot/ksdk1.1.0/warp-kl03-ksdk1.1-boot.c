@@ -58,9 +58,9 @@
 #define					kWarpConstantStringInvalidVoltage	"\r\n\n\nInvalid supply voltage [%d] mV\n\n\n"
 
 enum { kWarpI2C_AS7262_SLAVE_WRITE_REG	= 0x01 };
-enum { kWarpI2C_AS7262_SLAVE_READ_REG	= 0x02 };
+enum { kWarpI2C_AS7262_SLAVE_READ_REG		= 0x02 };
 enum { kWarpI2C_AS7263_SLAVE_WRITE_REG	= 0x01 };
-enum { kWarpI2C_AS7263_SLAVE_READ_REG	= 0x02 };
+enum { kWarpI2C_AS7263_SLAVE_READ_REG		= 0x02 };
 
 volatile WarpSPIDeviceState		deviceADXL362State;
 volatile WarpI2CDeviceState		deviceBMX055accelState;
@@ -71,7 +71,7 @@ volatile WarpI2CDeviceState		deviceMAG3110State;
 volatile WarpI2CDeviceState		deviceL3GD20HState;
 volatile WarpI2CDeviceState		deviceBMP180State;
 volatile WarpI2CDeviceState		deviceTMP006BState;
-volatile WarpUARTDeviceState	devicePAN1326BState;
+volatile WarpUARTDeviceState		devicePAN1326BState;
 volatile WarpI2CDeviceState		deviceAS7262State;
 volatile WarpI2CDeviceState		deviceAS7263State;
 volatile WarpI2CDeviceState		deviceSCD30State;
@@ -159,13 +159,13 @@ void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
 
-int						char2int(int character);
+int					char2int(int character);
 void					enableSssupply(uint16_t voltageMillivolts);
 void					disableSssupply(void);
 void					activateAllLowPowerSensorModes(void);
 void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
-int						read4digits(void);
+int					read4digits(void);
 
 WarpStatus				writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t commandByte, bool sendPayloadByte, uint8_t payloadByte);
 WarpStatus				writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength, bool driveI2cPinsHighToMatchSupply, bool driveI2cPinsLow);
@@ -176,8 +176,8 @@ void					warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLo
 /*
  *	TODO: move this and possibly others into a structure
  */
-volatile i2c_master_state_t			i2cMasterState;
-volatile spi_master_state_t			spiMasterState;
+volatile i2c_master_state_t		i2cMasterState;
+volatile spi_master_state_t		spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
 
 
@@ -1900,11 +1900,11 @@ main(void)
 	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State		);
 	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState		);
-	initBMP180(		0x77	/* i2cAddress */,	&deviceBMP180State		);
+	initBMP180(	0x77	/* i2cAddress */,	&deviceBMP180State		);
 	initTMP006B(	0x45	/* i2cAddress */,	&deviceTMP006BState		);
-	initAS7262(		0x49	/* i2cAddress */,	&deviceAS7262State		);
-	initAS7263(		0x49	/* i2cAddress */,	&deviceAS7263State		);
-	initSCD30(		0x61	/* i2cAddress */,	&deviceSCD30State		);
+	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State		);
+	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State		);
+	initSCD30(	0x61	/* i2cAddress */,	&deviceSCD30State		);
 
 	/*
 	 *	Initialization: Devices hanging off SPI
@@ -1975,12 +1975,12 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag		(0x40--0x52): 2.4V  -- 3.6V\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q		(0x00--0x31): 1.95V -- 3.6V\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110		(0x00--0x11): 1.95V -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '9' SCD30			(no regs, uses commands): 3.3V -- 5.5V\n");brieflyToggleEnablingSWD();
+				SEGGER_RTT_WriteString(0, "\r\t- '9' SCD30		(no regs, uses commands): 3.3V -- 5.5V\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H		(0x0F--0x39): 2.2V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'b' BMP180			(0xAA--0xF8): 1.6V  -- 3.6V\n");brieflyToggleEnablingSWD();
+				SEGGER_RTT_WriteString(0, "\r\t- 'b' BMP180		(0xAA--0xF8): 1.6V  -- 3.6V\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\t- 'c' TMP006B		(0x00--0xFF): 2.2V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'd' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'e' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");brieflyToggleEnablingSWD();
+				SEGGER_RTT_WriteString(0, "\r\t- 'd' AS7262		(0x00--0x2B): 2.7V -- 3.6V\n");brieflyToggleEnablingSWD();
+				SEGGER_RTT_WriteString(0, "\r\t- 'e' AS7263		(0x00--0x2B): 2.7V -- 3.6V\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326		(n/a)\n");brieflyToggleEnablingSWD();
 				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");brieflyToggleEnablingSWD();
 

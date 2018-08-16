@@ -3,10 +3,10 @@ typedef enum
 	kWarpTypeMaskTemperature		= (1 << 0),
 	kWarpTypeMaskPressure			= (1 << 1),
 	kWarpTypeMaskHumidity			= (1 << 2),
-	kWarpTypeMaskC02Concentration	= (1 << 3),
+	kWarpTypeMaskC02Concentration		= (1 << 3),
 
 	kWarpTypeMaskInfrared			= (1 << 4),
-	kWarpTypeMaskColor				= (1 << 5),
+	kWarpTypeMaskColor			= (1 << 5),
 
 	kWarpTypeMaskAccelerationX		= (1 << 6),
 	kWarpTypeMaskAccelerationY		= (1 << 7),
