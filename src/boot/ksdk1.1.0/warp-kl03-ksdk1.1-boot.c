@@ -91,7 +91,6 @@ void					initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  dev
 void					initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 void					initSCD30(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 
-
 /*
  *	Initialization: Devices hanging off SPI
  */
