@@ -57,10 +57,10 @@
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define					kWarpConstantStringInvalidVoltage	"\r\n\n\nInvalid supply voltage [%d] mV\n\n\n"
 
-enum { kWarpI2C_AS7262_SLAVE_WRITE_REG	= 0x01 };
-enum { kWarpI2C_AS7262_SLAVE_READ_REG		= 0x02 };
-enum { kWarpI2C_AS7263_SLAVE_WRITE_REG	= 0x01 };
-enum { kWarpI2C_AS7263_SLAVE_READ_REG		= 0x02 };
+enum {
+	kWarpI2C_AS726x_SLAVE_WRITE_REG = 0x01,
+	kWarpI2C_AS726x_SLAVE_READ_REG = 0x02
+};
 
 volatile WarpSPIDeviceState		deviceADXL362State;
 volatile WarpI2CDeviceState		deviceBMX055accelState;
@@ -915,8 +915,8 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	/*
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
 	 */
-	uint8_t 	cmdBuf_write[2]	= {I2C_AS7262_SLAVE_WRITE_REG,0xFF}; 
-	uint8_t 	cmdBuf_read[1]	= {I2C_AS7262_SLAVE_READ_REG};
+	uint8_t 	cmdBuf_write[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG,0xFF}; 
+	uint8_t 	cmdBuf_read[1]	= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
 
 
@@ -1001,8 +1001,8 @@ readSensorRegisterAS7263(uint8_t deviceRegister)
 	/*
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
 	 */
-	uint8_t 	cmdBuf_write[2]	= {I2C_AS7263_SLAVE_WRITE_REG,0xFF}; 
-	uint8_t 	cmdBuf_read[1]	= {I2C_AS7263_SLAVE_READ_REG};
+	uint8_t 	cmdBuf_write[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG,0xFF}; 
+	uint8_t 	cmdBuf_read[1]	= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
 
 
