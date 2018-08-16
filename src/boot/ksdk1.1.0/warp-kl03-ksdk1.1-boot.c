@@ -1898,13 +1898,13 @@ main(void)
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
 	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
-	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State		);
-	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState		);
-	initBMP180(	0x77	/* i2cAddress */,	&deviceBMP180State		);
-	initTMP006B(	0x45	/* i2cAddress */,	&deviceTMP006BState		);
-	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State		);
-	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State		);
-	initSCD30(	0x61	/* i2cAddress */,	&deviceSCD30State		);
+	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
+	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
+	initBMP180(	0x77	/* i2cAddress */,	&deviceBMP180State	);
+	initTMP006B(	0x45	/* i2cAddress */,	&deviceTMP006BState	);
+	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State	);
+	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
+	initSCD30(	0x61	/* i2cAddress */,	&deviceSCD30State	);
 
 	/*
 	 *	Initialization: Devices hanging off SPI
