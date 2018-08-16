@@ -1,18 +1,18 @@
 typedef enum
 {
-	kWarpTypeMaskTemperature	= (1 << 0),
-	kWarpTypeMaskPressure		= (1 << 1),
-	kWarpTypeMaskHumidity		= (1 << 2),
-	kWarpTypeMaskC02Concentration	= (1 << 3),
+	kWarpTypeMaskTemperature	= (1 <<  0),
+	kWarpTypeMaskPressure		= (1 <<  1),
+	kWarpTypeMaskHumidity		= (1 <<  2),
+	kWarpTypeMaskC02Concentration	= (1 <<  3),
 
-	kWarpTypeMaskInfrared		= (1 << 4),
-	kWarpTypeMaskColor		= (1 << 5),
+	kWarpTypeMaskInfrared		= (1 <<  4),
+	kWarpTypeMaskColor		= (1 <<  5),
 
-	kWarpTypeMaskAccelerationX	= (1 << 6),
-	kWarpTypeMaskAccelerationY	= (1 << 7),
-	kWarpTypeMaskAccelerationZ	= (1 << 8),
+	kWarpTypeMaskAccelerationX	= (1 <<  6),
+	kWarpTypeMaskAccelerationY	= (1 <<  7),
+	kWarpTypeMaskAccelerationZ	= (1 <<  8),
 
-	kWarpTypeMaskAngularRateX	= (1 << 9),
+	kWarpTypeMaskAngularRateX	= (1 <<  9),
 	kWarpTypeMaskAngularRateY	= (1 << 10),
 	kWarpTypeMaskAngularRateZ	= (1 << 11),
 

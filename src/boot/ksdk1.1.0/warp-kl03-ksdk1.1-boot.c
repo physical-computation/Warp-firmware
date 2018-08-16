@@ -76,7 +76,6 @@ volatile WarpI2CDeviceState		deviceAS7262State;
 volatile WarpI2CDeviceState		deviceAS7263State;
 volatile WarpI2CDeviceState		deviceSCD30State;
 
-
 /*
  *	Initialization: Devices hanging off I2C
  */
@@ -853,7 +852,6 @@ readSensorRegisterTMP006B(uint8_t deviceRegister)
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	returnValue;
 
-
 	i2c_device_t slave =
 	{
 		.address = deviceTMP006BState.i2cAddress,
@@ -1122,7 +1120,6 @@ readSensorRegisterSCD30(uint8_t deviceRegister)
 	}
 	return kWarpStatusOK;
 }
-
 
 void
 enableSPIpins(bool driveI2cPinsHighToMatchSupply)
