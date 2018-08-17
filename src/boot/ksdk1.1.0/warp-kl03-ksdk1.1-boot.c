@@ -646,6 +646,11 @@ readSensorRegisterMAG3110(uint8_t deviceRegister)
 	i2c_status_t	returnValue;
 
 
+	if (deviceRegister > 0x11)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
 	i2c_device_t slave =
 	{
 		.address = deviceMAG3110State.i2cAddress,
@@ -851,6 +856,22 @@ readSensorRegisterTMP006B(uint8_t deviceRegister)
 {
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	returnValue;
+
+
+	switch (deviceRegister)
+	{
+		case 0x00: case 0x01: case 0x02: case 0xFE: case 0xFF:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
 
 	i2c_device_t slave =
 	{
