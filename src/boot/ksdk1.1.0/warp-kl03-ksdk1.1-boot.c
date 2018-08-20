@@ -957,7 +957,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 
 	cmdBuf_write[1] = deviceRegister;
-	
+
+	/*
+	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
+	 */
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -968,7 +971,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							500 /* timeout in milliseconds */);
 
 	/*
-	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
+	 *	This turns on the LED before reading the data
 	 */
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -1024,7 +1027,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							500 /* timeout in milliseconds */);
 
 	/*
-	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
+	 *	This turns off the LED after finish reading the data
 	*/
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -1034,7 +1037,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
-
 
 	if (returnValue == kStatus_I2C_Success)
 	{
@@ -1070,6 +1072,9 @@ readSensorRegisterAS7263(uint8_t deviceRegister)
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
 	 */
 	uint8_t 	cmdBuf_write[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG,0xFF}; 
+	uint8_t 	cmdBuf_LEDCTRL[2] = {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
+	uint8_t 	cmdBuf_LEDON[2] = {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
+	uint8_t 	cmdBuf_LEDOFF[2] = {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
 	uint8_t 	cmdBuf_read[1]	= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
 
@@ -1087,7 +1092,31 @@ readSensorRegisterAS7263(uint8_t deviceRegister)
 
 
 	cmdBuf_write[1] = deviceRegister;
-	
+
+/*
+ *	The LED control register details can be found in Figure 27 of AS7263 detailed descriptions on page 24.
+ */
+returnValue = I2C_DRV_MasterSendDataBlocking(
+						0 /* I2C peripheral instance */,
+						&slave /* The pointer to the I2C device information structure */,
+						cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
+						2 /* The length in bytes of the commands to be transferred */,
+						NULL /* The pointer to the data to be transferred */,
+						0 /* The length in bytes of the data to be transferred */,
+						500 /* timeout in milliseconds */);
+
+/*
+ *	This turns on the LED before reading the data
+ */
+returnValue = I2C_DRV_MasterSendDataBlocking(
+						0 /* I2C peripheral instance */,
+						&slave /* The pointer to the I2C device information structure */,
+						cmdBuf_LEDON /* The pointer to the commands to be transferred */,
+						2 /* The length in bytes of the commands to be transferred */,
+						NULL /* The pointer to the data to be transferred */,
+						0 /* The length in bytes of the data to be transferred */,
+						500 /* timeout in milliseconds */);
+
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
 	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
@@ -1121,6 +1150,18 @@ readSensorRegisterAS7263(uint8_t deviceRegister)
 							1 /* The length in bytes of the commands to be transferred */,
 							(uint8_t *)deviceAS7263State.i2cBuffer /* The pointer to the data to be transferred */,
 							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
+							500 /* timeout in milliseconds */);
+
+	/*
+	 *	This turns off the LED after finish reading the data
+	 */
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave /* The pointer to the I2C device information structure */,
+							cmdBuf_LEDOFF /* The pointer to the commands to be transferred */,
+							2 /* The length in bytes of the commands to be transferred */,
+							NULL /* The pointer to the data to be transferred */,
+							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
 
 	if (returnValue == kStatus_I2C_Success)
