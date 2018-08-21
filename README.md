@@ -86,3 +86,19 @@ Enter selection> j
     Maximum voltage for adaptive supply (e.g., '0000')> 2500
     Reference byte for comparisons (e.g., '3e')> 00
 ````
+
+
+## If you use Warp in your research, please cite it as:
+Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
+
+**BibTeX:**
+````
+@ARTICLE{1804.09241,
+  author = {Stanley-Marbell, Phillip and Rinard, Martin},
+  title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+  journal = {ArXiv e-prints},
+  archivePrefix = {arXiv},
+  eprint = {1804.09241},
+  year = 2018,
+}
+
