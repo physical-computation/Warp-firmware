@@ -102,7 +102,7 @@ __isr_vector:
     .long 0xFFFFFFFF
     .long 0xFFFFFFFF
     .long 0xFFFFFFFF
-    .long 0xFFFF35FE
+    .long 0xFFFF3DFE
 
     .equ _NVIC_ICER,  0xE000E180
     .equ _NVIC_ICPR,  0xE000E280

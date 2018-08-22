@@ -12,6 +12,20 @@
 	cp ../../src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c		work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-powermodes.c	work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/warp.h				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devBMX055.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devADXL362.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devMMA8451Q.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devLPS25H.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devHDC1000.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devMAG3110.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devSI7021.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devL3GD20H.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devBME680.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devTCS34725.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devSI4705.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devCCS811.*				work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devAMG8834.*			work/demos/Warp/src/
+	cp ../../src/boot/ksdk1.1.0/devPAN1326.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/CMakeLists.txt			work/demos/Warp/armgcc/Warp/
 	cp ../../src/boot/ksdk1.1.0/startup_MKL03Z4.S			work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
 	cp ../../src/boot/ksdk1.1.0/gpio_pins.c				work/boards/Warp
