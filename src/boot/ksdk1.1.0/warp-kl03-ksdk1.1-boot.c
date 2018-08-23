@@ -1,5 +1,6 @@
 /*
 	Authored 2016. Phillip Stanley-Marbell.
+	Authored 2018. Youchao Wang.
 
 	All rights reserved.
 
@@ -37,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h> /* Is this really necessary? */
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -265,12 +267,6 @@ power_manager_error_code_t callback0(power_manager_notify_struct_t *  notify,
 /*
  *	From KSDK power_manager_demo.c <<END>>>
  */
-
-
-
-
-
-
 
 
 /*
@@ -1652,7 +1648,7 @@ main(void)
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
+	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);	
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
 	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
 	initBMP180(	0x77	/* i2cAddress */,	&deviceBMP180State	);
@@ -1673,523 +1669,234 @@ main(void)
 	initPAN1326B(&devicePAN1326BState);
 
 
+	///////////////////////////////////////////////////////
+	/*
+	 *	writing the control bytes
+	 */
+	
+	uint8_t		i2cAddress, payloadByte[1], commandByte[1];
+	i2c_status_t	i2cStatus;
+	WarpStatus	status;
+	
+	menuTargetSensor = kWarpSensorMMA8451Q;
+
+	i2cAddress = 0x1C; /* acc addr, 7-bit */
+	
+	i2c_device_t slave =
+	{
+		.address = i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+	
+	enableSssupply(menuSupplyVoltage);
+	enableI2Cpins(menuI2cPullupEnable);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(1000);
+
+
+	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
+	commandByte[0] = menuRegisterAddress;
+	payloadByte[0] = 0x00; /*	Disable FIFO	*/
+		
+	i2cStatus = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (i2cStatus != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);brieflyToggleEnablingSWD();
+	}
+	
+	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
+	commandByte[0] = menuRegisterAddress;
+	payloadByte[0] = 0x02;  /* Enable fast read 8bit, 800Hz, normal, standby mode */
+		
+	i2cStatus = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (i2cStatus != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);brieflyToggleEnablingSWD();
+	}
+	
+	disableI2Cpins();
+	/*	Essential writes complete */	
 
 	while (1)
 	{
+		
 		/*
-		 *	Do not, e.g., lowPowerPinStates() on each iteration, because we actually
-		 *	want to use menu to progressively change the machine state with various
-		 *	commands.
+		 *	Adapted from Warp-firmware by Phillip
 		 */
-		SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t\t\t* ]\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t    Cambridge / Physcomplab / PSM\t\t  ]\n\n");brieflyToggleEnablingSWD();
 		
-		SEGGER_RTT_printf(0, "\r\tSupply=%dmV,\tDefault Target Read Register=0x%02x\n",
-					menuSupplyVoltage, menuRegisterAddress);brieflyToggleEnablingSWD();
-		SEGGER_RTT_printf(0, "\r\tI2C=%dkb/s,\tSPI=%dkb/s,\tUART=%dkb/s,\tI2C Pull-Up=%d\n\n",
-					gWarpI2cBaudRateKbps, gWarpSpiBaudRateKbps, gWarpUartBaudRateKbps, menuI2cPullupEnable);brieflyToggleEnablingSWD();
+		/*
+		 *	Read values from the accel sensor, the default full scale value range is 2g
+		 *	and the high-pass filter is disabled
+		 *	the measurement range is -2g to +1.99975g, and each count corresponds to 1g/64 (15.6mg)
+		 */
 		
-		SEGGER_RTT_WriteString(0, "\rSelect:\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'a': set default sensor.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'b': set I2C baud rate.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'c': set SPI baud rate.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'd': set UART baud rate.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'e': set default register address.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'f': write byte to sensor.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'g': set default SSSUPPLY.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'h': powerdown command to all sensors.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'i': set pull-up enable flag.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_printf(0, "\r- 'j': repeat read reg 0x%02x on device%d.\n", menuRegisterAddress, menuTargetSensor);brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'k': sleep for 30 seconds.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'l': send repeated byte on I2C.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'm': send repeated byte on SPI.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'n': enable SSSUPPLY.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'o': disable SSSUPPLY.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");brieflyToggleEnablingSWD();
-		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");brieflyToggleEnablingSWD();
+		/*
+		 *	Parameters known: mass m = 2kg, cable diameter D = 0.3m, cable length l = 1.2m, deltaT = 2e-5
+		 *	density rho = 1.0kg/m^3, viscosity mu = 
+		 */
+		
+		float l = 1.2;
+		float m = 2;
+		double deltaT = 2e-5;
+		double PI[100][8];
+		
+		uint8_t	accX[100], accY[100], accZ[100];
+		double accValueX[100], accValueY[100], accValueZ[100]; 
+		double accValueSqrt[100], accValueTotal[100];  
+		
+		double speValueX[100], speValueY[100], speValueZ[100];
+		double speValueSqrt[100], speValueTotal[100];
+		
+		speValueX[100] = 0;
+		speValueY[100] = 0;
+		speValueZ[100] = 0;
+		
+		enableI2Cpins(pullupEnable);
+		
+		
+		repeatRegisterReadForDeviceAndAddress(	menuTargetSensor /*warpSensorDevice*/, 
+							menuRegisterAddress /*baseAddress */,
+							menuI2cPullupEnable,
+							autoIncrement /*autoIncrement*/,
+							chunkReadsPerAddress,
+							chatty,
+							spinDelay,
+							repetitionsPerAddress,
+							menuSupplyVoltage,
+							adaptiveSssupplyMaxMillivolts,
+							referenceByte
+						);
 
-		SEGGER_RTT_WriteString(0, "\rEnter selection> ");brieflyToggleEnablingSWD();
-		enableSWDDisablePTA1x2x3xGpio();
-		key = SEGGER_RTT_WaitKey();
-		SEGGER_RTT_WriteString(0, "    \r\n");
+		uint8_t cmdBuf[1]	= {0xFF};
+		i2c_status_t		returnValue;
 
-		switch (key)
+		i2c_device_t slave =
 		{
-			/*
-			 *	Select sensor
-			 */
-			case 'a':
-			{
-				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362		(0x00--0x2D): 1.6V  -- 3.5V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel	(0x00--0x3F): 2.4V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro	(0x00--0x3F): 2.4V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag		(0x40--0x52): 2.4V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q		(0x00--0x31): 1.95V -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110		(0x00--0x11): 1.95V -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H		(0x0F--0x39): 2.2V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'b' BMP180		(0xAA--0xF8): 1.6V  -- 3.6V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'c' TMP006B		(0x00--0xFF): 2.2V\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326		(n/a)\n");brieflyToggleEnablingSWD();
-				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");brieflyToggleEnablingSWD();
+			.address = deviceMMA8451QState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps
+		};
 
-				enableSWDDisablePTA1x2x3xGpio();
-				key = SEGGER_RTT_WaitKey();
-				disableSWDEnablePTA1x2x3xGpio();
+			
 
-				switch(key)
-				{
-					case '1':
-					{
-						menuTargetSensor = kWarpSensorADXL362;
-
-						break;
-					}
-
-					case '2':
-					{
-						menuTargetSensor = kWarpSensorBMX055accel;
-
-						break;
-					}
-
-					case '3':
-					{
-						menuTargetSensor = kWarpSensorBMX055gyro;
-
-						break;
-					}
-
-					case '4':
-					{
-						menuTargetSensor = kWarpSensorBMX055mag;
-
-						break;
-					}
-
-					case '5':
-					{
-						menuTargetSensor = kWarpSensorMMA8451Q;
-
-						break;
-					}
-
-					case '6':
-					{
-						break;
-					}
-
-					case '7':
-					{
-						menuTargetSensor = kWarpSensorMAG3110;
-
-						break;
-					}
-
-					case '9':
-					{
-						break;
-					}
-
-					case 'a':
-					{
-						menuTargetSensor = kWarpSensorL3GD20H;
-
-						break;
-					}
-
-					case 'b':
-					{
-						menuTargetSensor = kWarpSensorBMP180;
-
-						break;
-					}
-
-					case 'c':
-					{
-						menuTargetSensor = kWarpSensorTMP006B;
-
-						break;
-					}
-
-					case 'd':
-					{
-						break;
-					}
-
-					case 'e':
-					{
-						break;
-					}
-
-					case 'f':
-					{
-						menuTargetSensor = kWarpSensorPAN1326;
-
-						break;
-					}
-
-					default:
-					{
-						SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);brieflyToggleEnablingSWD();
-					}
-				}
-				break;
-			}
-
-			/*
-			 *	Change default I2C baud rate
-			 */
-			case 'b':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tSet I2C baud rate in kbps (e.g., '0001')> ");brieflyToggleEnablingSWD();
-				gWarpI2cBaudRateKbps = read4digits();
-
-				/*
-				 *	Round 9999kbps to 10Mbps
-				 */
-				if (gWarpI2cBaudRateKbps == 9999)
-				{
-					gWarpI2cBaudRateKbps = 10000;
-				}
-
-				SEGGER_RTT_printf(0, "\r\n\tI2C baud rate set to %d kb/s", gWarpI2cBaudRateKbps);brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Change default SPI baud rate
-			 */
-			case 'c':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tSet SPI baud rate in kbps (e.g., '0001')> ");brieflyToggleEnablingSWD();
-				gWarpSpiBaudRateKbps = read4digits();
-
-				/*
-				 *	Round 9999kbps to 10Mbps
-				 */
-				if (gWarpSpiBaudRateKbps == 9999)
-				{
-					gWarpSpiBaudRateKbps = 10000;
-				}
-
-				SEGGER_RTT_printf(0, "\r\n\tSPI baud rate: %d kb/s", gWarpSpiBaudRateKbps);brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Change default UART baud rate
-			 */
-			case 'd':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tSet UART baud rate in kbps (e.g., '0001')> ");brieflyToggleEnablingSWD();
-				gWarpUartBaudRateKbps = read4digits();
-				SEGGER_RTT_printf(0, "\r\n\tUART baud rate: %d kb/s", gWarpUartBaudRateKbps);brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Set register address for subsequent operations
-			 */
-			case 'e':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tEnter 2-nybble register hex address (e.g., '3e')> ");brieflyToggleEnablingSWD();
-				menuRegisterAddress = readHexByte();
-				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n\n", menuRegisterAddress);brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Write byte to sensor
-			 */
-			case 'f':
-			{
-				uint8_t		i2cAddress, payloadByte[1], commandByte[1];
-				i2c_status_t	i2cStatus;
-				WarpStatus	status;
-	
-
-				SEGGER_RTT_WriteString(0, "\r\n\tEnter I2C addr. (e.g., '0f') or '99' for SPI > ");brieflyToggleEnablingSWD();
-				i2cAddress = readHexByte();
-				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n", i2cAddress);brieflyToggleEnablingSWD();
-
-
-				SEGGER_RTT_WriteString(0, "\r\n\tEnter hex byte to send (e.g., '0f')> ");brieflyToggleEnablingSWD();
-				payloadByte[0] = readHexByte();
-				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n", payloadByte[0]);brieflyToggleEnablingSWD();
-
-				if (i2cAddress == 0x99)
-				{
-					SEGGER_RTT_printf(0, "\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);brieflyToggleEnablingSWD();
-					status = writeSensorRegisterADXL362(	0x0A			/* command == write register	*/,
-										menuRegisterAddress,
-										payloadByte[0]		/* writeValue			*/
-									);
-					if (status != kWarpStatusOK)
-					{
-						SEGGER_RTT_printf(0, "\r\n\tSPI write failed, error %d.\n\n", status);brieflyToggleEnablingSWD();
-					}
-				}
-				else
-				{
-					i2c_device_t slave =
-					{
-						.address = i2cAddress,
-						.baudRate_kbps = gWarpI2cBaudRateKbps
-					};
-
-					enableSssupply(menuSupplyVoltage);
-					enableI2Cpins(menuI2cPullupEnable);
-
-					/*
-					 *	Wait for supply and pull-ups to settle.
-					 */
-					OSA_TimeDelay(1000);
-
-					commandByte[0] = menuRegisterAddress;
-					i2cStatus = I2C_DRV_MasterSendDataBlocking(
-											0 /* I2C instance */,
-											&slave,
-											commandByte,
-											1,
-											payloadByte,
-											1,
-											1000);
-					if (i2cStatus != kStatus_I2C_Success)
-					{
-						SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);brieflyToggleEnablingSWD();
-					}
-					disableI2Cpins();
-				}
-
-				/*
-				 *	NOTE: do not disable the supply here, because we typically want to build on the effect of this register write command.
-				 */
-
-				break;
-			}
-
-			/*
-			 *	Configure default TPS82740 voltage
-			 */
-			case 'g':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tOverride SSSUPPLY in mV (e.g., '1800')> ");brieflyToggleEnablingSWD();
-				menuSupplyVoltage = read4digits();
-				SEGGER_RTT_printf(0, "\r\n\tOverride SSSUPPLY set to %d mV", menuSupplyVoltage);brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Activate low-power modes in all sensors.
-			 */
-			case 'h':
-			{
-				activateAllLowPowerSensorModes();
-
-				break;
-			}
-
-			/*
-			 *	Configure default pullup enable flag
-			 */
-			case 'i':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tDefault pullup enable flag ['0' | '1']> ");brieflyToggleEnablingSWD();
-				enableSWDDisablePTA1x2x3xGpio();
-				menuI2cPullupEnable = SEGGER_RTT_WaitKey() - '0';
-				disableSWDEnablePTA1x2x3xGpio();
-				SEGGER_RTT_printf(0, "\r\n\tI2cPullupEnable Flag set to %d\n", menuI2cPullupEnable);brieflyToggleEnablingSWD();
+		for(int i = 0; i < 100; i++)
+		{
+				cmdBuf[0] = 0x01;
+				accX[i] = I2C_DRV_MasterReceiveDataBlocking(
+										0 /* I2C peripheral instance */,
+										&slave,
+										cmdBuf,
+										1,
+										(uint8_t *)deviceMMA8451QState.i2cBuffer,
+										1,
+										500 /* timeout in milliseconds */);
+				accValueX[i] = accX[i] / 64;
+										
+				cmdBuf[0] = 0x03;
+				accValueY[i] = I2C_DRV_MasterReceiveDataBlocking(
+										0 /* I2C peripheral instance */,
+										&slave,
+										cmdBuf,
+										1,
+										(uint8_t *)deviceMMA8451QState.i2cBuffer,
+										1,
+										500 /* timeout in milliseconds */);
+				accValueY[i] = accY[i] / 64;
 				
-				break;
-			}
-
-			/*
-			 *	Start repeated read
-			 */
-			case 'j':
-			{
-				bool		autoIncrement, chatty;
-				int		spinDelay, repetitionsPerAddress, chunkReadsPerAddress;
-				int		adaptiveSssupplyMaxMillivolts;
-				uint8_t		referenceByte;
-
-
-				SEGGER_RTT_printf(0, "\r\n\tAuto-increment from base address 0x%02x? ['0' | '1']> ", menuRegisterAddress);brieflyToggleEnablingSWD();
-				enableSWDDisablePTA1x2x3xGpio();
-				autoIncrement = SEGGER_RTT_WaitKey() - '0';
-				disableSWDEnablePTA1x2x3xGpio();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tChunk reads per address (e.g., '1')> ");brieflyToggleEnablingSWD();
-				enableSWDDisablePTA1x2x3xGpio();
-				chunkReadsPerAddress = SEGGER_RTT_WaitKey() - '0';
-				disableSWDEnablePTA1x2x3xGpio();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tChatty? ['0' | '1']> ");brieflyToggleEnablingSWD();
-				enableSWDDisablePTA1x2x3xGpio();
-				chatty = SEGGER_RTT_WaitKey() - '0';
-				disableSWDEnablePTA1x2x3xGpio();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tInter-operation spin delay in milliseconds (e.g., '0000')> ");brieflyToggleEnablingSWD();
-				spinDelay = read4digits();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tRepetitions per address (e.g., '0000')> ");brieflyToggleEnablingSWD();
-				repetitionsPerAddress = read4digits();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tMaximum voltage for adaptive supply (e.g., '0000')> ");brieflyToggleEnablingSWD();
-				adaptiveSssupplyMaxMillivolts = read4digits();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tReference byte for comparisons (e.g., '3e')> ");brieflyToggleEnablingSWD();
-				referenceByte = readHexByte();
-
-				SEGGER_RTT_printf(0, "\r\n\tRepeating dev%d @ 0x%02x, reps=%d, pull=%d, delay=%dms:\n\n",
-					menuTargetSensor, menuRegisterAddress, repetitionsPerAddress, menuI2cPullupEnable, spinDelay);brieflyToggleEnablingSWD();
-
-				repeatRegisterReadForDeviceAndAddress(	menuTargetSensor /*warpSensorDevice*/, 
-									menuRegisterAddress /*baseAddress */,
-									menuI2cPullupEnable,
-									autoIncrement /*autoIncrement*/,
-									chunkReadsPerAddress,
-									chatty,
-									spinDelay,
-									repetitionsPerAddress,
-									menuSupplyVoltage,
-									adaptiveSssupplyMaxMillivolts,
-									referenceByte
-								);
-
-				break;
-			}
-
-			/*
-			 *	Sleep for 30 seconds.
-			 */
-			case 'k':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tSleeping for 30 seconds...\n");brieflyToggleEnablingSWD();
-				warpLowPowerSecondsSleep(30, true /* forceAllPinsIntoLowPowerState */);
-				SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Send repeated byte on I2C or SPI
-			 */
-			case 'l':
-			case 'm':
-			{
-				uint8_t		outBuffer[1];
-				int		repetitions;
-
-				SEGGER_RTT_WriteString(0, "\r\n\tByte to send (e.g., 'F0')> ");brieflyToggleEnablingSWD();
-				outBuffer[0] = readHexByte();
-
-				SEGGER_RTT_WriteString(0, "\r\n\tRepetitions (e.g., '0000')> ");brieflyToggleEnablingSWD();
-				repetitions = read4digits();
-
-				if (key == 'l')
+				cmdBuf[0] = 0x05;
+				accValueZ[i] = I2C_DRV_MasterReceiveDataBlocking(
+										0 /* I2C peripheral instance */,
+										&slave,
+										cmdBuf,
+										1,
+										(uint8_t *)deviceMMA8451QState.i2cBuffer,
+										1,
+										500 /* timeout in milliseconds */);	
+				accValueZ[i] = accZ[i] / 64;					
+				
+				accValueSqrt[i] = accValueX[i]*accValueX[i]+accValueY[i]*accValueY[i]+accValueZ[i]*accValueZ[i];
+				accValueTotal[i] = sqrt(accValueSqrt[i]);
+				
+				speValueX[i] = m * accValueX[i] * deltaT;
+				speValueY[i] = m * accValueY[i] * deltaT;
+				speValueZ[i] = m * accValueZ[i] * deltaT;
+				
+				speValueSqrt[i] = speValueX[i]*speValueX[i]+speValueY[i]*speValueY[i]+speValueZ[i]*speValueZ[i];
+				speValueTotal[i] = sqrt(speValueSqrt[i]);
+		
+				for(int j = 0; j < 8; j++)
 				{
-					SEGGER_RTT_printf(0, "\r\n\tSending %d repetitions of [0x%02x] on I2C, i2cPullupEnable=%d, SSSUPPLY=%dmV\n\n",
-						repetitions, outBuffer[0], menuI2cPullupEnable, menuSupplyVoltage);brieflyToggleEnablingSWD();
-					for (int i = 0; i < repetitions; i++)
+					switch (j) /* Might be a better way to calculate these */
 					{
-						writeByteToI2cDeviceRegister(0xFF, true /* sedCommandByte */, outBuffer[0] /* commandByte */, false /* sendPayloadByte */, 0 /* payloadByte */);
+						case 0x00;
+						{
+							PI[i][j] = l * speValueTotal[i] * rho / mu;
+							break;
+						}	
+						case 0x01;
+						{	
+							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+							break;
+						}
+						case 0x02;
+						{	
+							PI[i][j] = rho * mu * forceValue[i];
+							break;	
+						}
+						case 0x03;
+						{	
+							PI[i][j] = l * speValueTotal[i] * rho / mu;
+							break;
+						}
+						case 0x04;
+						{	
+							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+							break;
+						}
+						case 0x05;
+						{	
+							PI[i][j] = rho * mu * forceValue[i];
+							break;							
+						}
+						case 0x06;
+						{	
+							PI[i][j] = l * speValueTotal[i] * rho / mu;
+							break;
+						}
+						case 0x07;
+						{	
+							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+							break;
+						}
+						default:
+						{
+							break;
+						}
 					}
+					
 				}
-				else
-				{
-					SEGGER_RTT_printf(0, "\r\n\tSending %d repetitions of [0x%02x] on SPI, SSSUPPLY=%dmV\n\n",
-						repetitions, outBuffer[0], menuSupplyVoltage);brieflyToggleEnablingSWD();
-					for (int i = 0; i < repetitions; i++)
-					{
-						writeBytesToSpi(outBuffer /* payloadByte */, 1 /* payloadLength */, false /* driveI2cPinsHighToMatchSupply */, false /* driveI2cPinsLow */);
-					}
-				}
-
-				break;
-			}
-
-
-			/*
-			 *	enable SSSUPPLY
-			 */
-			case 'n':
-			{
-				enableSssupply(menuSupplyVoltage);
-				break;
-			}
-
-			/*
-			 *	disable SSSUPPLY
-			 */
-			case 'o':
-			{
-				disableSssupply();
-				break;
-			}
-
-			/*
-			 *	Switch to VLPR
-			 */
-			case 'p':
-			{
-				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
-				break;
-			}
-
-			/*
-			 *	Switch to RUN
-			 */
-			case 'r':
-			{
-				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
-				break;
-			}
-
-			/*
-			 *	Power up all sensors
-			 */
-			case 's':
-			{
-				powerupAllSensors();
-				break;
-			}
-
-			/*
-			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
-			 */
-			case 'x':
-			{
-				SEGGER_RTT_WriteString(0, "\r\n\tSpinning for 10 seconds...\n");brieflyToggleEnablingSWD();
-				OSA_TimeDelay(10000);
-				SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");brieflyToggleEnablingSWD();
-
-				break;
-			}
-
-			/*
-			 *	Ignore naked returns.
-			 */
-			case '\n':
-			{
-				SEGGER_RTT_WriteString(0, "\r\tPayloads make rockets more than just fireworks.");brieflyToggleEnablingSWD();
-				break;
-			}
-
-			default:
-			{
-				SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);brieflyToggleEnablingSWD();
-			}
+		
+		
 		}
-	}
+			
+	}	
+	
 
 	return 0;
 }
