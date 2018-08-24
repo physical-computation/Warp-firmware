@@ -920,7 +920,8 @@ void
 initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
 {
 	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (	kWarpTypeMaskLambda450V |
+	deviceStatePointer->signalType	= (	kWarpTypeMaskTemperature|
+						kWarpTypeMaskLambda450V |
 						kWarpTypeMaskLambda500B |
 						kWarpTypeMaskLambda550G |
 						kWarpTypeMaskLambda570Y |
@@ -1054,7 +1055,8 @@ void
 initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
 {
 	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (	kWarpTypeMaskLambda610R |
+	deviceStatePointer->signalType	= (	kWarpTypeMaskTemperature|
+						kWarpTypeMaskLambda610R |
 						kWarpTypeMaskLambda680S |
 						kWarpTypeMaskLambda730T |
 						kWarpTypeMaskLambda760U |
