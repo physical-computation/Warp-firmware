@@ -2423,7 +2423,7 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\n\tReference byte for comparisons (e.g., '3e')> ");brieflyToggleEnablingSWD();
 				referenceByte = readHexByte();
 				
-				SEGGER_RTT_WriteString(0, "\r\n\tOverall numbers of repetitions (e.g., '0000')> ");brieflyToggleEnablingSWD();
+				SEGGER_RTT_WriteString(0, "\r\n\tOverall number of repetitions (e.g., '0000')> ");brieflyToggleEnablingSWD();
 				overallNumberOfRepetitions = read4digits();
 
 				SEGGER_RTT_printf(0, "\r\n\tRepeating dev%d @ 0x%02x, reps=%d, pull=%d, delay=%dms:\n\n",
