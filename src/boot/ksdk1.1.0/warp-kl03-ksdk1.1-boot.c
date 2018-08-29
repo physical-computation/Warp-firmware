@@ -1,6 +1,6 @@
 /*
 	Authored 2016. Phillip Stanley-Marbell.
-	Authored 2018. Youchao Wang.
+	Adapted for FRDM-KL03Z 2018. Youchao Wang
 
 	All rights reserved.
 
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h> /* Is this really necessary? */
+#include <math.h>
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -267,6 +267,12 @@ power_manager_error_code_t callback0(power_manager_notify_struct_t *  notify,
 /*
  *	From KSDK power_manager_demo.c <<END>>>
  */
+
+
+
+
+
+
 
 
 /*
@@ -1422,7 +1428,7 @@ int
 main(void)
 {
 	uint8_t					key;
-	WarpSensorDevice			menuTargetSensor = kWarpSensorADXL362;
+	WarpSensorDevice		menuTargetSensor = kWarpSensorMMA8451Q;
 	bool					menuI2cPullupEnable = true;
 	uint8_t					menuRegisterAddress = 0x00;
 	uint16_t				menuSupplyVoltage = 0;
@@ -1546,7 +1552,7 @@ main(void)
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
 
-	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp in 3... ");
+	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp-adpated in 3... ");
 	OSA_TimeDelay(1000);
 	SEGGER_RTT_WriteString(0, "2... ");
 	OSA_TimeDelay(1000);
@@ -1651,7 +1657,7 @@ main(void)
 	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);	
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
 	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
-	initBMP180(	0x77	/* i2cAddress */,	&deviceBMP180State	);
+	initBMP180(		0x77	/* i2cAddress */,	&deviceBMP180State	);
 	initTMP006B(	0x45	/* i2cAddress */,	&deviceTMP006BState	);
 
 
@@ -1668,8 +1674,6 @@ main(void)
 	 */
 	initPAN1326B(&devicePAN1326BState);
 
-
-	///////////////////////////////////////////////////////
 	/*
 	 *	writing the control bytes
 	 */
@@ -1677,10 +1681,8 @@ main(void)
 	uint8_t		i2cAddress, payloadByte[1], commandByte[1];
 	i2c_status_t	i2cStatus;
 	WarpStatus	status;
-	
-	menuTargetSensor = kWarpSensorMMA8451Q;
 
-	i2cAddress = 0x1C; /* acc addr, 7-bit */
+	i2cAddress = 0x1D; /* acc addr, 7-bit */
 	
 	i2c_device_t slave =
 	{
@@ -1695,7 +1697,6 @@ main(void)
 	 *	Wait for supply and pull-ups to settle.
 	 */
 	OSA_TimeDelay(1000);
-
 
 	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
 	commandByte[0] = menuRegisterAddress;
@@ -1716,7 +1717,7 @@ main(void)
 	
 	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
 	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x02;  /* Enable fast read 8bit, 800Hz, normal, standby mode */
+	payloadByte[0] = 0x03;  /* Enable fast read 8bit, 800Hz, normal, active mode */
 		
 	i2cStatus = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -1736,9 +1737,8 @@ main(void)
 
 	while (1)
 	{
-		
-		/*
-		 *	Adapted from Warp-firmware by Phillip
+				/*
+		 *	Adapted from Warp-firmware by Youchao Wang
 		 */
 		
 		/*
@@ -1749,13 +1749,16 @@ main(void)
 		
 		/*
 		 *	Parameters known: mass m = 2kg, cable diameter D = 0.3m, cable length l = 1.2m, deltaT = 2e-5
-		 *	density rho = 1.0kg/m^3, viscosity mu = 
+		 *	density rho = 1.0kg/m^3, viscosity mu = 0.89*10^3 Pa/s (kg/m*s)
 		 */
 		
-		float l = 1.2;
-		float m = 2;
+		double l = 1.2;
+		double m = 2.0;
 		double deltaT = 2e-5;
-		double PI[100][8];
+		double rho = 1.0;
+		double mu = 0.00089;
+
+		double PIOne[100];
 		
 		uint8_t	accX[100], accY[100], accZ[100];
 		double accValueX[100], accValueY[100], accValueZ[100]; 
@@ -1763,29 +1766,18 @@ main(void)
 		
 		double speValueX[100], speValueY[100], speValueZ[100];
 		double speValueSqrt[100], speValueTotal[100];
-		
-		speValueX[100] = 0;
-		speValueY[100] = 0;
-		speValueZ[100] = 0;
-		
-		enableI2Cpins(pullupEnable);
-		
-		
-		repeatRegisterReadForDeviceAndAddress(	menuTargetSensor /*warpSensorDevice*/, 
-							menuRegisterAddress /*baseAddress */,
-							menuI2cPullupEnable,
-							autoIncrement /*autoIncrement*/,
-							chunkReadsPerAddress,
-							chatty,
-							spinDelay,
-							repetitionsPerAddress,
-							menuSupplyVoltage,
-							adaptiveSssupplyMaxMillivolts,
-							referenceByte
-						);
 
+		double forceValue[100];
+		
+		/*
+		 *	I2C operations
+	     */
+
+		enableI2Cpins(1);
+		
 		uint8_t cmdBuf[1]	= {0xFF};
-		i2c_status_t		returnValue;
+		
+		i2c_status_t		returnValue; /* saved for use later in debugging */
 
 		i2c_device_t slave =
 		{
@@ -1793,110 +1785,139 @@ main(void)
 			.baudRate_kbps = gWarpI2cBaudRateKbps
 		};
 
-			
+		/*	
+		 *	Update the data buffer in a loop, as the first fill (100 sets of data)
+		 */
+	//	if(countLoops == 0)
+	//	{
+	//		N = 100;
+	//	}
+	//	else
+	//	{
+	//		N = 10;
+	//	}
+//
 
 		for(int i = 0; i < 100; i++)
 		{
-				cmdBuf[0] = 0x01;
-				accX[i] = I2C_DRV_MasterReceiveDataBlocking(
-										0 /* I2C peripheral instance */,
-										&slave,
-										cmdBuf,
-										1,
-										(uint8_t *)deviceMMA8451QState.i2cBuffer,
-										1,
-										500 /* timeout in milliseconds */);
-				accValueX[i] = accX[i] / 64;
-										
-				cmdBuf[0] = 0x03;
-				accValueY[i] = I2C_DRV_MasterReceiveDataBlocking(
-										0 /* I2C peripheral instance */,
-										&slave,
-										cmdBuf,
-										1,
-										(uint8_t *)deviceMMA8451QState.i2cBuffer,
-										1,
-										500 /* timeout in milliseconds */);
-				accValueY[i] = accY[i] / 64;
-				
-				cmdBuf[0] = 0x05;
-				accValueZ[i] = I2C_DRV_MasterReceiveDataBlocking(
-										0 /* I2C peripheral instance */,
-										&slave,
-										cmdBuf,
-										1,
-										(uint8_t *)deviceMMA8451QState.i2cBuffer,
-										1,
-										500 /* timeout in milliseconds */);	
-				accValueZ[i] = accZ[i] / 64;					
-				
-				accValueSqrt[i] = accValueX[i]*accValueX[i]+accValueY[i]*accValueY[i]+accValueZ[i]*accValueZ[i];
-				accValueTotal[i] = sqrt(accValueSqrt[i]);
-				
-				speValueX[i] = m * accValueX[i] * deltaT;
-				speValueY[i] = m * accValueY[i] * deltaT;
-				speValueZ[i] = m * accValueZ[i] * deltaT;
-				
-				speValueSqrt[i] = speValueX[i]*speValueX[i]+speValueY[i]*speValueY[i]+speValueZ[i]*speValueZ[i];
-				speValueTotal[i] = sqrt(speValueSqrt[i]);
-		
-				for(int j = 0; j < 8; j++)
-				{
-					switch (j) /* Might be a better way to calculate these */
-					{
-						case 0x00;
-						{
-							PI[i][j] = l * speValueTotal[i] * rho / mu;
-							break;
-						}	
-						case 0x01;
-						{	
-							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-							break;
-						}
-						case 0x02;
-						{	
-							PI[i][j] = rho * mu * forceValue[i];
-							break;	
-						}
-						case 0x03;
-						{	
-							PI[i][j] = l * speValueTotal[i] * rho / mu;
-							break;
-						}
-						case 0x04;
-						{	
-							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-							break;
-						}
-						case 0x05;
-						{	
-							PI[i][j] = rho * mu * forceValue[i];
-							break;							
-						}
-						case 0x06;
-						{	
-							PI[i][j] = l * speValueTotal[i] * rho / mu;
-							break;
-						}
-						case 0x07;
-						{	
-							PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-							break;
-						}
-						default:
-						{
-							break;
-						}
-					}
-					
-				}
-		
-		
-		}
+			cmdBuf[0] = 0x01;
+			returnValue = I2C_DRV_MasterReceiveDataBlocking(
+									0 /* I2C peripheral instance */,
+									&slave,
+									cmdBuf,
+									1,
+									(uint8_t *)deviceMMA8451QState.i2cBuffer,
+									1,
+									500 /* timeout in milliseconds */);
+			accX[i] = deviceMMA8451QState.i2cBuffer[0];
+			accValueX[i] = accX[i] / 64;
+									
+			cmdBuf[0] = 0x03;
+			returnValue = I2C_DRV_MasterReceiveDataBlocking(
+									0 /* I2C peripheral instance */,
+									&slave,
+									cmdBuf,
+									1,
+									(uint8_t *)deviceMMA8451QState.i2cBuffer,
+									1,
+									500 /* timeout in milliseconds */);
+			accY[i] = deviceMMA8451QState.i2cBuffer[0];
+			accValueY[i] = accY[i] / 64;
 			
-	}	
-	
+			cmdBuf[0] = 0x05;
+			returnValue = I2C_DRV_MasterReceiveDataBlocking(
+									0 /* I2C peripheral instance */,
+									&slave,
+									cmdBuf,
+									1,
+									(uint8_t *)deviceMMA8451QState.i2cBuffer,
+									1,
+									500 /* timeout in milliseconds */);	
+			accZ[i] = deviceMMA8451QState.i2cBuffer[0];
+			accValueZ[i] = accZ[i] / 64;	/* as a proof of concept, using 8bit resolution */				
+			
+			accValueSqrt[i] = accValueX[i]*accValueX[i]+accValueY[i]*accValueY[i]+accValueZ[i]*accValueZ[i];
+			accValueTotal[i] = sqrt(accValueSqrt[i]);
+			
+			speValueX[i] = m * accValueX[i] * deltaT;
+			speValueY[i] = m * accValueY[i] * deltaT;
+			speValueZ[i] = m * accValueZ[i] * deltaT;
+			
+			speValueSqrt[i] = speValueX[i]*speValueX[i]+speValueY[i]*speValueY[i]+speValueZ[i]*speValueZ[i];
+			speValueTotal[i] = sqrt(speValueSqrt[i]);
+
+			forceValue[i] = accValueTotal[i] * m;
+		
+	//		for(int j = 0; j < 8; j++)
+	//		{
+	//			switch (j) /* Might exist a better way to calculate these values */
+	//			{
+	//				case 0x00:
+	//				{
+	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
+	//					break;
+	//				}	
+	//				case 0x01:
+	//				{	
+	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+	//					break;
+	//				}
+	//				case 0x02:
+	//				{	
+	//					PI[i][j] = rho * mu * forceValue[i];
+	//					break;	
+	//				}
+	//				case 0x03:
+	//				{	
+	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
+	//					break;
+	//				}
+	//				case 0x04:
+	//				{	
+	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+	//					break;
+	//				}
+	//				case 0x05:
+	//				{	
+	//					PI[i][j] = rho * mu * forceValue[i];
+	//					break;							
+	//				}
+	//				case 0x06:
+	//				{	
+	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
+	//					break;
+	//				}
+	//				case 0x07:
+	//				{	
+	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
+	//					break;
+	//				}
+	//				default:
+	//				{
+	//					break;
+	//				}
+	//			} /* end of switch */
+
+	//			SEGGER_RTT_printf(0, "%f,",PI[i][j]);brieflyToggleEnablingSWD();
+
+	//		}
+		
+			
+			SEGGER_RTT_printf(0,"//(%d)::://",i);brieflyToggleEnablingSWD();
+
+		}
+		
+		SEGGER_RTT_printf(0,"\n");brieflyToggleEnablingSWD();
+
+		/*
+		 *	TODO in While(1), read the values continuously, and update the buffer FIFO or depending on a specific algorithm
+		 */
+		
+	//	if(countLoops == 250)
+	//	{
+	//		countLoops = 2;
+	//	}
+	}
 
 	return 0;
 }
