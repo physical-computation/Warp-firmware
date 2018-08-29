@@ -69,7 +69,7 @@ volatile WarpI2CDeviceState		deviceMAG3110State;
 volatile WarpI2CDeviceState		deviceL3GD20HState;
 volatile WarpI2CDeviceState		deviceBMP180State;
 volatile WarpI2CDeviceState		deviceTMP006BState;
-volatile WarpUARTDeviceState		devicePAN1326BState;
+volatile WarpUARTDeviceState	devicePAN1326BState;
 
 
 /*
@@ -156,7 +156,7 @@ WarpStatus				writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandB
 WarpStatus				writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength, bool driveI2cPinsHighToMatchSupply, bool driveI2cPinsLow);
 void					warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
 
-
+void					printDouble(double doubleNumber, int decimalDigits);
 
 /*
  *	TODO: move this and possibly others into a structure
@@ -1752,22 +1752,23 @@ main(void)
 		 *	density rho = 1.0kg/m^3, viscosity mu = 0.89*10^3 Pa/s (kg/m*s)
 		 */
 		
-		double l = 1.2;
-		double m = 2.0;
-		double deltaT = 2e-5;
-		double rho = 1.0;
-		double mu = 0.00089;
+		double	l = 1.2;
+		double	D = 0.3;
+		double 	m = 2.0;
+		double 	deltaT = 2e-5;
+		double 	rho = 1.0;
+		double 	mu = 0.00089;
 
-		double PIOne[100];
+		u_int32_t	PIOne[100], PITwo[100],PIThree[100],PIFour[100],PIFive[100],PISix[100],PISeven[100],PIEight[100];
 		
-		uint8_t	accX[100], accY[100], accZ[100];
-		double accValueX[100], accValueY[100], accValueZ[100]; 
-		double accValueSqrt[100], accValueTotal[100];  
+		u_int8_t	accX[100], accY[100], accZ[100];
+		double 	accValueX[100], accValueY[100], accValueZ[100]; 
+		double 	accValueSqrt[100], accValueTotal[100];  
 		
-		double speValueX[100], speValueY[100], speValueZ[100];
-		double speValueSqrt[100], speValueTotal[100];
+		double 	speValueX[100], speValueY[100], speValueZ[100];
+		double 	speValueSqrt[100], speValueTotal[100];
 
-		double forceValue[100];
+		double 	forceValue[100];
 		
 		/*
 		 *	I2C operations
@@ -1796,7 +1797,7 @@ main(void)
 	//	{
 	//		N = 10;
 	//	}
-//
+		SEGGER_RTT_WriteString(0, "Pi1, Pi2, Pi3, Pi4, Pi5, Pi6, Pi7, Pi8, X, Y, Z\n");brieflyToggleEnablingSWD();
 
 		for(int i = 0; i < 100; i++)
 		{
@@ -1810,7 +1811,7 @@ main(void)
 									1,
 									500 /* timeout in milliseconds */);
 			accX[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueX[i] = accX[i] / 64;
+			accValueX[i] = accX[i] / 64.0;
 									
 			cmdBuf[0] = 0x03;
 			returnValue = I2C_DRV_MasterReceiveDataBlocking(
@@ -1822,7 +1823,7 @@ main(void)
 									1,
 									500 /* timeout in milliseconds */);
 			accY[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueY[i] = accY[i] / 64;
+			accValueY[i] = accY[i] / 64.0;
 			
 			cmdBuf[0] = 0x05;
 			returnValue = I2C_DRV_MasterReceiveDataBlocking(
@@ -1834,7 +1835,7 @@ main(void)
 									1,
 									500 /* timeout in milliseconds */);	
 			accZ[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueZ[i] = accZ[i] / 64;	/* as a proof of concept, using 8bit resolution */				
+			accValueZ[i] = (double) accZ[i] / 64.0;	/* as a proof of concept, using 8bit resolution */				
 			
 			accValueSqrt[i] = accValueX[i]*accValueX[i]+accValueY[i]*accValueY[i]+accValueZ[i]*accValueZ[i];
 			accValueTotal[i] = sqrt(accValueSqrt[i]);
@@ -1847,63 +1848,39 @@ main(void)
 			speValueTotal[i] = sqrt(speValueSqrt[i]);
 
 			forceValue[i] = accValueTotal[i] * m;
-		
-	//		for(int j = 0; j < 8; j++)
-	//		{
-	//			switch (j) /* Might exist a better way to calculate these values */
-	//			{
-	//				case 0x00:
-	//				{
-	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
-	//					break;
-	//				}	
-	//				case 0x01:
-	//				{	
-	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-	//					break;
-	//				}
-	//				case 0x02:
-	//				{	
-	//					PI[i][j] = rho * mu * forceValue[i];
-	//					break;	
-	//				}
-	//				case 0x03:
-	//				{	
-	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
-	//					break;
-	//				}
-	//				case 0x04:
-	//				{	
-	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-	//					break;
-	//				}
-	//				case 0x05:
-	//				{	
-	//					PI[i][j] = rho * mu * forceValue[i];
-	//					break;							
-	//				}
-	//				case 0x06:
-	//				{	
-	//					PI[i][j] = l * speValueTotal[i] * rho / mu;
-	//					break;
-	//				}
-	//				case 0x07:
-	//				{	
-	//					PI[i][j] = l * l * speValueTotal[i] * speValueTotal[i] * rho / forceValue[i];
-	//					break;
-	//				}
-	//				default:
-	//				{
-	//					break;
-	//				}
-	//			} /* end of switch */
 
-	//			SEGGER_RTT_printf(0, "%f,",PI[i][j]);brieflyToggleEnablingSWD();
-
-	//		}
-		
-			
-			SEGGER_RTT_printf(0,"//(%d)::://",i);brieflyToggleEnablingSWD();
+			PIOne[i] = l * speValueTotal[i] * rho * 100000 / mu ;
+			PITwo[i] = l * l * speValueTotal[i] * speValueTotal[i] * rho * 100000 / forceValue[i];
+			PIThree[i] = rho * mu * forceValue[i] * 100000;
+			PIFour[i] = l * speValueTotal[i] * rho * forceValue[i] * 100000;
+			PIFive[i] = l * speValueTotal[i] * mu * forceValue[i] * 100000;
+			PISix[i] = D * speValueTotal[i] * rho * 100000 / mu;
+			PISeven[i] = D * D * speValueTotal[i] * speValueTotal[i] * rho * 100000 / forceValue[i];
+			PIEight[i] = D * 100000 / l;
+		//	u_int16_t aX = accValueX[i];
+		//	u_int16_t bX = accValueX[i] * 1000;
+		//	bX = bX % 1000;
+		//	int numberDigitsCount = 0;
+		//	while(bX != 0)
+   		//	{
+        //		bX /= 10;
+        //		++numberDigitsCount;
+    	//	}
+		//	if (numberDigitsCount != 3)
+		//	{
+		//		SEGGER_RTT_printf(0, "%d.0%d,",aX,bX);brieflyToggleEnablingSWD();
+		//	}
+		//	else
+		//	{
+		//		SEGGER_RTT_printf(0, "%d.%d,",aX,bX);brieflyToggleEnablingSWD();
+		//	}
+		//	//sprintf(accValueXStr,"%d.%d,",M_PI);
+			//SEGGER_RTT_WriteString(0, accValueXStr);brieflyToggleEnablingSWD();
+		//printDouble(3.01415008,6);
+			SEGGER_RTT_printf(0, "%d,%d,%d,%d,",PIOne[i],PITwo[i],PIThree[i],PIFour[i]);brieflyToggleEnablingSWD();
+			SEGGER_RTT_printf(0, "%d,%d,%d,%d,",PIFive[i],PISix[i],PISeven[i],PIEight[i]);brieflyToggleEnablingSWD();
+			SEGGER_RTT_printf(0, "%d,%d,%d\n",accX[i],accY[i],accZ[i]);brieflyToggleEnablingSWD();
+			//SEGGER_RTT_printf(0,"//(%d)::://",i);brieflyToggleEnablingSWD();
 
 		}
 		
@@ -1922,7 +1899,57 @@ main(void)
 	return 0;
 }
 
+/*
+ *	This below function is used to print out Double Floats. 
 
+void printDouble(double doubleNumber, int decimalDigits)
+{
+	int i = 1;
+	int intNumber, decimalNumber;
+	int numberDigitsCount = 0;
+	char zeros[10];
+  
+	int tempDD = decimalDigits;
+	int tempDC = numberDigitsCount;
+
+	while(tempDD != 0)
+	{
+		i*=10;
+		tempDD--;
+	}
+  
+	intNumber = (int)doubleNumber;
+	decimalNumber = (int)((doubleNumber-(double)(int)doubleNumber)*i);
+
+	int tempDN = decimalNumber;
+
+    while(tempDN != 0)
+  	{
+  		tempDN /= 10;
+   		++tempDC;
+ 	}
+
+	if (numberDigitsCount + 1 != decimalDigits)
+	{
+		SEGGER_RTT_printf(0, "%d.",intNumber);brieflyToggleEnablingSWD();
+		
+		for(int z=0; z< (decimalDigits-1-numberDigitsCount); z++)
+		{
+			SEGGER_RTT_WriteString(0, "here is a zero");brieflyToggleEnablingSWD();
+		}		
+		
+		SEGGER_RTT_printf(0, "%d,",decimalNumber);brieflyToggleEnablingSWD();
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "%d.%d,",intNumber,decimalNumber);brieflyToggleEnablingSWD();
+	}
+
+
+	//SEGGER_RTT_printf(0,"%d.%d", intNumber, decimalNumber);brieflyToggleEnablingSWD();
+}
+
+*/
 
 void
 repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, bool pullupEnable, bool autoIncrement, int chunkReadsPerAddress, bool chatty, int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts, uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte)
@@ -2842,3 +2869,4 @@ activateAllLowPowerSensorModes(void)
 	 */
 	GPIO_DRV_ClearPinOutput(kWarpPinADXL362_CS_PAN1326_nSHUTD);
 }
+
