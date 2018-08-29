@@ -971,6 +971,11 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 	/*
 	 *	This turns on the LED before reading the data
 	 */
@@ -982,6 +987,11 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
+
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
@@ -996,19 +1006,14 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 	/*
 	 *	Read transaction which reads from the READ register 0x02.
-	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
 	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_read /* The pointer to the commands to be transferred */,
-							1 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
-
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -1018,6 +1023,11 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
 							500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -1026,6 +1036,11 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
+
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	/*
 	 *	This turns off the LED after finish reading the data
@@ -1039,11 +1054,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
 
-	if (returnValue == kStatus_I2C_Success)
-	{
-		//...
-	}
-	else
+	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
@@ -1107,6 +1118,11 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 						0 /* The length in bytes of the data to be transferred */,
 						500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 /*
  *	This turns on the LED before reading the data
  */
@@ -1119,6 +1135,11 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 						0 /* The length in bytes of the data to be transferred */,
 						500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
 	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
@@ -1130,21 +1151,16 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 							2 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);		
+							500 /* timeout in milliseconds */);
+
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	/*
 	 *	Read transaction which reads from the READ register 0x02.
-	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
-	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_read /* The pointer to the commands to be transferred */,
-							1 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);			
-
+	 */		
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -1154,6 +1170,11 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
 							500 /* timeout in milliseconds */);
 
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -1162,6 +1183,11 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
+
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	/*
 	 *	This turns off the LED after finish reading the data
@@ -1175,11 +1201,7 @@ returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
 
-	if (returnValue == kStatus_I2C_Success)
-	{
-		//...
-	}
-	else
+	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
