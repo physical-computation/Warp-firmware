@@ -42,6 +42,8 @@
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
 #include "fsl_spi_master_driver.h"
+#include "fsl_lpuart_driver.h"
+
 #include "fsl_rtc_driver.h"
 #include "fsl_clock_manager.h"
 #include "fsl_power_manager.h"
@@ -52,25 +54,56 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-#include "devBMX055.h"
-#include "devADXL362.h"
-#include "devMMA8451Q.h"
-#include "devLPS25H.h"
-#include "devHDC1000.h"
-#include "devMAG3110.h"
-#include "devSI7021.h"
-#include "devL3GD20H.h"
-#include "devBME680.h"
-#include "devTCS34725.h"
-#include "devSI4705.h"
-#include "devCCS811.h"
-#include "devAMG8834.h"
+// #include "devBMX055.h"
+// #include "devADXL362.h"
+// #include "devMMA8451Q.h"
+// #include "devLPS25H.h"
+// #include "devHDC1000.h"
+// #include "devMAG3110.h"
+// #include "devSI7021.h"
+// #include "devL3GD20H.h"
+// #include "devBME680.h"
+// #include "devTCS34725.h"
+// #include "devSI4705.h"
+// #include "devCCS811.h"
+// #include "devAMG8834.h"
 #include "devPAN1326.h"
 
 
-#define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
-#define					kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
-#define					kWarpConstantStringErrorSanity		"\rSanity Check Failed!"
+///////////////////////
+//BTstack includes
+///////////////////////
+
+
+#include "btstack/btstack_chipset_cc256x.h"
+#include "btstack/btstack_config.h"
+#include "btstack/btstack_event.h"
+#include "btstack/btstack_memory.h"
+#include "btstack/btstack_run_loop.h"
+#include "btstack/btstack_run_loop_embedded.h"
+#include "btstack/bluetooth_company_id.h"
+#include "btstack/classic/btstack_link_key_db.h"
+// #include "hal_board.h"
+// #include "hal_compat.h"
+#include "btstack/hal_cpu.h"
+#include "btstack/hal_tick.h"
+// #include "hal_usb.h"
+#include "btstack/hci.h"
+#include "btstack/hci_dump.h"
+
+// #include "btstack_defines.h"
+// #include "hci_dump.h"
+// #include "hci_transport.h"
+// #include "devCC2564C.h"
+#include "btstack/hal_led.h"
+#include "btstack/led_counter.h"
+
+// const uint8_t cc256x_init_script = "cc2564cInit.c";
+// const uint8_t cc256x_init_script = "cc2564cInit.c";
+
+#define		kWarpConstantStringI2cFailure			"\rI2C failed, reg 0x%02x, code %d\n"
+#define		kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
+#define		kWarpConstantStringErrorSanity			"\rSanity Check Failed!"
 
 
 volatile WarpSPIDeviceState		deviceADXL362State;
@@ -88,15 +121,17 @@ volatile WarpI2CDeviceState		deviceTCS34725State;
 volatile WarpI2CDeviceState		deviceSI4705State;
 volatile WarpI2CDeviceState		deviceCCS811State;
 volatile WarpI2CDeviceState		deviceAMG8834State;
-volatile WarpUARTDeviceState		devicePAN1326BState;
-volatile WarpUARTDeviceState		devicePAN1323ETUState;
+volatile WarpUARTDeviceState	devicePAN1326BState;
+volatile WarpUARTDeviceState	devicePAN1323ETUState;
 
 /*
  *	TODO: move this and possibly others into a global structure
  */
-volatile i2c_master_state_t		i2cMasterState;
-volatile spi_master_state_t		spiMasterState;
+volatile i2c_master_state_t			i2cMasterState;
+volatile spi_master_state_t			spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
+volatile lpuart_user_config_t 		lpuartUserConfig;
+volatile lpuart_state_t 			lpuartState;
 
 
 /*
@@ -106,40 +141,44 @@ volatile uint32_t			gWarpI2cBaudRateKbps	= 1;
 volatile uint32_t			gWarpUartBaudRateKbps	= 1;
 volatile uint32_t			gWarpSpiBaudRateKbps	= 1;
 volatile uint32_t			gWarpSleeptimeSeconds	= 0;
-volatile WarpModeMask			gWarpMode		= kWarpModeDisableAdcOnSleep;
+volatile WarpModeMask		gWarpMode		= kWarpModeDisableAdcOnSleep;
 
 
-
-void					sleepUntilReset(void);
-void					lowPowerPinStates(void);
-void					disableTPS82740A(void);
-void					disableTPS82740B(void);
-void					enableTPS82740A(uint16_t voltageMillivolts);
-void					enableTPS82740B(uint16_t voltageMillivolts);
-void					setTPS82740CommonControlLines(uint16_t voltageMillivolts);
-void					printPinDirections(void);
-void					dumpProcessorState(void);
-void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, 
+void		sleepUntilReset(void);
+void		lowPowerPinStates(void);
+void		disableTPS82740A(void);
+void		disableTPS82740B(void);
+void		enableTPS82740A(uint16_t voltageMillivolts);
+void		enableTPS82740B(uint16_t voltageMillivolts);
+void		setTPS82740CommonControlLines(uint16_t voltageMillivolts);
+void		printPinDirections(void);
+void		dumpProcessorState(void);
+void		repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, 
 								uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
-int					char2int(int character);
-void					enableSssupply(uint16_t voltageMillivolts);
-void					disableSssupply(void);
-void					activateAllLowPowerSensorModes(void);
-void					powerupAllSensors(void);
-uint8_t					readHexByte(void);
-int					read4digits(void);
+int			char2int(int character);
+void		enableSssupply(uint16_t voltageMillivolts);
+void		disableSssupply(void);
+void		activateAllLowPowerSensorModes(void);
+void		powerupAllSensors(void);
+uint8_t		readHexByte(void);
+int			read4digits(void);
 
+//bt things
+void 	ble_writeMenu(void);
+void 	ble_setup(void);
+void 	ble_enable(void);
+void 	ble_disable(void);
 
 /*
  *	TODO: change the following to take byte arrays
  */
-WarpStatus				writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t commandByte, bool sendPayloadByte, uint8_t payloadByte);
-WarpStatus				writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
+WarpStatus writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t commandByte, bool sendPayloadByte, uint8_t payloadByte);
+WarpStatus	writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
 
 
-void					warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
+void warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
 
 
 
@@ -191,6 +230,8 @@ clockManagerCallbackRoutine(clock_notify_struct_t *  notify, void *  callbackDat
 void
 RTC_IRQHandler(void)
 {
+	SEGGER_RTT_WriteString(0, "\r RTC_IRQ called\n");
+
 	if (RTC_DRV_IsAlarmPending(0))
 	{
 		RTC_DRV_SetAlarmIntCmd(0, false);
@@ -250,6 +291,58 @@ sleepUntilReset(void)
 }
 
 
+void
+enableLPUARTpins(void)
+{
+	//Enable UART CLOCK
+	CLOCK_SYS_EnableLpuartClock(0);
+
+	//set UART pin association
+	//see page 99 in https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
+
+	/*	Warp KL03_UART_HCI_TX	--> PTB3 (ALT3)	--> PAN1326 HCI_RX */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
+	/*	Warp KL03_UART_HCI_RX	--> PTB4 (ALT3)	--> PAN1326 HCI_RX */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
+
+	// FIXME:
+	/*	Warp PTA6 --> PAN1326 HCI_RTS */
+	/*	Warp PTA7 --> PAN1326 HCI_CTS */
+
+
+	/*
+	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
+	 *
+	 */
+	lpuartUserConfig.baudRate = 115;
+	lpuartUserConfig.parityMode = kLpuartParityDisabled;
+	lpuartUserConfig.stopBitCount = kLpuartOneStopBit;
+	lpuartUserConfig.bitCountPerChar = kLpuart8BitsPerChar;
+
+	LPUART_DRV_Init(0,(lpuart_state_t *)&lpuartState,(lpuart_user_config_t *)&lpuartUserConfig);
+
+}
+
+void
+disableLPUARTpins(void)
+{
+	/* LPUART dinini */
+	LPUART_DRV_Deinit(0);
+
+	/*	Warp KL03_UART_HCI_RX	--> PTB4 (GPIO)	*/
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAsGpio);
+	/*	Warp KL03_UART_HCI_TX	--> PTB3 (GPIO) */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAsGpio);
+
+	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
+	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
+	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_TX);
+	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_RX);
+
+	//Disable LPUART CLOCK
+	CLOCK_SYS_DisableLpuartClock(0);
+
+}
 
 void
 enableSPIpins(void)
@@ -278,8 +371,6 @@ enableSPIpins(void)
 	SPI_DRV_MasterInit(0 /* SPI master instance */, (spi_master_state_t *)&spiMasterState);
 	SPI_DRV_MasterConfigureBus(0 /* SPI master instance */, (spi_master_user_config_t *)&spiUserConfig, &calculatedBaudRate);
 }
-
-
 
 void
 disableSPIpins(void)
@@ -327,8 +418,6 @@ enableI2Cpins(uint16_t pullupValue)
 	//...
 }
 
-
-
 void
 disableI2Cpins(void)
 {
@@ -357,7 +446,7 @@ disableI2Cpins(void)
 	CLOCK_SYS_DisableI2cClock(0);
 }
 
-
+// TODO: add pin states for pan1326 lp states
 void
 lowPowerPinStates(void)
 {
@@ -1036,27 +1125,29 @@ main(void)
 	/*
 	 *	Initialize all the sensors
 	 */
-	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
-	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
-	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
-	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
-	initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
-	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
-	initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State	);
-	initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
-	initBME680(	0x77	/* i2cAddress */,	&deviceBME680State	);
-	initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State	);
-	initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State	);
-	initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State	);
-	initAMG8834(	0x3A	/* i2cAddress */,	&deviceAMG8834State	);
+	// FIXME: commented out for bt testing
+	// initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
+	// initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
+	// initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
+	// initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
+	// initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
+	// initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
+	// initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
+	// initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State	);
+	// initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
+	// initBME680(	0x77	/* i2cAddress */,	&deviceBME680State	);
+	// initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State	);
+	// initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State	);
+	// initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State	);
+	// initAMG8834(	0x3A	/* i2cAddress */,	&deviceAMG8834State	);
 
 
 
 	/*
 	 *	Initialization: Devices hanging off SPI
 	 */
-	initADXL362(&deviceADXL362State);
+	//FIXME: commented out for bt testing
+	// initADXL362(&deviceADXL362State);
 
 
 
@@ -1071,7 +1162,7 @@ main(void)
 	 *	Initialization: the PAN1326, generating its 32k clock
 	 */
 	//Disable for now
-	//initPAN1326B(&devicePAN1326BState);
+	initPAN1326B(&devicePAN1326BState);
 #ifdef WARP_PAN1323ETU
 	initPAN1323ETU(&devicePAN1323ETUState);
 #endif
@@ -1139,6 +1230,7 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
 		SEGGER_RTT_WriteString(0, "\r- 't': dump processor state.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'w': bluetooth setup.\n");
 		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
 
@@ -1152,22 +1244,22 @@ main(void)
 			case 'a':
 			{
 				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362			(0x00--0x2D): 1.6V  -- 3.5V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '1' *DISABLED* ADXL362			(0x00--0x2D): 1.6V  -- 3.5V\n"); //TODO:
+				SEGGER_RTT_WriteString(0, "\r\t- '2' *DISABLED* BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '3' *DISABLED* BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '4' *DISABLED* BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '5' *DISABLED* MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '6' *DISABLED* LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '7' *DISABLED* MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '8' *DISABLED* HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '9' *DISABLED* SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'a' *DISABLED* L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'b' *DISABLED* BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'd' *DISABLED* TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'e' *DISABLED* SI4705			(n/a):        2.7V  -- 5.5V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'g' *DISABLED* CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'h' *DISABLED* AMG8834			(0x00--?): ?V  -- ?V\n");
 				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
 
 				key = SEGGER_RTT_WaitKey();
@@ -1383,10 +1475,12 @@ main(void)
 				if (i2cAddress == 0x99)
 				{
 					SEGGER_RTT_printf(0, "\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);
-					status = writeSensorRegisterADXL362(	0x0A			/* command == write register	*/,
-										menuRegisterAddress,
-										payloadByte[0]		/* writeValue			*/
-									);
+					
+					//FIXME: disabled to test BT
+					// status = writeSensorRegisterADXL362(	0x0A			/* command == write register	*/,
+					// 					menuRegisterAddress,
+					// 					payloadByte[0]		/* writeValue			*/
+					// 				);
 					if (status != kWarpStatusOK)
 					{
 						SEGGER_RTT_printf(0, "\r\n\tSPI write failed, error %d.\n\n", status);
@@ -1619,6 +1713,53 @@ main(void)
 				break;
 			}
 
+			case 'w':
+			{
+				ble_writeMenu();
+
+				key = SEGGER_RTT_WaitKey();
+
+				switch (key)
+				{
+					case '0':
+					{
+						SEGGER_RTT_printf(0, "\r\tDisabling PAN1326 \n");
+						GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
+						ble_disable();
+						break;
+					}
+					case '1':
+					{
+						SEGGER_RTT_printf(0, "\r\tEnabling PAN1326... \n");
+						GPIO_DRV_SetPinOutput(kWarpPinPAN1326_nSHUTD);
+						enableLPUARTpins();
+						ble_setup();
+						ble_enable();
+						SEGGER_RTT_printf(0, "\r\t...DONE\n");
+						// btstack_main();
+						break;
+					}
+					case '5':
+					{
+						SEGGER_RTT_printf(0, "\r\t Setting Supply voltage \n");
+						// menuSupplyVoltage = 3000
+						break;
+					}
+					case '6':
+					{
+						SEGGER_RTT_printf(0, "\r\t Setting UART Baud rate \n");
+						// gWarpUartBaudRateKbps = "0115";
+						break;
+					}
+					default:
+					{
+						SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);
+					}
+				}
+
+				break;
+			}
+
 			/*
 			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
 			 */
@@ -1649,8 +1790,6 @@ main(void)
 
 	return 0;
 }
-
-
 
 void
 loopForSensor(	const char *  tagString,
@@ -1804,22 +1943,26 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	ADXL362: VDD 1.6--3.5
 			 */
-			loopForSensor(	"\r\nADXL362:\n\r",		/*	tagString			*/
-					&readSensorRegisterADXL362,	/*	readSensorRegisterFunction	*/
-					NULL,				/*	i2cDeviceState			*/
-					&deviceADXL362State,		/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x2E,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+			
+			//FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nADXL362:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterADXL362,	/*	readSensorRegisterFunction	*/
+			// 		NULL,				/*	i2cDeviceState			*/
+			// 		&deviceADXL362State,		/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x2E,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
+			
 			break;
 		}
 
@@ -1828,22 +1971,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MMA8451Q: VDD 1.95--3.6
 			 */
-			loopForSensor(	"\r\nMMA8451Q:\n\r",		/*	tagString			*/
-					&readSensorRegisterMMA8451Q,	/*	readSensorRegisterFunction	*/
-					&deviceMMA8451QState,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x31,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+			
+			//FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nMMA8451Q:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterMMA8451Q,	/*	readSensorRegisterFunction	*/
+			// 		&deviceMMA8451QState,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x31,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1852,22 +1998,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BME680: VDD 1.7--3.6
 			 */
-			loopForSensor(	"\r\nBME680:\n\r",		/*	tagString			*/
-					&readSensorRegisterBME680,	/*	readSensorRegisterFunction	*/
-					&deviceBME680State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x1D,				/*	minAddress			*/
-					0x75,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			//FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nBME680:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterBME680,	/*	readSensorRegisterFunction	*/
+			// 		&deviceBME680State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x1D,				/*	minAddress			*/
+			// 		0x75,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1876,22 +2025,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055accel: VDD 2.4V -- 3.6V
 			 */
-			loopForSensor(	"\r\nBMX055accel:\n\r",		/*	tagString			*/
-					&readSensorRegisterBMX055accel,	/*	readSensorRegisterFunction	*/
-					&deviceBMX055accelState,	/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x39,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nBMX055accel:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterBMX055accel,	/*	readSensorRegisterFunction	*/
+			// 		&deviceBMX055accelState,	/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x39,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1900,22 +2052,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055gyro: VDD 2.4V -- 3.6V
 			 */
-			loopForSensor(	"\r\nBMX055gyro:\n\r",		/*	tagString			*/
-					&readSensorRegisterBMX055gyro,	/*	readSensorRegisterFunction	*/
-					&deviceBMX055gyroState,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x39,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nBMX055gyro:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterBMX055gyro,	/*	readSensorRegisterFunction	*/
+			// 		&deviceBMX055gyroState,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x39,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1924,22 +2079,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055mag: VDD 2.4V -- 3.6V
 			 */
-			loopForSensor(	"\r\nBMX055mag:\n\r",		/*	tagString			*/
-					&readSensorRegisterBMX055mag,	/*	readSensorRegisterFunction	*/
-					&deviceBMX055magState,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x40,				/*	minAddress			*/
-					0x52,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nBMX055mag:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterBMX055mag,	/*	readSensorRegisterFunction	*/
+			// 		&deviceBMX055magState,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x40,				/*	minAddress			*/
+			// 		0x52,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1948,22 +2106,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MAG3110: VDD 1.95 -- 3.6
 			 */
-			loopForSensor(	"\r\nMAG3110:\n\r",		/*	tagString			*/
-					&readSensorRegisterMAG3110,	/*	readSensorRegisterFunction	*/
-					&deviceMAG3110State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x11,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT			
+
+			// loopForSensor(	"\r\nMAG3110:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterMAG3110,	/*	readSensorRegisterFunction	*/
+			// 		&deviceMAG3110State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x11,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1972,22 +2133,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	L3GD20H: VDD 2.2V -- 3.6V
 			 */
-			loopForSensor(	"\r\nL3GD20H:\n\r",		/*	tagString			*/
-					&readSensorRegisterL3GD20H,	/*	readSensorRegisterFunction	*/
-					&deviceL3GD20HState,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x0F,				/*	minAddress			*/
-					0x39,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT			
+
+			// loopForSensor(	"\r\nL3GD20H:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterL3GD20H,	/*	readSensorRegisterFunction	*/
+			// 		&deviceL3GD20HState,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x0F,				/*	minAddress			*/
+			// 		0x39,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -1996,22 +2160,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	LPS25H: VDD 1.7V -- 3.6V
 			 */
-			loopForSensor(	"\r\nLPS25H:\n\r",		/*	tagString			*/
-					&readSensorRegisterLPS25H,	/*	readSensorRegisterFunction	*/
-					&deviceLPS25HState,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x08,				/*	minAddress			*/
-					0x24,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nLPS25H:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterLPS25H,	/*	readSensorRegisterFunction	*/
+			// 		&deviceLPS25HState,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x08,				/*	minAddress			*/
+			// 		0x24,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2020,22 +2187,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	TCS34725: VDD 2.7V -- 3.3V
 			 */
-			loopForSensor(	"\r\nTCS34725:\n\r",		/*	tagString			*/
-					&readSensorRegisterTCS34725,	/*	readSensorRegisterFunction	*/
-					&deviceTCS34725State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x1D,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nTCS34725:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterTCS34725,	/*	readSensorRegisterFunction	*/
+			// 		&deviceTCS34725State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x1D,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2044,22 +2214,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI4705: VDD 2.7V -- 5.5V
 			 */
-			loopForSensor(	"\r\nSI4705:\n\r",		/*	tagString			*/
-					&readSensorRegisterSI4705,	/*	readSensorRegisterFunction	*/
-					&deviceSI4705State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x09,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nSI4705:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterSI4705,	/*	readSensorRegisterFunction	*/
+			// 		&deviceSI4705State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x09,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2068,22 +2241,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	HDC1000: VDD 3V--5V
 			 */
-			loopForSensor(	"\r\nHDC1000:\n\r",		/*	tagString			*/
-					&readSensorRegisterHDC1000,	/*	readSensorRegisterFunction	*/
-					&deviceHDC1000State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x1F,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+			
+			// loopForSensor(	"\r\nHDC1000:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterHDC1000,	/*	readSensorRegisterFunction	*/
+			// 		&deviceHDC1000State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x1F,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2092,22 +2268,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI7021: VDD 1.9V -- 3.6V
 			 */
-			loopForSensor(	"\r\nSI7021:\n\r",		/*	tagString			*/
-					&readSensorRegisterSI7021,	/*	readSensorRegisterFunction	*/
-					&deviceSI7021State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0x09,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+			
+			// FIXME: disabled to test BT
+
+			// loopForSensor(	"\r\nSI7021:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterSI7021,	/*	readSensorRegisterFunction	*/
+			// 		&deviceSI7021State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0x09,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2116,22 +2295,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	CCS811: VDD 1.8V -- 3.6V
 			 */
-			loopForSensor(	"\r\nCCS811:\n\r",		/*	tagString			*/
-					&readSensorRegisterCCS811,	/*	readSensorRegisterFunction	*/
-					&deviceCCS811State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0xFF,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+			
+			// loopForSensor(	"\r\nCCS811:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterCCS811,	/*	readSensorRegisterFunction	*/
+			// 		&deviceCCS811State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0xFF,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2140,22 +2322,25 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AMG8834: VDD ?V -- ?V
 			 */
-			loopForSensor(	"\r\nAMG8834:\n\r",		/*	tagString			*/
-					&readSensorRegisterAMG8834,	/*	readSensorRegisterFunction	*/
-					&deviceAMG8834State,		/*	i2cDeviceState			*/
-					NULL,				/*	spiDeviceState			*/
-					baseAddress,			/*	baseAddress			*/
-					0x00,				/*	minAddress			*/
-					0xFF,				/*	maxAddress			*/
-					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-					spinDelay,			/*	spinDelay			*/
-					autoIncrement,			/*	autoIncrement			*/
-					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-					referenceByte,			/*	referenceByte			*/
-					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-					chatty				/*	chatty				*/
-					);
+
+			// FIXME: disabled to test BT
+			
+			// loopForSensor(	"\r\nAMG8834:\n\r",		/*	tagString			*/
+			// 		&readSensorRegisterAMG8834,	/*	readSensorRegisterFunction	*/
+			// 		&deviceAMG8834State,		/*	i2cDeviceState			*/
+			// 		NULL,				/*	spiDeviceState			*/
+			// 		baseAddress,			/*	baseAddress			*/
+			// 		0x00,				/*	minAddress			*/
+			// 		0xFF,				/*	maxAddress			*/
+			// 		repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+			// 		chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+			// 		spinDelay,			/*	spinDelay			*/
+			// 		autoIncrement,			/*	autoIncrement			*/
+			// 		sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+			// 		referenceByte,			/*	referenceByte			*/
+			// 		adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+			// 		chatty				/*	chatty				*/
+			// 		);
 			break;
 		}
 
@@ -2265,14 +2450,15 @@ writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength)
 	uint8_t		inBuffer[payloadLength];
 	spi_status_t	status;
 	
-	enableSPIpins();
+	// enableSPIpins(); FIXME: disabled for BT
+
 	status = SPI_DRV_MasterTransferBlocking(0		/* master instance */,
 						NULL		/* spi_master_user_config_t */,
 						payloadBytes,
 						inBuffer,
 						payloadLength	/* transfer size */,
 						1000		/* timeout in microseconds (unlike I2C which is ms) */);					
-	disableSPIpins();
+	// disableSPIpins(); FIXME: disabled for BT
 
 	return (status == kStatus_SPI_Success ? kWarpStatusOK : kWarpStatusCommsError);
 }
@@ -2400,15 +2586,17 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	POR state seems to be powered down.
 	 */
-	status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
-						true				/*	sendCommandByte		*/,
-						0x20				/*	commandByte		*/,
-						true				/*	sendPayloadByte		*/,
-						0x00				/*	payloadByte		*/);
-	if (status != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x%02x.\n", status, deviceL3GD20HState.i2cAddress);
-	}
+
+	// FIXME: disabled to test BT			
+	// status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
+	// 					true				/*	sendCommandByte		*/,
+	// 					0x20				/*	commandByte		*/,
+	// 					true				/*	sendPayloadByte		*/,
+	// 					0x00				/*	payloadByte		*/);
+	// if (status != kWarpStatusOK)
+	// {
+	// 	SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x%02x.\n", status, deviceL3GD20HState.i2cAddress);
+	// }
 
 
 
@@ -2424,15 +2612,18 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	Make it go to sleep state. See page 17, 18, and 19.
 	 */
-	status = writeByteToI2cDeviceRegister(	deviceTCS34725State.i2cAddress	/*	i2cAddress		*/,
-						true				/*	sendCommandByte		*/,
-						0x00				/*	commandByte		*/,
-						true				/*	sendPayloadByte		*/,
-						0x00				/*	payloadByte		*/);
-	if (status != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for TCS34725 @ 0x%02x.\n", status, deviceTCS34725State.i2cAddress);
-	}
+
+	// FIXME: disabled to test BT
+
+	// status = writeByteToI2cDeviceRegister(	deviceTCS34725State.i2cAddress	/*	i2cAddress		*/,
+	// 					true				/*	sendCommandByte		*/,
+	// 					0x00				/*	commandByte		*/,
+	// 					true				/*	sendPayloadByte		*/,
+	// 					0x00				/*	payloadByte		*/);
+	// if (status != kWarpStatusOK)
+	// {
+	// 	SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for TCS34725 @ 0x%02x.\n", status, deviceTCS34725State.i2cAddress);
+	// }
 
 
 
@@ -2443,8 +2634,6 @@ activateAllLowPowerSensorModes(void)
 	 *	For now, simply hold its reset line low.
 	 */
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-
-
 
 #ifdef WARP_FRDMKL03
 	/*
@@ -2461,4 +2650,170 @@ activateAllLowPowerSensorModes(void)
 	 */
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 #endif
+}
+
+
+
+/////////////////////////////////////////
+// BLUETOOTH STUFF
+/////////////////////////////////////////
+
+
+static hci_transport_config_uart_t ble_hciConfig = {
+    HCI_TRANSPORT_CONFIG_UART,
+    115200,
+    1000000,  // main baudrate
+    1,        // flow control
+    NULL,
+};
+
+
+// const btstack_uart_block_t ble_uartBlock = {}
+
+// static void btstack_setup(void){
+
+    
+// }
+
+void
+ble_setup(void){
+
+	// int btStat = 0;
+	SEGGER_RTT_WriteString(0, "\r\t\tBluetooth HW setup starting... \n");
+
+    hal_tick_init(); /*Initialise the 250ms tick*/
+
+
+    /// GET STARTED with BTstack ///
+
+	/* initialise memory pools */
+    btstack_memory_init(); 
+
+    /* Set to use an embeded run loop instance */
+	btstack_run_loop_init(btstack_run_loop_embedded_get_instance());  
+    
+
+    // Initialise HCI
+	/* enable data dump to stdout */
+	hci_dump_open(NULL, HCI_DUMP_STDOUT); //FIXME: route to segger_rtt printf
+
+	hci_transport_t * ble_transportLayer = hci_transport_h4_instance(btstack_uart_block_embedded_instance());
+
+	/* hci_init using UART_H4 and ble_hciConfig */
+    hci_init(ble_transportLayer, &ble_hciConfig); 
+    // hci_init(hci_transport_h4_instance(btstack_uart_block_embedded_instance()), &ble_hciConfig); /* isuing UART_h4 and ble_hciConfig */
+
+    // hci_set_link_key_db(btstack_link_key_db_memory_instance()); TODO:
+    
+	/* set to use cc256x chipsets*/
+	hci_set_chipset(btstack_chipset_cc256x_instance()); 
+    
+    // inform about BTstack state TODO: impliment event callbacks
+    // hci_event_callback_registration.callback = &packet_handler;
+    // hci_add_event_handler(&hci_event_callback_registration);
+
+
+	SEGGER_RTT_WriteString(0, "\r\t\t\t...done \n");
+
+
+	//// btStat = btstack_main();
+
+	//// ... hardware init: watchdog, IOs, timers, etc...
+	//// setup BTstack memory pools
+	//// btstack_memory_init();
+
+	////select embedded run loo
+	//// btstack_run_loop_init(btstack_run_loop_embedded_get_instance());
+	
+	////use logge: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
+	//// hci_dump_open(NULL, HCI_DUMP_STDOUT);
+
+	////init HCI
+	//// hci_transport_t * transport = hci_transport_h4_instance();
+	//// hci_init(transport, NULL);
+
+	//// example logic
+	//// btstack_main(1, [1]);
+
+	//// run 
+	//// btstack_run_loop_execute();
+}
+
+// int btstack_main(int argc, const char * argv[]);
+
+// int btstack_main(int argc, const char * argv[]){
+	
+// }
+
+void ble_enable(void){
+	// WarpStatus status;
+
+	enableLPUARTpins();
+	SEGGER_RTT_WriteString(0, "\r\t\t BT run loop execute... \n");
+
+	btstack_main(0, NULL);
+
+    btstack_run_loop_execute();
+
+	SEGGER_RTT_WriteString(0, "\r\t\t\t...DONE \n");	
+
+	//make discoverable
+	gap_discoverable_control(1);
+
+	//enable BLE advertiesments
+	gap_advertisements_enable(1);
+
+	// TODO: impliment HCI_POWER_OFF/HCI_POWER_ON
+
+}
+
+void ble_disable(void){
+
+	disableLPUARTpins();
+
+	//disable discoverablility
+	gap_discoverable_control(0);
+
+	//disable BLE advertiesments
+	gap_advertisements_enable(0);
+
+}
+
+void
+ble_writeMenu(void) {
+
+	int modADR = 5123; 
+
+	SEGGER_RTT_WriteString(0, "\r\n");
+	SEGGER_RTT_WriteString(0, "\r\t\tBluetooth Status \n");
+	SEGGER_RTT_printf(0, "\r\t Bluetooth module = some mod, \tBluetooth MAC Address=%dmV\n", modADR);
+	SEGGER_RTT_printf(0, "\r\t Bluetooth Powwer= NULL,\tBluetooth Discovery=NULL\n");
+	SEGGER_RTT_printf(0, "\r\t BT status - %d \n", devicePAN1326BState.deviceStatus);
+	SEGGER_RTT_printf(0, "\r\t kWarpPinPAN1326_nSHUTD:%d\n", GPIO_DRV_GetPinDir(kWarpPinPAN1326_nSHUTD));
+
+	SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
+	SEGGER_RTT_WriteString(0, "\r\t- '0' Disable PAN1326C\n");
+	SEGGER_RTT_WriteString(0, "\r\t- '1' Enable PAN1326C\n");
+	SEGGER_RTT_WriteString(0, "\r\t- '2' Toggle Bluetooth discovery \n");
+	SEGGER_RTT_WriteString(0, "\r\t- '3' Scan for BT devices\n");
+	SEGGER_RTT_WriteString(0, "\r\t- '5' Set Supply voltage\n");
+	SEGGER_RTT_WriteString(0, "\r\t- '6' Set UART baud rate\n");
+
+
+
+	// SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
+	// SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+	SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
 }
