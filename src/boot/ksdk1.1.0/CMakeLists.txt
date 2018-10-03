@@ -71,6 +71,8 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
+    # INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
+    # INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -79,8 +81,10 @@ ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/startup/MKL03Z4)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc) 
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ENDIF()
 
 # ADD_EXECUTABLE
@@ -89,19 +93,19 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S"
     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-boot.c"
     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-powermodes.c"
-    "${ProjDirPath}/../../src/devBMX055.c"
-    "${ProjDirPath}/../../src/devADXL362.c"
-    "${ProjDirPath}/../../src/devMMA8451Q.c"
-    "${ProjDirPath}/../../src/devLPS25H.c"
-    "${ProjDirPath}/../../src/devHDC1000.c"
-    "${ProjDirPath}/../../src/devMAG3110.c"
-    "${ProjDirPath}/../../src/devSI7021.c"
-    "${ProjDirPath}/../../src/devL3GD20H.c"
-    "${ProjDirPath}/../../src/devBME680.c"
-    "${ProjDirPath}/../../src/devTCS34725.c"
-    "${ProjDirPath}/../../src/devSI4705.c"
-    "${ProjDirPath}/../../src/devCCS811.c"
-    "${ProjDirPath}/../../src/devAMG8834.c"
+    # "${ProjDirPath}/../../src/devBMX055.c"
+    # "${ProjDirPath}/../../src/devADXL362.c"
+    # "${ProjDirPath}/../../src/devMMA8451Q.c"
+    # "${ProjDirPath}/../../src/devLPS25H.c"
+    # "${ProjDirPath}/../../src/devHDC1000.c"
+    # "${ProjDirPath}/../../src/devMAG3110.c"
+    # "${ProjDirPath}/../../src/devSI7021.c"
+    # "${ProjDirPath}/../../src/devL3GD20H.c"
+    # "${ProjDirPath}/../../src/devBME680.c"
+    # "${ProjDirPath}/../../src/devTCS34725.c"
+    # "${ProjDirPath}/../../src/devSI4705.c"
+    # "${ProjDirPath}/../../src/devCCS811.c"
+    # "${ProjDirPath}/../../src/devAMG8834.c"
     "${ProjDirPath}/../../src/devPAN1326.c"
     "${ProjDirPath}/../../src/devAS7262.c"
     "${ProjDirPath}/../../src/devAS7263.c"
@@ -114,6 +118,30 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/startup.h"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
+    
+    "${ProjDirPath}/../../src/btstack/led_counter.c"
+    "${ProjDirPath}/../../src/btstack/hal_led.c" 				  
+    
+    "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"     
+    "${ProjDirPath}/../../src/btstack/btstack_memory.c"          
+    "${ProjDirPath}/../../src/btstack/btstack_memory_pool.c"       
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop.c"		    
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop_embedded.c" 
+    
+    "${ProjDirPath}/../../src/btstack/hal_cpu.c"                 
+    "${ProjDirPath}/../../src/btstack/hal_tick.c"	              
+    "${ProjDirPath}/../../src/btstack/hci_dump.c"		          
+    "${ProjDirPath}/../../src/btstack/btstack_util.c"			         
+	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         
+	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"         
+    
+    "${ProjDirPath}/../../src/btstack/btstack_uart_block_embedded.c"    
+    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"            		 
+    "${ProjDirPath}/../../src/btstack/hci.c"			          		 
+    "${ProjDirPath}/../../src/btstack/ad_parser.c"			          		 
+    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		          		 
+    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"               
+
 )
 SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
 
