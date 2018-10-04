@@ -2,8 +2,8 @@
 
 // TODO: Impliment these functions
  
-#import "hal_cpu.h"
-#import "SEGGER_RTT.h"
+#include "hal_cpu.h"
+#include "SEGGER_RTT.h"
 
 void hal_cpu_disable_irqs(void){
 	SEGGER_RTT_WriteString(0, "\r BLE: CPU Disable IRQs called\n");

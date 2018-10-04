@@ -43,6 +43,7 @@
 	cp ../../src/boot/ksdk1.1.0/btstack/hal_tick.c     				work/demos/Warp/src/btstack/
 	cp ../../src/boot/ksdk1.1.0/btstack/hal_cpu.*     				work/demos/Warp/src/btstack/
 	cp ../../src/boot/ksdk1.1.0/btstack/hal_uart_dma.*     			work/demos/Warp/src/btstack/
+	cp ../../src/boot/ksdk1.1.0/btstack/btstack_main.h     			work/demos/Warp/src/btstack/
 
 	## chipset
 	cp ../../../btstack/chipset/cc256x/btstack_chipset_cc256x.h 	work/demos/Warp/src/btstack/
