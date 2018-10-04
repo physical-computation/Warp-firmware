@@ -52,27 +52,35 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-#include "devBMX055.h"
-#include "devADXL362.h"
-#include "devMMA8451Q.h"
-#include "devLPS25H.h"
-#include "devHDC1000.h"
-#include "devMAG3110.h"
-#include "devSI7021.h"
-#include "devL3GD20H.h"
-#include "devBME680.h"
-#include "devTCS34725.h"
-#include "devSI4705.h"
-#include "devCCS811.h"
-#include "devAMG8834.h"
+
+
+// #include "devBMX055.h"
+// #include "devADXL362.h"
+// #include "devMMA8451Q.h"
+// #include "devLPS25H.h"
+// #include "devHDC1000.h"
+// #include "devMAG3110.h"
+// #include "devSI7021.h"
+// #include "devL3GD20H.h"
+// #include "devBME680.h"
+// #include "devTCS34725.h"
+// #include "devSI4705.h"
+// #include "devCCS811.h"
+// #include "devAMG8834.h"
 #include "devPAN1326.h"
 #include "devAS7262.h"
 #include "devAS7263.h"
 
 
-#define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
-#define					kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
-#define					kWarpConstantStringErrorSanity		"\rSanity Check Failed!"
+///////////////////////
+//BTstack includes
+///////////////////////
+#include "btstack_main.h"
+
+
+#define		kWarpConstantStringI2cFailure			"\rI2C failed, reg 0x%02x, code %d\n"
+#define		kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
+#define		kWarpConstantStringErrorSanity			"\rSanity Check Failed!"
 
 
 volatile WarpSPIDeviceState		deviceADXL362State;
@@ -127,13 +135,13 @@ void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice
 								uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
-int					char2int(int character);
-void					enableSssupply(uint16_t voltageMillivolts);
-void					disableSssupply(void);
-void					activateAllLowPowerSensorModes(void);
-void					powerupAllSensors(void);
-uint8_t					readHexByte(void);
-int					read4digits(void);
+int			char2int(int character);
+void		enableSssupply(uint16_t voltageMillivolts);
+void		disableSssupply(void);
+void		activateAllLowPowerSensorModes(void);
+void		powerupAllSensors(void);
+uint8_t		readHexByte(void);
+int			read4digits(void);
 
 
 /*
@@ -1642,6 +1650,58 @@ main(void)
 				break;
 			}
 
+			case 'w':
+			{
+				#ifdef BLE_ENABLED
+					
+					ble_writeMenu();
+
+					key = SEGGER_RTT_WaitKey();
+
+					switch (key)
+					{
+						case '0':
+						{
+							SEGGER_RTT_printf(0, "\r\tDisabling PAN1326 \n");
+							GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
+							ble_disable();
+							break;
+						}
+						case '1':
+						{
+							SEGGER_RTT_printf(0, "\r\tEnabling PAN1326... \n");
+							GPIO_DRV_SetPinOutput(kWarpPinPAN1326_nSHUTD);
+							enableLPUARTpins();
+							ble_setup();
+							ble_enable();
+							SEGGER_RTT_printf(0, "\r\t...DONE\n");
+							// btstack_main();
+							break;
+						}
+						case '5':
+						{
+							SEGGER_RTT_printf(0, "\r\t Setting Supply voltage \n");
+							// menuSupplyVoltage = 3000
+							break;
+						}
+						case '6':
+						{
+							SEGGER_RTT_printf(0, "\r\t Setting UART Baud rate \n");
+							// gWarpUartBaudRateKbps = "0115";
+							break;
+						}
+						default:
+						{
+							SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);
+						}
+					}
+				#else 	
+					SEGGER_RTT_printf(0, "\r\tBluetooth Not Enabled! :( Please include \"btstack_main.h\" in the \"warp-boot.c\" file before compiling \n");
+				#endif
+
+				break;
+			}
+
 			/*
 			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
 			 */
@@ -2530,3 +2590,154 @@ activateAllLowPowerSensorModes(void)
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 #endif
 }
+
+
+#ifdef BLE_ENABLED
+
+	static hci_transport_config_uart_t ble_hciConfig = {
+		HCI_TRANSPORT_CONFIG_UART,
+		115200,
+		1000000,  // main baudrate
+		1,        // flow control
+		NULL,
+	};
+
+	void ble_setup(void){
+
+		// int btStat = 0;
+		SEGGER_RTT_WriteString(0, "\r\t\tBluetooth HW setup starting... \n");
+
+		hal_tick_init(); /*Initialise the 250ms tick*/
+
+
+		/// GET STARTED with BTstack ///
+
+		/* initialise memory pools */
+		btstack_memory_init(); 
+
+		/* Set to use an embeded run loop instance */
+		btstack_run_loop_init(btstack_run_loop_embedded_get_instance());  
+		
+
+		// Initialise HCI
+		/* enable data dump to stdout */
+		hci_dump_open(NULL, HCI_DUMP_STDOUT); //FIXME: route to segger_rtt printf
+
+		hci_transport_t * ble_transportLayer = hci_transport_h4_instance(btstack_uart_block_embedded_instance());
+
+		/* hci_init using UART_H4 and ble_hciConfig */
+		hci_init(ble_transportLayer, &ble_hciConfig); 
+		// hci_init(hci_transport_h4_instance(btstack_uart_block_embedded_instance()), &ble_hciConfig); /* isuing UART_h4 and ble_hciConfig */
+
+		// hci_set_link_key_db(btstack_link_key_db_memory_instance()); TODO:
+		
+		/* set to use cc256x chipsets*/
+		hci_set_chipset(btstack_chipset_cc256x_instance()); 
+		
+		// inform about BTstack state TODO: impliment event callbacks
+		// hci_event_callback_registration.callback = &packet_handler;
+		// hci_add_event_handler(&hci_event_callback_registration);
+
+
+		SEGGER_RTT_WriteString(0, "\r\t\t\t...done \n");
+
+
+		//// btStat = btstack_main();
+
+		//// ... hardware init: watchdog, IOs, timers, etc...
+		//// setup BTstack memory pools
+		//// btstack_memory_init();
+
+		////select embedded run loo
+		//// btstack_run_loop_init(btstack_run_loop_embedded_get_instance());
+		
+		////use logge: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
+		//// hci_dump_open(NULL, HCI_DUMP_STDOUT);
+
+		////init HCI
+		//// hci_transport_t * transport = hci_transport_h4_instance();
+		//// hci_init(transport, NULL);
+
+		//// example logic
+		//// btstack_main(1, [1]);
+
+		//// run 
+		//// btstack_run_loop_execute();
+	}
+
+	// int btstack_main(int argc, const char * argv[]);
+	// int btstack_main(int argc, const char * argv[]){
+	// }
+
+	void ble_enable(void){
+		// WarpStatus status;
+
+		enableLPUARTpins();
+		SEGGER_RTT_WriteString(0, "\r\t\t BT run loop execute... \n");
+
+		btstack_main(0, NULL);
+
+		btstack_run_loop_execute();
+
+		SEGGER_RTT_WriteString(0, "\r\t\t\t...DONE \n");	
+
+		//make discoverable
+		gap_discoverable_control(1);
+
+		//enable BLE advertiesments
+		gap_advertisements_enable(1);
+
+		// TODO: impliment HCI_POWER_OFF/HCI_POWER_ON
+
+	}
+
+	void ble_disable(void){
+
+		disableLPUARTpins();
+
+		//disable discoverablility
+		gap_discoverable_control(0);
+
+		//disable BLE advertiesments
+		gap_advertisements_enable(0);
+
+	}
+
+	void
+	ble_writeMenu(void) {
+
+		int modADR = 5123; 
+
+		SEGGER_RTT_WriteString(0, "\r\n");
+		SEGGER_RTT_WriteString(0, "\r\t\tBluetooth Status \n");
+		SEGGER_RTT_printf(0, "\r\t Bluetooth module = some mod, \tBluetooth MAC Address=%dmV\n", modADR);
+		SEGGER_RTT_printf(0, "\r\t Bluetooth Powwer= NULL,\tBluetooth Discovery=NULL\n");
+		SEGGER_RTT_printf(0, "\r\t BT status - %d \n", devicePAN1326BState.deviceStatus);
+		SEGGER_RTT_printf(0, "\r\t kWarpPinPAN1326_nSHUTD:%d\n", GPIO_DRV_GetPinDir(kWarpPinPAN1326_nSHUTD));
+
+		SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
+		SEGGER_RTT_WriteString(0, "\r\t- '0' Disable PAN1326C\n");
+		SEGGER_RTT_WriteString(0, "\r\t- '1' Enable PAN1326C\n");
+		SEGGER_RTT_WriteString(0, "\r\t- '2' Toggle Bluetooth discovery \n");
+		SEGGER_RTT_WriteString(0, "\r\t- '3' Scan for BT devices\n");
+		SEGGER_RTT_WriteString(0, "\r\t- '5' Set Supply voltage\n");
+		SEGGER_RTT_WriteString(0, "\r\t- '6' Set UART baud rate\n");
+
+		// SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
+		// SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+		SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
+	}
+
+#endif

@@ -21,7 +21,7 @@
 // #include "fsl_hwtimer.h"
 
 // #include "gpio_pins.h"
-// #include "SEGGER_RTT.h"
+#include "SEGGER_RTT.h"
 // #include "warp.h"
 #include "fsl_lptmr_driver.h"
 

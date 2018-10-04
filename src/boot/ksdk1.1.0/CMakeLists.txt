@@ -130,19 +130,23 @@ ADD_EXECUTABLE(Warp
     
     "${ProjDirPath}/../../src/btstack/hal_cpu.c"                 
     "${ProjDirPath}/../../src/btstack/hal_tick.c"	              
-    "${ProjDirPath}/../../src/btstack/hci_dump.c"		          
-    "${ProjDirPath}/../../src/btstack/btstack_util.c"			         
-	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         
-	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"         
+    "${ProjDirPath}/../../src/btstack/hci_dump.c"		         #~
+    "${ProjDirPath}/../../src/btstack/btstack_util.c"			#~         
+	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c" #~5kB          
+	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"        #~5kB  
     
     "${ProjDirPath}/../../src/btstack/btstack_uart_block_embedded.c"    
-    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"            		 
-    "${ProjDirPath}/../../src/btstack/hci.c"			          		 
-    "${ProjDirPath}/../../src/btstack/ad_parser.c"			          		 
-    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		          		 
-    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"               
+    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"         #0.5kB   		 
+    "${ProjDirPath}/../../src/btstack/hci.c"			    #~12kB      		 
+    "${ProjDirPath}/../../src/btstack/ad_parser.c"			    #~      		 
+    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		#~1kB          		 
+    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"  #0.5kB             
 
 )
+#contribution to .text overflow amount ^
+
+
+
 SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
 
 TARGET_LINK_LIBRARIES(Warp -Wl,--start-group)
@@ -162,7 +166,7 @@ TARGET_LINK_LIBRARIES(Warp -Wl,--end-group)
 
 # MAP FILE
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}  -Xlinker -Map=debug/Warp.map")
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}  -Xlinker -Map=release/Warp.map")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Xlinker --cref -Xlinker -Map=release/Warp.map ")
 
 # BIN AND HEX
 ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Oihex ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.hex)
