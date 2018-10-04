@@ -66,6 +66,8 @@
 #include "devCCS811.h"
 #include "devAMG8834.h"
 #include "devPAN1326.h"
+#include "devAS7262.h"
+#include "devAS7263.h"
 
 
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
@@ -90,6 +92,8 @@ volatile WarpI2CDeviceState		deviceCCS811State;
 volatile WarpI2CDeviceState		deviceAMG8834State;
 volatile WarpUARTDeviceState		devicePAN1326BState;
 volatile WarpUARTDeviceState		devicePAN1323ETUState;
+volatile WarpI2CDeviceState		deviceAS7262State;
+volatile WarpI2CDeviceState		deviceAS7263State;
 
 /*
  *	TODO: move this and possibly others into a global structure
@@ -1050,6 +1054,8 @@ main(void)
 	initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State	);
 	initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State	);
 	initAMG8834(	0x3A	/* i2cAddress */,	&deviceAMG8834State	);
+	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State	);
+	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
 
 
 
@@ -1168,6 +1174,8 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
 				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
 
 				key = SEGGER_RTT_WaitKey();
@@ -1282,6 +1290,20 @@ main(void)
 					case 'h':
 					{
 						menuTargetSensor = kWarpSensorAMG8834;
+
+						break;
+					}
+
+					case 'j':
+					{
+						menuTargetSensor = kWarpSensorAS7262;
+
+						break;
+					}
+
+					case 'k':
+					{
+						menuTargetSensor = kWarpSensorAS7263;
 
 						break;
 					}
@@ -2147,6 +2169,54 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					baseAddress,			/*	baseAddress			*/
 					0x00,				/*	minAddress			*/
 					0xFF,				/*	maxAddress			*/
+					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+					spinDelay,			/*	spinDelay			*/
+					autoIncrement,			/*	autoIncrement			*/
+					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+					referenceByte,			/*	referenceByte			*/
+					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+					chatty				/*	chatty				*/
+					);
+			break;
+		}
+
+		case kWarpSensorAS7262:
+		{
+			/*
+			 *	AS7262: VDD 2.7--3.6
+			 */
+			loopForSensor(	"\r\nAS7262:\n\r",		/*	tagString			*/
+					&readSensorRegisterAS7262,	/*	readSensorRegisterFunction	*/
+					&deviceAS7262State,		/*	i2cDeviceState			*/
+					NULL,				/*	spiDeviceState			*/
+					baseAddress,			/*	baseAddress			*/
+					0x00,				/*	minAddress			*/
+					0x2B,				/*	maxAddress			*/
+					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+					spinDelay,			/*	spinDelay			*/
+					autoIncrement,			/*	autoIncrement			*/
+					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+					referenceByte,			/*	referenceByte			*/
+					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+					chatty				/*	chatty				*/
+					);
+			break;
+		}
+
+		case kWarpSensorAS7263:
+		{
+			/*
+			 *	AS7263: VDD 2.7--3.6
+			 */
+			loopForSensor(	"\r\nAS7263:\n\r",		/*	tagString			*/
+					&readSensorRegisterAS7263,	/*	readSensorRegisterFunction	*/
+					&deviceAS7263State,		/*	i2cDeviceState			*/
+					NULL,				/*	spiDeviceState			*/
+					baseAddress,			/*	baseAddress			*/
+					0x00,				/*	minAddress			*/
+					0x2B,				/*	maxAddress			*/
 					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
 					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
 					spinDelay,			/*	spinDelay			*/
