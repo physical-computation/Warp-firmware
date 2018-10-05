@@ -83,31 +83,31 @@
 #define		kWarpConstantStringErrorSanity			"\rSanity Check Failed!"
 
 
-volatile WarpSPIDeviceState		deviceADXL362State;
-volatile WarpI2CDeviceState		deviceBMX055accelState;
-volatile WarpI2CDeviceState		deviceBMX055gyroState;
-volatile WarpI2CDeviceState		deviceBMX055magState;
-volatile WarpI2CDeviceState		deviceMMA8451QState;
-volatile WarpI2CDeviceState		deviceLPS25HState;
-volatile WarpI2CDeviceState		deviceHDC1000State;
-volatile WarpI2CDeviceState		deviceMAG3110State;
-volatile WarpI2CDeviceState		deviceSI7021State;
-volatile WarpI2CDeviceState		deviceL3GD20HState;
-volatile WarpI2CDeviceState		deviceBME680State;
-volatile WarpI2CDeviceState		deviceTCS34725State;
-volatile WarpI2CDeviceState		deviceSI4705State;
-volatile WarpI2CDeviceState		deviceCCS811State;
-volatile WarpI2CDeviceState		deviceAMG8834State;
+volatile WarpSPIDeviceState			deviceADXL362State;
+volatile WarpI2CDeviceState			deviceBMX055accelState;
+volatile WarpI2CDeviceState			deviceBMX055gyroState;
+volatile WarpI2CDeviceState			deviceBMX055magState;
+volatile WarpI2CDeviceState			deviceMMA8451QState;
+volatile WarpI2CDeviceState			deviceLPS25HState;
+volatile WarpI2CDeviceState			deviceHDC1000State;
+volatile WarpI2CDeviceState			deviceMAG3110State;
+volatile WarpI2CDeviceState			deviceSI7021State;
+volatile WarpI2CDeviceState			deviceL3GD20HState;
+volatile WarpI2CDeviceState			deviceBME680State;
+volatile WarpI2CDeviceState			deviceTCS34725State;
+volatile WarpI2CDeviceState			deviceSI4705State;
+volatile WarpI2CDeviceState			deviceCCS811State;
+volatile WarpI2CDeviceState			deviceAMG8834State;
 volatile WarpUARTDeviceState		devicePAN1326BState;
 volatile WarpUARTDeviceState		devicePAN1323ETUState;
-volatile WarpI2CDeviceState		deviceAS7262State;
-volatile WarpI2CDeviceState		deviceAS7263State;
+volatile WarpI2CDeviceState			deviceAS7262State;
+volatile WarpI2CDeviceState			deviceAS7263State;
 
 /*
  *	TODO: move this and possibly others into a global structure
  */
-volatile i2c_master_state_t		i2cMasterState;
-volatile spi_master_state_t		spiMasterState;
+volatile i2c_master_state_t			i2cMasterState;
+volatile spi_master_state_t			spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
 
 
