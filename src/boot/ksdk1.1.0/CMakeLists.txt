@@ -71,8 +71,8 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
-    # INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
-    # INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -93,19 +93,19 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S"
     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-boot.c"
     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-powermodes.c"
-    # "${ProjDirPath}/../../src/devBMX055.c"
-    # "${ProjDirPath}/../../src/devADXL362.c"
-    # "${ProjDirPath}/../../src/devMMA8451Q.c"
-    # "${ProjDirPath}/../../src/devLPS25H.c"
-    # "${ProjDirPath}/../../src/devHDC1000.c"
-    # "${ProjDirPath}/../../src/devMAG3110.c"
-    # "${ProjDirPath}/../../src/devSI7021.c"
-    # "${ProjDirPath}/../../src/devL3GD20H.c"
-    # "${ProjDirPath}/../../src/devBME680.c"
-    # "${ProjDirPath}/../../src/devTCS34725.c"
-    # "${ProjDirPath}/../../src/devSI4705.c"
-    # "${ProjDirPath}/../../src/devCCS811.c"
-    # "${ProjDirPath}/../../src/devAMG8834.c"
+    "${ProjDirPath}/../../src/devBMX055.c"
+    "${ProjDirPath}/../../src/devADXL362.c"
+    "${ProjDirPath}/../../src/devMMA8451Q.c"
+    "${ProjDirPath}/../../src/devLPS25H.c"
+    "${ProjDirPath}/../../src/devHDC1000.c"
+    "${ProjDirPath}/../../src/devMAG3110.c"
+    "${ProjDirPath}/../../src/devSI7021.c"
+    "${ProjDirPath}/../../src/devL3GD20H.c"
+    "${ProjDirPath}/../../src/devBME680.c"
+    "${ProjDirPath}/../../src/devTCS34725.c"
+    "${ProjDirPath}/../../src/devSI4705.c"
+    "${ProjDirPath}/../../src/devCCS811.c"
+    "${ProjDirPath}/../../src/devAMG8834.c"
     "${ProjDirPath}/../../src/devPAN1326.c"
     "${ProjDirPath}/../../src/devAS7262.c"
     "${ProjDirPath}/../../src/devAS7263.c"
@@ -119,28 +119,28 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
     
-    "${ProjDirPath}/../../src/btstack/led_counter.c"
-    "${ProjDirPath}/../../src/btstack/hal_led.c" 				  
+    "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
+    "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
     
-    "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"     
-    "${ProjDirPath}/../../src/btstack/btstack_memory.c"          
-    "${ProjDirPath}/../../src/btstack/btstack_memory_pool.c"       
-    "${ProjDirPath}/../../src/btstack/btstack_run_loop.c"		    
-    "${ProjDirPath}/../../src/btstack/btstack_run_loop_embedded.c" 
+    "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"            #~0.3kb   
+    "${ProjDirPath}/../../src/btstack/btstack_memory.c"                 #~0.5kb  
+    "${ProjDirPath}/../../src/btstack/btstack_memory_pool.c"            #~0.2kb
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop.c"               #~0.4kb
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop_embedded.c"      #~0.8kb
     
-    "${ProjDirPath}/../../src/btstack/hal_cpu.c"                 
-    "${ProjDirPath}/../../src/btstack/hal_tick.c"	              
-    "${ProjDirPath}/../../src/btstack/hci_dump.c"		         #~
-    "${ProjDirPath}/../../src/btstack/btstack_util.c"			#~         
-	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c" #~5kB          
-	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"        #~5kB  
+    "${ProjDirPath}/../../src/btstack/hal_cpu.c"                        #~0.3kb 
+    "${ProjDirPath}/../../src/btstack/hal_tick.c"	                    #~0      
+    "${ProjDirPath}/../../src/btstack/hci_dump.c"		                #~0
+    "${ProjDirPath}/../../src/btstack/btstack_util.c"			        #~0        
+	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         #~5kB          
+	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"                    #~5kB  
     
-    "${ProjDirPath}/../../src/btstack/btstack_uart_block_embedded.c"    
-    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"         #0.5kB   		 
-    "${ProjDirPath}/../../src/btstack/hci.c"			    #~12kB      		 
-    "${ProjDirPath}/../../src/btstack/ad_parser.c"			    #~      		 
-    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		#~1kB          		 
-    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"  #0.5kB             
+    "${ProjDirPath}/../../src/btstack/btstack_uart_block_embedded.c"    #~1kb
+    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"                   #~0.5kB   		 
+    "${ProjDirPath}/../../src/btstack/hci.c"			                #~12kB      		 
+    "${ProjDirPath}/../../src/btstack/ad_parser.c"			            #~0      		 
+    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		                #~1kB          		 
+    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"               #~0.5kB             
 
 )
 #contribution to .text overflow amount ^

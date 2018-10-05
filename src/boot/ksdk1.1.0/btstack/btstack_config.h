@@ -43,7 +43,7 @@
 #define SEGGER_RTT_LOG
 
 #ifdef SEGGER_RTT_LOG
-    #include "SEGGER_RTT.h"
+    #include "../SEGGER_RTT.h"
 #endif
 
 #endif

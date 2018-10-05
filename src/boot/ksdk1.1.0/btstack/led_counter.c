@@ -53,9 +53,11 @@
 #include "btstack_run_loop.h"
 #include "btstack_defines.h"
 #include "hal_led.h"
+#include "btstack_config.h"
+
 // #include "led_counter.h"
 
-#include "SEGGER_RTT.h"
+// #include "SEGGER_RTT.h"
 
 
 #define HEARTBEAT_PERIOD_MS 1000
