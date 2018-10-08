@@ -75,7 +75,7 @@
 ///////////////////////
 //BTstack includes
 ///////////////////////
-#include "btstack_main.h"
+// #include "btstack_main.h"
 
 
 #define		kWarpConstantStringI2cFailure			"\rI2C failed, reg 0x%02x, code %d\n"
