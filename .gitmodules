@@ -1,4 +1,4 @@
 [submodule "src/btstack"]
 	path = src/btstack
-	url = https://github.com/chaturatbs/btstack
+	url = https://github.com/chaturatbs/btstack.git
 	branch = master
