@@ -104,32 +104,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 	cmdBuf_write[1] = deviceRegister;
 
-/*
-	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
-	 */
- 	// returnValue = LEDonAS7262();
-
-	// returnValue = I2C_DRV_MasterSendDataBlocking(
-	// 						0 /* I2C peripheral instance */,
-	// 						&slave /* The pointer to the I2C device information structure */,
-	// 						cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
-	// 						2 /* The length in bytes of the commands to be transferred */,
-	// 						NULL /* The pointer to the data to be transferred */,
-	// 						0 /* The length in bytes of the data to be transferred */,
-	// 						500 /* timeout in milliseconds */);
-
-	// /*
-	//  *	This turns on the LED before reading the data
-	//  */
-	// returnValue = I2C_DRV_MasterSendDataBlocking(
-	// 						0 /* I2C peripheral instance */,
-	// 						&slave /* The pointer to the I2C device information structure */,
-	// 						cmdBuf_LEDON /* The pointer to the commands to be transferred */,
-	// 						2 /* The length in bytes of the commands to be transferred */,
-	// 						NULL /* The pointer to the data to be transferred */,
-	// 						0 /* The length in bytes of the data to be transferred */,
-	// 						500 /* timeout in milliseconds */);
-
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
 	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
@@ -181,28 +155,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
- 	// returnValue = LEDoffAS7262();
-
-	// returnValue = I2C_DRV_MasterSendDataBlocking(
-	// 				0 /* I2C peripheral instance */,
-	// 				&slave /* The pointer to the I2C device information structure */,
-	// 				cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
-	// 				2 /* The length in bytes of the commands to be transferred */,
-	// 				NULL /* The pointer to the data to be transferred */,
-	// 				0 /* The length in bytes of the data to be transferred */,
-	// 				500 /* timeout in milliseconds */);
-
-	// /*
-	//  *	This turns off the LED after finish reading the data
-	// */
-	// returnValue = I2C_DRV_MasterSendDataBlocking(
-	// 						0 /* I2C peripheral instance */,
-	// 						&slave /* The pointer to the I2C device information structure */,
-	// 						cmdBuf_LEDOFF /* The pointer to the commands to be transferred */,
-	// 						2 /* The length in bytes of the commands to be transferred */,
-	// 						NULL /* The pointer to the data to be transferred */,
-	// 						0 /* The length in bytes of the data to be transferred */,
-	// 						500 /* timeout in milliseconds */);
 
 	if (returnValue == kStatus_I2C_Success)
 	{
