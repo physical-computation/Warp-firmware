@@ -44,3 +44,6 @@ WarpStatus	readSensorSignalAS7262(WarpTypeMask signal,
 					WarpSignalAccuracy accuracy,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
+
+WarpStatus LEDonAS7262(void);
+WarpStatus LEDoffAS7262(void);
