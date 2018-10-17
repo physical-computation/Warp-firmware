@@ -1,5 +1,0 @@
-exec EnableRemarks
-unlock kinetis
-loadfile D:/Chatu_Docs_MAIN/Cambridge/PhD/2year/warp/Warp-firmware/build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.srec
-r
-go
