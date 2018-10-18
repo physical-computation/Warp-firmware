@@ -1,3 +1,5 @@
+#define	min(x,y)	((x) < (y) ? (x) : (y))
+
 typedef enum
 {
 	kWarpTypeMaskTemperature	= (1 <<  0),
@@ -36,6 +38,8 @@ typedef enum
 	kWarpTypeMaskLambda810V		= (1 << 26),
 	kWarpTypeMaskLambda860W		= (1 << 27),
 	
+	kWarpTypeMaskTotalVOC		= (1 << 28),
+	kWarpTypeMaskEquivalentCO2	= (1 << 29),
 
 
 	/*
@@ -130,7 +134,7 @@ typedef enum
 {
 	kWarpSensorADXL362,
 	kWarpSensorMMA8451Q,
-	kWarpSensorBMP180,
+	kWarpSensorBME680,
 	kWarpSensorBMX055accel,
 	kWarpSensorBMX055gyro,
 	kWarpSensorBMX055mag,
@@ -138,16 +142,22 @@ typedef enum
 	kWarpSensorMAG3110,
 	kWarpSensorL3GD20H,
 	kWarpSensorLPS25H,
-	kWarpSensorTCS3772,
+	kWarpSensorTCS34725,
 	kWarpSensorSI4705,
 	kWarpSensorHDC1000,
 	kWarpSensorSI7021,
+	kWarpSensorAMG8834,
+	kWarpSensorCCS811,
 	kWarpSensorPAN1326,
 	kWarpSensorAS7262,
 	kWarpSensorAS7263,
 	kWarpSensorSCD30,
 } WarpSensorDevice;
 
+typedef enum
+{
+	kWarpModeDisableAdcOnSleep	= (1 << 0),
+} WarpModeMask;
 
 
 typedef struct
@@ -194,3 +204,7 @@ typedef struct
 
 
 WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
+void		enableI2Cpins(uint16_t pullupValue);
+void		disableI2Cpins(void);
+void		enableSPIpins(void);
+void		disableSPIpins(void);
