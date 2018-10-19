@@ -5,6 +5,7 @@ import numpy as np
 import serial
 import random
 
+import multiprocessing
 
 
 def writeData(dataList):
@@ -22,35 +23,36 @@ def writeData(dataList):
     uiCon.write("\n".encode('ascii'))
 
 
-
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 19021        # Port to listen on (non-privileged ports are > 1023)
 
 endTag = "Enter selection> "
-warpReady = False
+warpAtMenu = False
 progRead = False
-readCounts = 40
-i = 0
+sampleLimit = 10
+readCount = 0
 autoReadEnabled = True
+
+exitProgMode = False
+
 dataReady = False
 
 dataBuffer = [0,0,0,0,0,0]
 highNibble = 0
 lowNibble = 0
-
+lastSend = ''
 
 uiCon = serial.Serial('COM7', 19200)
 # uiCon.open()
 tempStringBuffer = ""
 recvdData = ""
 
+
+
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     constatus = s.connect((HOST, PORT))
-    # s.listen()
-    # conn, addr = s.accept()
-    # with conn:
-    # print('Connected by', addr)
-    # print(constatus)
+
     while True:
         data = s.recv(1024)
         if not data:
@@ -59,19 +61,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         else :
             # dataReady = True
             # print(data[len(data)- len(endTag):])
-            print(data.decode('ascii'))
+            print("# - ", data.decode('ascii'))
+
+            if (data.decode('ascii') == "progExit"):
+                exitProgMode = False
 
             if (data[len(data)- len(endTag):].decode('ascii') == endTag):
                 print("End Matched!")
-                warpReady = True
-            
-            if(warpReady and autoReadEnabled):
+                warpAtMenu = True
+                # exitProgMode = False
+
+            if(warpAtMenu and autoReadEnabled):
+                print("Entering Prog Mode!")
                 s.send('#9'.encode('ascii'))
+                lastSend = '#9'
                 progRead = True
-                # warpReady = False
+                warpAtMenu = False
             
-            if (progRead):
-                # print("in prog read")
+            if (progRead and (readCount < sampleLimit)):
 
                 if (data == b'\r\nAS7262:') or (data == b'\r\nAS7262:,'):
                     if (data == b'\r\nAS7262:'):
@@ -88,6 +95,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         recvdData = s.recv(1)
 
                     print("data = ", tempStringBuffer, " size = ", len(tempStringBuffer))
+
                     if len(tempStringBuffer) == 35:
                         tempDataList = tempStringBuffer.split(',')
                         
@@ -98,61 +106,37 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                                 dataBuffer[int(x/2)] = int(tempDataList[x]+tempDataList[x+1],16)
                             except Exception as e:
                                 print ("Error", e)
-                                # pass
-                        
-                        # print(dataBuffer)
+                    
+                    s.send('~'.encode('ascii'))
+                    lastSend = '~'
                     
                     tempStringBuffer = ""
 
-                    # highNibble = 0
-                    # lowNibble = 0
-                    # for x in range(0,6):
-                    #     highNibble = s.recv(1024)
-                    #     if highNibble:
-                    #         highNibble = highNibble[:len(highNibble)-1]
-                    #         lowNibble = s.recv(1024)
-                    #         if lowNibble:
-                    #             lowNibble = lowNibble[:len(lowNibble)-1]
-                    #             dataReady = True 
-                    #         else:
-                    #             lowNibble = "-"
-                    #     else:
-                    #         highNibble = "-"
-
-                    #     # print("data from ", x, "is :", highNibble+lowNibble)
-                    #     try:
-                    #         dataBuffer[x] = int(highNibble.decode('ascii')+lowNibble.decode('ascii'),16)
-                    #     except Exception as e:
-                    #         print ("Error", e)
-                    #         # pass
-
-                    # print(dataBuffer)
-                    # try:
-                    #     writeData(dataBuffer)
-                    # except Exception as e:
-                    #     print ("Error", e)
-
                 if dataReady:
-                    print("Sample : ", i, ", sending data = ", dataBuffer)
+                    readCount += 1
+                    print("Sample : ", readCount, ", sending data = ", dataBuffer)
                     try:
                         writeData(dataBuffer)
                     except Exception as e:
                         print ("Error", e)
                     dataReady = False
-                    i += 1
 
-                # if (data[0] == "!" and data[10] == "\n"):
-                # print("Value in reg {reg} is {value}".format(reg=data[1:4], value=data[6:9]))
+            # print("readcount  = ", readCount)
 
-                if (i>=readCounts):
-                    s.send('x'.encode('ascii'))
-                    autoReadEnabled = False
-                    i = 0
-                    # # progRead = False
 
-            # print("#", data)
-            
-                # dataReady=False
+            if (readCount >= sampleLimit):
+                print("RC LIMIT")
+                exitProgMode = True
+                autoReadEnabled = False
+                progRead = False
+                warpAtMenu = False
+                readCount = 0
+
+            if exitProgMode and not warpAtMenu and lastSend != '&':
+                print("exit mode")
+                lastSend = '&'
+                s.send('&'.encode('ascii'))
+
 
             
 

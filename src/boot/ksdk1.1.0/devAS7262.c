@@ -92,6 +92,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 	if (deviceRegister > 0x2B)
 	{
+		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Bad Command");
 		return kWarpStatusBadDeviceCommand;
 	}
 
@@ -108,6 +109,8 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
 	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
 	 */
+	
+	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request read");
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -127,6 +130,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	 *	Read transaction which reads from the READ register 0x02.
 	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
 	 */
+	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set register to read");
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -142,6 +146,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 
 
+	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Recv data");
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -162,6 +167,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	}
 	else
 	{
+		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : comm fail");
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
