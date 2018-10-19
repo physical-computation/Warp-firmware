@@ -1800,6 +1800,7 @@ main(void)
 
 					// by default fetch as7262
 					do {
+						key = "";
 						felix_pollSensor("\r\nAS7262:",		/*	tagString			*/
 								&readSensorRegisterAS7262,	/*	readSensorRegisterFunction	*/
 								&deviceAS7262State,		/*	i2cDeviceState			*/
@@ -1811,7 +1812,11 @@ main(void)
 						// 	 felixDataBuffer[0], felixDataBuffer[1], felixDataBuffer[2], felixDataBuffer[3], felixDataBuffer[4], felixDataBuffer[5], felixDataBuffer[6], felixDataBuffer[7], felixDataBuffer[8], felixDataBuffer[9], felixDataBuffer[10], felixDataBuffer[11]);
 
 						key = SEGGER_RTT_WaitKey();
-					} while (key != 'x');
+						// SEGGER_RTT_printf(0, "\r\n\tkey = %c", key);
+
+					} while (key != '&');
+
+					SEGGER_RTT_WriteString(0, "progExit\n");
 
 					warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 
@@ -1901,12 +1906,12 @@ loopForSensor(	const char *  tagString,
 	int			nBadCommands = 0;
 	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
 	uint16_t		voltageTrace[readCount];
-	// bool 		LEDAS7262 = 0;
+	bool 		LEDAS7262 = 0;
 
-	// if (tagString == "\r\nAS7262:\n\r") {
-	// 	SEGGER_RTT_WriteString(0, "\r\n\tEnable AS7262 LED? ['0' | '1']");
-	// 	LEDAS7262 = SEGGER_RTT_WaitKey() - '0';
-	// }
+	if (tagString == "\r\nAS7262:\n\r") {
+		SEGGER_RTT_WriteString(0, "\r\n\tEnable AS7262 LED? ['0' | '1']");
+		LEDAS7262 = SEGGER_RTT_WaitKey() - '0';
+	}
 
 	if (	(!spiDeviceState && !i2cDeviceState) ||
 		(spiDeviceState && i2cDeviceState) )
@@ -1925,22 +1930,25 @@ loopForSensor(	const char *  tagString,
 		{
 			voltageTrace[i] = actualSssupplyMillivolts;
 			
-			// if (LEDAS7262 == 1) 
-			// {	
-			// 	SEGGER_RTT_WriteString(0, "\t\t LED Enabled");
-			// 	LEDonAS7262(); //returns kwarpStatus if needed
-			// } else {
-			// 	SEGGER_RTT_WriteString(0, "\t\t LED Disabled");
-			// 	LEDoffAS7262();
-			// }
+			if (LEDAS7262 == 1) 
+			{	
+				LEDonAS7262(); //returns kwarpStatus if needed
+				SEGGER_RTT_WriteString(0, "\t\t LED Enabled");
+			} else {
+				LEDoffAS7262();
+				SEGGER_RTT_WriteString(0, "\t\t LED Disabled");
+			}
 
-			// SEGGER_RTT_WriteString(0, "\r\n\t\t reading addresses");
+			SEGGER_RTT_WriteString(0, "\r\n\t\t reading addresses");
 			status = readSensorRegisterFunction(address+j);
 			
-			// if (LEDAS7262 == 1) 
-			// {
-			// 	LEDoffAS7262();
-			// }
+			SEGGER_RTT_WriteString(0, "\r\n\t\t\t Address read done.");
+
+			if (LEDAS7262 == 1) 
+			{
+				LEDoffAS7262();
+				SEGGER_RTT_WriteString(0, "\t\t End - LED Disabled");
+			}
 
 			if (status == kWarpStatusOK)
 			{
