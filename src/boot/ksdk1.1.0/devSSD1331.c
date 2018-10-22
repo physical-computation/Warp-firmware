@@ -98,7 +98,7 @@ devSSD1331init(void)
 	 */
 	writeCommand(kSSD1331CommandDISPLAYOFF);	// 0xAE
 	writeCommand(kSSD1331CommandSETREMAP);		// 0xA0
-	writeCommand(0x72);				// RGB Color
+	writeCommand(0x32);				// RGB Color 0b01110010 -> 0b00110010 (changed)
 	writeCommand(kSSD1331CommandSTARTLINE);		// 0xA1
 	writeCommand(0x0);
 	writeCommand(kSSD1331CommandDISPLAYOFFSET);	// 0xA2
@@ -117,11 +117,11 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8A
 	writeCommand(0x64);
 	writeCommand(kSSD1331CommandPRECHARGEB);	// 0x8B
-	writeCommand(0x78);
+	writeCommand(0x00);				// lowest second pre-charge speed
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8C
 	writeCommand(0x64);
 	writeCommand(kSSD1331CommandPRECHARGELEVEL);	// 0xBB
-	writeCommand(0x3A);
+	writeCommand(0x3E); //pre-charge voltage 3E
 	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
 	writeCommand(0x3E);
 	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
@@ -129,7 +129,7 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
 	writeCommand(0x91);
 	writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
-	writeCommand(0x50);
+	writeCommand(0xFF);				// set contrast to maximum
 	writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
 	writeCommand(0x7D);
 	writeCommand(kSSD1331CommandDISPLAYON);		// Turn on oled panel
@@ -152,17 +152,33 @@ devSSD1331init(void)
 	writeCommand(0x3F);
 //	SEGGER_RTT_WriteString(0, "\r\n\tDone with screen clear...\n");
 
-
+  //  9.2.6 Fill Enable/Disable (26h)//
+ //   This command has two functions.
+ //   • Enable/Disable fill (A[0])/
+  //  0 = Disable filling of color into rectangle in draw rectangle command. (RESET)
+  //  1 = Enable filling of color into rectangle in draw rectangle command.
 
 	/*
 	 *	Read the manual for the SSD1331 (SSD1331_1.2.pdf) to figure
 	 *	out how to fill the entire screen with the brightest shade
 	 *	of green.
 	 */
+	writeCommand(kSSD1331CommandDISPLAYON);	//0xAF
+	writeCommand(kSSD1331CommandDISPLAYALLON);	//0xA5
 
-	...
+	writeCommand(kSSD1331CommandDRAWRECT);	//0x22 Enter the “draw rectangle mode” by execute the command 22h
+	writeCommand(0x00);	//Set the starting column coordinates, Column 1. e.g., 03h.
+	writeCommand(0x00);	//Set the starting row coordinates, Row 1. e.g., 02h.
+	writeCommand(0x5F);	//Set the finishing column coordinates, Column 2. e.g., 12h
+	writeCommand(0x3F);	//Set the finishing row coordinates, Row 2. e.g., 15h
+	writeCommand(0x00);	//Set the outline color C (Blue)
+	writeCommand(0xFF);	//Set the outline color B (Green)
+	writeCommand(0x00);	//Set the outline color A (Red)
+	writeCommand(0x00);	//Set the filled color C (Blue)
+	writeCommand(0xFF);	//Set the filled color B (Green)
+	writeCommand(0x00);	//Set the filled color A (Red)
 
-
+//The longer the length of the pulse width, the brighter is the OLED pixel when it’s turned ON.	
 
 //	SEGGER_RTT_WriteString(0, "\r\n\tDone with draw rectangle...\n");
 
