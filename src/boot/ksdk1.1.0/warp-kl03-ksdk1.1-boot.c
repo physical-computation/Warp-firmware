@@ -68,6 +68,7 @@
 #include "devPAN1326.h"
 #include "devAS7262.h"
 #include "devAS7263.h"
+#include "devSSD1331.h"
 
 
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
@@ -1043,7 +1044,7 @@ main(void)
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
+	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	); //modified the address
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 	initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
@@ -1100,6 +1101,10 @@ main(void)
 	 */
 	OSA_TimeDelay(1000);
 
+    /*
+     *    Initialize the OLED display.
+     */
+    int initOLED = devSSD1331init();
 
 	while (1)
 	{
