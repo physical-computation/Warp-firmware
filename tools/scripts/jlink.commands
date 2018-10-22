@@ -1,5 +1,5 @@
 exec EnableRemarks
 unlock kinetis
-loadfile <full-path-to-warp-firmware>/build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.srec
+loadfile /Users/youchaowang/OneDrive\ -\ University\ Of\ Cambridge/Study/Cambridge/4B25\ Embedded\ Systems/Coursework2/Warp-firmware/build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.srec
 r
 go
