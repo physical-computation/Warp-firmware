@@ -163,7 +163,7 @@ devSSD1331init(void)
 	 *	out how to fill the entire screen with the brightest shade
 	 *	of green.
 	 */
-	writeCommand(kSSD1331CommandDISPLAYON);	//0xAF
+/*	writeCommand(kSSD1331CommandDISPLAYON);	//0xAF
 	writeCommand(kSSD1331CommandDISPLAYALLON);	//0xA5
 
 	writeCommand(kSSD1331CommandDRAWRECT);	//0x22 Enter the “draw rectangle mode” by execute the command 22h
@@ -177,7 +177,7 @@ devSSD1331init(void)
 	writeCommand(0x00);	//Set the filled color C (Blue)
 	writeCommand(0xFF);	//Set the filled color B (Green)
 	writeCommand(0x00);	//Set the filled color A (Red)
-
+*/
 //The longer the length of the pulse width, the brighter is the OLED pixel when it’s turned ON.	
 
 //	SEGGER_RTT_WriteString(0, "\r\n\tDone with draw rectangle...\n");
