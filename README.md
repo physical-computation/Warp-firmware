@@ -87,6 +87,12 @@ Enter selection> j
     Reference byte for comparisons (e.g., '3e')> 00
 ````
 
+## To update your fork
+From your local clone:
+
+	git remote add upstream https://github.com/physical-computation/Warp-firmware.git
+	git fetch upstream
+	git pull upstream master
 
 ## If you use Warp in your research, please cite it as:
 Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
