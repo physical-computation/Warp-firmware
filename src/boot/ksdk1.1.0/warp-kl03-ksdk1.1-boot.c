@@ -1043,7 +1043,7 @@ main(void)
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
+	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 	initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
@@ -1099,6 +1099,7 @@ main(void)
 	 *	Wait for supply and pull-ups to settle.
 	 */
 	OSA_TimeDelay(1000);
+
 
 
 	while (1)
@@ -1692,7 +1693,6 @@ loopForSensor(	const char *  tagString,
 		bool  chatty
 		)
 {
-#ifndef WARP_FRDMKL03
 	WarpStatus		status;
 	uint8_t			address = min(minAddress, baseAddress);
 	int			readCount = repetitionsPerAddress + 1;
@@ -1701,8 +1701,7 @@ loopForSensor(	const char *  tagString,
 	int			nCorrects = 0;
 	int			nBadCommands = 0;
 	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
-	uint16_t		voltageTrace[readCount];
-
+//	uint16_t		voltageTrace[readCount];
 
 
 	if (	(!spiDeviceState && !i2cDeviceState) ||
@@ -1711,7 +1710,7 @@ loopForSensor(	const char *  tagString,
 			SEGGER_RTT_printf(0, RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_YELLOW RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorSanity RTT_CTRL_RESET "\n");
 	}
 
-	memset(voltageTrace, 0, readCount*sizeof(uint16_t));
+//	memset(voltageTrace, 0, readCount*sizeof(uint16_t));
 	enableSssupply(actualSssupplyMillivolts);
 	OSA_TimeDelay(100);
 
@@ -1720,7 +1719,7 @@ loopForSensor(	const char *  tagString,
 	{
 		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
 		{
-			voltageTrace[i] = actualSssupplyMillivolts;
+//			voltageTrace[i] = actualSssupplyMillivolts;
 			status = readSensorRegisterFunction(address+j);
 			if (status == kWarpStatusOK)
 			{
@@ -1800,11 +1799,10 @@ loopForSensor(	const char *  tagString,
 	SEGGER_RTT_printf(0, "\r\t%d bad commands.\n\n", nBadCommands);
 	SEGGER_RTT_printf(0, "\r\tVoltage trace:\n", nBadCommands);
 
-	for (int i = 0; i < readCount; i++)
-	{
-		SEGGER_RTT_printf(0, "\r\t\t%d\t%d\n", i, voltageTrace[i]);
-	}
-#endif
+//	for (int i = 0; i < readCount; i++)
+//	{
+//		SEGGER_RTT_printf(0, "\r\t\t%d\t%d\n", i, voltageTrace[i]);
+//	}
 
 	return;
 }
