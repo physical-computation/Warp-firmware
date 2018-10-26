@@ -918,8 +918,8 @@ main(void)
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
 
-	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp, in 3... ");
-	OSA_TimeDelay(500);
+	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp-adpated in 3... ");
+	OSA_TimeDelay(1000);
 	SEGGER_RTT_WriteString(0, "2... ");
 	OSA_TimeDelay(500);
 	SEGGER_RTT_WriteString(0, "1...\n\r");
