@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell. Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -918,8 +917,8 @@ main(void)
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
 
-	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp-adpated in 3... ");
-	OSA_TimeDelay(1000);
+	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp, in 3... ");
+	OSA_TimeDelay(500);
 	SEGGER_RTT_WriteString(0, "2... ");
 	OSA_TimeDelay(500);
 	SEGGER_RTT_WriteString(0, "1...\n\r");
@@ -1101,73 +1100,10 @@ main(void)
 	 */
 	OSA_TimeDelay(1000);
 
-	/*
-	 *	writing the control bytes
-	 */
-	
-	uint8_t		i2cAddress, payloadByte[1], commandByte[1];
-	i2c_status_t	i2cStatus;
-	WarpStatus	status;
 
-	i2cAddress = 0x1D; /* acc addr, 7-bit */
-	
-	i2c_device_t slave =
-	{
-		.address = i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-	
-	enableSssupply(menuSupplyVoltage);
-	enableI2Cpins(menuI2cPullupEnable);
-
-	/*
-	 *	Wait for supply and pull-ups to settle.
-	 */
-	OSA_TimeDelay(1000);
-
-	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x00; /*	Disable FIFO	*/
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);brieflyToggleEnablingSWD();
-	}
-	
-	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x03;  /* Enable fast read 8bit, 800Hz, normal, active mode */
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);brieflyToggleEnablingSWD();
-	}
-	
-	disableI2Cpins();
-	/*	Essential writes complete */	
 
 	while (1)
 	{
-				/*
-		 *	Adapted from Warp-firmware by Youchao Wang
-		 */
-		
 		/*
 		 *	Do not, e.g., lowPowerPinStates() on each iteration, because we actually
 		 *	want to use menu to progressiveley change the machine state with various
@@ -1647,7 +1583,56 @@ main(void)
 						writeBytesToSpi(outBuffer /* payloadByte */, 1 /* payloadLength */);
 					}
 				}
-	
+
+				break;
+			}
+
+
+			/*
+			 *	enable SSSUPPLY
+			 */
+			case 'n':
+			{
+				enableSssupply(menuSupplyVoltage);
+				break;
+			}
+
+			/*
+			 *	disable SSSUPPLY
+			 */
+			case 'o':
+			{
+				disableSssupply();
+				break;
+			}
+
+			/*
+			 *	Switch to VLPR
+			 */
+			case 'p':
+			{
+				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
+				break;
+			}
+
+			/*
+			 *	Switch to RUN
+			 */
+			case 'r':
+			{
+				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+				break;
+			}
+
+			/*
+			 *	Power up all sensors
+			 */
+			case 's':
+			{
+				powerupAllSensors();
+				break;
+			}
+
 			/*
 			 *	Dump processor state
 			 */
@@ -1666,6 +1651,9 @@ main(void)
 				OSA_TimeDelay(10000);
 				SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");
 
+				break;
+			}
+
 			/*
 			 *	Ignore naked returns.
 			 */
@@ -1682,11 +1670,10 @@ main(void)
 		}
 	}
 
-
-	//SEGGER_RTT_printf(0,"%d.%d", intNumber, decimalNumber);brieflyToggleEnablingSWD();
+	return 0;
 }
 
-*/
+
 
 void
 loopForSensor(	const char *  tagString,
