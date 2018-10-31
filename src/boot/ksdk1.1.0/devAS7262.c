@@ -34,6 +34,9 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+// #define AS7262_DGBUG
+
 #include <stdlib.h>
 
 #include "fsl_misc_utilities.h"
@@ -109,8 +112,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
 	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
 	 */
-	
-	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request read");
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request read\r\n");
+	#endif
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -130,7 +135,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	 *	Read transaction which reads from the READ register 0x02.
 	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
 	 */
-	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set register to read");
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set register to read\r\n");
+	#endif
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -146,7 +154,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 
 
-	// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Recv data");
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Recv data\r\n");
+	#endif
+
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -167,7 +178,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	}
 	else
 	{
-		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : comm fail");
+		#ifdef AS7262_DGBUG		
+		SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : comm fail");
+		#endif
+
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
@@ -232,7 +246,11 @@ LEDonAS7262(void) {
 
 WarpStatus
 LEDoffAS7262(void) {
+
+	uint8_t		cmdBuf_write[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0xFF};	
+	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
+
 	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
 	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
 
@@ -241,6 +259,10 @@ LEDoffAS7262(void) {
 		.address = deviceAS7262State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
+		
+	#ifdef AS7262_DGBUG	
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request register read\r\n");
+	#endif
 
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 					0 /* I2C peripheral instance */,
@@ -254,6 +276,11 @@ LEDoffAS7262(void) {
 	/*
 	 *	This turns off the LED after finish reading the data
 	*/
+
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set data to write\r\n");
+	#endif
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
