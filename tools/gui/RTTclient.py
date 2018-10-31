@@ -8,11 +8,12 @@ import random
 import logging
 import multiprocessing as mp
 from queue import Queue
+import traceback
 
 
 
 class WarpConnectorClass(object):
-
+    #TODO: Need to impliment exception handling at each socket use
     dataBuffer = [0,0,0,0,0,0]
     exitProgMode = False
 
@@ -26,6 +27,9 @@ class WarpConnectorClass(object):
     endTag = "Enter selection> "
 
     progRead = False
+    warpConnected = False
+    logger = mp.get_logger()
+
 
     HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
     PORT = 19021        # Port to listen on (non-privileged ports are > 1023)
@@ -37,15 +41,25 @@ class WarpConnectorClass(object):
         self._running = True
 
     def terminate(self):
+        self.logger.debug("Termination Handle called")
         self._running = False
 
-    def run(self,warpAtMenu,dataQueue, dataReady):
-        logger = mp.get_logger()
+    def run(self,warpAtMenu,dataQueue, dataReady, uInputQueue):
 
-        warpConnectionHandle = self.warpSocket.connect((self.HOST, self.PORT))
+        while not self.warpConnected:
+            try :
+                warpConnectionHandle = self.warpSocket.connect((self.HOST, self.PORT))
+                self.warpConnected = True
+            except Exception as e:
+                self.warpConnected = False
+                self.logger.error(e)
+                self.logger.debug(traceback.format_exc())
+                time.sleep(2)
+
+        uInput = ""
 
         while self._running:
-            # logger.error("# - waiting for data")
+            # self.logger.error("# - waiting for data")
             data = self.warpSocket.recv(1024)
             if not data:
                 break
@@ -53,23 +67,36 @@ class WarpConnectorClass(object):
             else :
                 # dataReady.set()
                 # print(data[len(data)- len(self.endTag):])
-                # print("# - ", data.decode('ascii'))
-                # logger.error("# - %s", data.decode('ascii'))
+                print("# (", len(data.decode('ascii')), ") -", data.decode('ascii'))
+                # self.logger.error("# - %s", data.decode('ascii'))
 
-                if (data.decode('ascii') == "progExit"):
+                # print("test = ", data.decode('ascii')[1:8])
+                if (data.decode('ascii')[0:8] == "progExit"):
+                    self.logger.debug("progExit match!")
                     self.exitProgMode = False
 
                 if (data[len(data)- len(self.endTag):].decode('ascii') == self.endTag):
-                    logger.debug("End matched! -> Menu load completed!")
+                    self.logger.debug("End matched! -> Menu load completed!")
                     warpAtMenu.set()
                     # self.exitProgMode = False
 
-                if(warpAtMenu.is_set() and self.autoReadEnabled):
-                    logger.debug("Entering Programatic read mode!")
-                    self.warpSocket.send('#9'.encode('ascii'))
-                    self.lastSend = '#9'
-                    self.progRead = True
-                    warpAtMenu.clear()
+                if(warpAtMenu.is_set()):
+                    # self.exitProgMode = False
+                    self.logger.debug("Waiting for user input")
+                    uInput = uInputQueue.get()
+                    self.logger.debug("User input = %s", uInput)
+
+                    if uInput == "#":
+                        warpAtMenu.clear()
+                        self.autoReadEnabled = True
+                        self.logger.debug("Entering Programatic read mode!")
+                        self.warpSocket.send('#9'.encode('ascii'))
+                        self.lastSend = '#9'
+                        self.progRead = True
+                    else: 
+                        warpAtMenu.clear()
+                        self.warpSocket.send(uInput.encode('ascii'))
+                        self.lastSend = uInput
                 
                 if (self.progRead and (self.readCount < self.sampleLimit)):
 
@@ -98,7 +125,7 @@ class WarpConnectorClass(object):
                                     dataReady.set()
 
                                 except Exception as e:
-                                    logger.error("Error - %s", e)
+                                    self.logger.error("Error - %s", e)
                         
                         self.warpSocket.send('~'.encode('ascii'))
                         self.lastSend = '~'
@@ -107,18 +134,18 @@ class WarpConnectorClass(object):
 
                     if dataReady.is_set():
                         self.readCount += 1
-                        logger.info("Sample : %d - sending data = %s", self.readCount, self.dataBuffer)
+                        self.logger.info("Sample : %d - sending data = %s", self.readCount, self.dataBuffer)
                         try:
                             dataQueue.put(self.dataBuffer)
                             # writeData(self.dataBuffer) ######
                         except Exception as e:
-                            logger.error("Error - %s", e)
+                            self.logger.error("Error - %s", e)
                         dataReady.clear()
 
                 # print("self.readCount  = ", self.readCount)
 
                 if (self.readCount >= self.sampleLimit):
-                    logger.warn("Read limit reached")
+                    self.logger.warn("Read limit reached")
                     self.exitProgMode = True
                     self.autoReadEnabled = False
                     self.progRead = False
@@ -126,20 +153,22 @@ class WarpConnectorClass(object):
                     self.readCount = 0
 
                 if self.exitProgMode and not warpAtMenu.is_set() and self.lastSend != '&':
-                    logger.debug("Exiting programatic read mode")
+                    self.logger.debug("Exiting programatic read mode")
                     self.lastSend = '&'
                     self.warpSocket.send('&'.encode('ascii'))
 
+        self.warpConnected = False
+        self.warpSocket.shutdown()
+        self.warpSocket.close()
+
+
 
 class UIConnectorClass(object):
-
-    
     def __init__(self): #thread initialisation
         self._running = True
 
     def terminate(self):
         self._running = False
-
 
     def run(self, dataQueue, dataReady):
         # uiCon = serial.Serial('COM7', 19200)
@@ -173,7 +202,7 @@ if __name__ == "__main__":
 
     # warpAtMenu = False
     # self.progRead = False
-
+    terminateFlag = False
     
     mpManager = mp.Manager()
     mpLock = mp.Lock()
@@ -190,15 +219,16 @@ if __name__ == "__main__":
     warpAtMenu.clear()
 
     # userInput = mp.sharedctypes.Array('c',b'',lock=mpLock)
-    dataQueue = mp.Queue()
+    dataQueueToUI = mp.Queue()
+    uInputQueue = mp.Queue()
 
     warpConnectorInstance = WarpConnectorClass()
     uiConnectorInstance = UIConnectorClass() 
 
 
-    warpConnectorProcess = mp.Process(target = warpConnectorInstance.run, args=(warpAtMenu,dataQueue, warpDataReady),name="Warp")
+    warpConnectorProcess = mp.Process(target = warpConnectorInstance.run, args=(warpAtMenu,dataQueueToUI, warpDataReady, uInputQueue),name="Warp")
     
-    uiConnectorProcess = mp.Process(target = uiConnectorInstance.run, args=(dataQueue, warpDataReady),name="UI")
+    uiConnectorProcess = mp.Process(target = uiConnectorInstance.run, args=(dataQueueToUI, warpDataReady),name="UI")
 
     uiConnectorProcess.start()
     processList.append(uiConnectorProcess)
@@ -206,7 +236,14 @@ if __name__ == "__main__":
     warpConnectorProcess.start()
     processList.append(warpConnectorProcess)
 
-    time.sleep(15)
+    while not terminateFlag:
+        uInput = input()
+        if uInput == "&":
+            terminateFlag = True
+        else:
+            uInputQueue.put(uInput)
+
+    # time.sleep(15)
 
     for p in processList:
         p.terminate()
