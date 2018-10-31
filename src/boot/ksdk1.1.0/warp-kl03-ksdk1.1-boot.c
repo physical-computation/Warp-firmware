@@ -79,13 +79,18 @@
 ////////////////////////
 //FELIX includes 
 ////////////////////////
+#define FELIX
 
+#ifdef FELIX
 void felix_pollSensor(const char *  tagString,
 		WarpStatus  (* readSensorRegisterFunction)(uint8_t deviceRegister),
 		volatile WarpI2CDeviceState *  i2cDeviceState,
 		uint16_t  sssupplyMillivolts,
 		uint16_t  *data,
 		uint16_t  dataSize);
+
+uint16_t felixDataBuffer[12];
+#endif
 
 
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
@@ -154,7 +159,6 @@ void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
 int					read4digits(void);
 
-uint16_t felixDataBuffer[12];
 
 
 /*
@@ -1782,6 +1786,8 @@ main(void)
 
 				break;
 			}
+
+			#ifdef FELIX
 			case '#':
 			{
 				//simple confirmation process to ensure keypress wasnt accidental
@@ -1856,6 +1862,7 @@ main(void)
 				}
 				break;
 			}
+			#endif
 
 			/*
 			 *	Ignore naked returns.
@@ -1909,7 +1916,7 @@ loopForSensor(	const char *  tagString,
 	bool 		LEDAS7262 = 0;
 
 	if (tagString == "\r\nAS7262:\n\r") {
-		SEGGER_RTT_WriteString(0, "\r\n\tEnable AS7262 LED? ['0' | '1']");
+		SEGGER_RTT_WriteString(0, "\tEnable AS7262 LED? ['0' | '1'] ");
 		LEDAS7262 = SEGGER_RTT_WaitKey() - '0';
 	}
 
@@ -1922,34 +1929,31 @@ loopForSensor(	const char *  tagString,
 	memset(voltageTrace, 0, readCount*sizeof(uint16_t));
 	enableSssupply(actualSssupplyMillivolts);
 	OSA_TimeDelay(100);
+			
+	// SEGGER_RTT_printf(0, "led enabled? - %d \r\n", LEDAS7262);
+	
+	if (tagString == "\r\nAS7262:\n\r") {
+		if (LEDAS7262 == 1) {	
+			// SEGGER_RTT_WriteString(0, "\t\t LED Enabled");
+			LEDonAS7262(); //returns kwarpStatus if needed
+			OSA_TimeDelay(1000);
 
-	SEGGER_RTT_WriteString(0, tagString);
+		} else {
+			// SEGGER_RTT_WriteString(0, "\t\t LED Disabled");
+			LEDoffAS7262();
+		}
+	}
+
+	// SEGGER_RTT_WriteString(0, tagString);
+	SEGGER_RTT_printf(0, tagString);
+
 	while ((address <= maxAddress) && autoIncrement)
 	{
 		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
 		{
 			voltageTrace[i] = actualSssupplyMillivolts;
-			
-			if (LEDAS7262 == 1) 
-			{	
-				LEDonAS7262(); //returns kwarpStatus if needed
-				SEGGER_RTT_WriteString(0, "\t\t LED Enabled");
-			} else {
-				LEDoffAS7262();
-				SEGGER_RTT_WriteString(0, "\t\t LED Disabled");
-			}
-
-			SEGGER_RTT_WriteString(0, "\r\n\t\t reading addresses");
 			status = readSensorRegisterFunction(address+j);
 			
-			SEGGER_RTT_WriteString(0, "\r\n\t\t\t Address read done.");
-
-			if (LEDAS7262 == 1) 
-			{
-				LEDoffAS7262();
-				SEGGER_RTT_WriteString(0, "\t\t End - LED Disabled");
-			}
-
 			if (status == kWarpStatusOK)
 			{
 				nSuccesses++;
@@ -2014,6 +2018,11 @@ loopForSensor(	const char *  tagString,
 		{
 			address++;
 		}
+	}
+	
+	if (LEDAS7262 == 1) {
+		LEDoffAS7262();
+		SEGGER_RTT_WriteString(0, "\t\t End - LED Disabled");
 	}
 
 	/*
@@ -2914,6 +2923,7 @@ activateAllLowPowerSensorModes(void)
 
 #endif
 
+#ifdef FELIX
 
 void felix_init(char voltage ){
 	// menuSupplyVoltage = voltage;
@@ -2932,6 +2942,10 @@ void felix_pollSensor(const char *  tagString,
 	uint8_t  baseAddress = 0x08;
 	uint8_t  minAddress = 0x08;
 	uint8_t  maxAddress = 0x13;
+
+	// uint8_t  baseAddress = 0x00;
+	// uint8_t  minAddress = 0x00;
+	// uint8_t  maxAddress = 0x2B;
 
 	int  spinDelay = 0;
 	int  repetitionsPerAddress = 0;
@@ -3064,10 +3078,10 @@ void felix_pollSensor(const char *  tagString,
 	}
 	
 	/*
-	 *	To make printing of stats robust, we switch to VLPR (assuming we are not already in VLPR).
-	 *
-	 *	As of circa issue-58 implementation, RTT printing when in RUN mode was flaky (achievable SWD speed too slow for buffer fill rate?)
-	 */
+	*	To make printing of stats robust, we switch to VLPR (assuming we are not already in VLPR).
+	*
+	*	As of circa issue-58 implementation, RTT printing when in RUN mode was flaky (achievable SWD speed too slow for buffer fill rate?)
+	*/
 
 	// SEGGER_RTT_printf(0, "\r\n\t%d/%d success rate.\n", nSuccesses, (nSuccesses + nFailures));
 	// SEGGER_RTT_printf(0, "\r\t%d/%d successes matched ref. value of 0x%02x.\n", nCorrects, nSuccesses, referenceByte);
@@ -3087,3 +3101,5 @@ void felix_dumpMeasurements(){
 		SEGGER_RTT_printf(0, "\r\t\t MEASEUREMENTS \n");
 
 }
+
+#endif
