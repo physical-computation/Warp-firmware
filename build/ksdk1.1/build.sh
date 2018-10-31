@@ -37,10 +37,10 @@
 	# Files needed for Bluetooth
 	## user files
 	cp ../../src/boot/ksdk1.1.0/devCC2564C.*						work/demos/Warp/src/btstack/
-	# cp -r ../../src/boot/ksdk1.1.0/btstack/*     					work/demos/Warp/src/
+	cp -r ../../src/boot/ksdk1.1.0/btstack/*     					work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/btstack/btstack_config.h     		work/demos/Warp/src/btstack/
-	# cp ../../src/boot/ksdk1.1.0/btstack/btstack_config.h     		work/demos/Warp/src/ble #FIXME:
-	# cp ../../src/boot/ksdk1.1.0/btstack/btstack_config.h     		work/demos/Warp/src/classic #FIXME:
+	cp ../../src/boot/ksdk1.1.0/btstack/btstack_config.h     		work/demos/Warp/src/ble #FIXME:
+	cp ../../src/boot/ksdk1.1.0/btstack/btstack_config.h     		work/demos/Warp/src/classic #FIXME:
 	cp ../../src/boot/ksdk1.1.0/btstack/led_counter.*     			work/demos/Warp/src/btstack/
 	cp ../../src/boot/ksdk1.1.0/btstack/hal_led.*     				work/demos/Warp/src/btstack/
 	cp ../../src/boot/ksdk1.1.0/btstack/hal_tick.c     				work/demos/Warp/src/btstack/
@@ -49,22 +49,22 @@
 	cp ../../src/boot/ksdk1.1.0/btstack/btstack_main.h     			work/demos/Warp/src/btstack/
 
 	## chipset
-	cp ../../../btstack/chipset/cc256x/btstack_chipset_cc256x.h 	work/demos/Warp/src/btstack/
-	cp ../../../btstack/chipset/cc256x/btstack_chipset_cc256x.c     work/demos/Warp/src/btstack/
-	cp ../../../btstack/chipset/cc256x/ant_cmd.c		     		work/demos/Warp/src/btstack/
-	cp ../../../btstack/chipset/cc256x/ant_cmd.h                    work/demos/Warp/src/btstack/
-	cp ../../../btstack/chipset/cc256x/cc2564cInit.c                work/demos/Warp/src/btstack/
+	cp ../../src/btstack/chipset/cc256x/btstack_chipset_cc256x.h 	work/demos/Warp/src/btstack/
+	cp ../../src/btstack/chipset/cc256x/btstack_chipset_cc256x.c     work/demos/Warp/src/btstack/
+	cp ../../src/btstack/chipset/cc256x/ant_cmd.c		     		work/demos/Warp/src/btstack/
+	cp ../../src/btstack/chipset/cc256x/ant_cmd.h                    work/demos/Warp/src/btstack/
+	cp ../../src/btstack/chipset/cc256x/cc2564cInit.c                work/demos/Warp/src/btstack/
 	
 	## bt stack
-	cp -r ../../../btstack/platform/embedded/btstack_run_loop_embedded.*	work/demos/Warp/src/btstack/
-	cp -r ../../../btstack/platform/embedded/btstack_uart_block_embedded.*	work/demos/Warp/src/btstack/
-	cp -r ../../../btstack/platform/embedded/hal_cpu.h			work/demos/Warp/src/btstack/
-	cp -r ../../../btstack/platform/embedded/hal_led.h			work/demos/Warp/src/btstack/
-	cp -r ../../../btstack/platform/embedded/hal_tick.h			work/demos/Warp/src/btstack/
-	cp -r ../../../btstack/platform/embedded/hal_uart_dma.h		work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/btstack_run_loop_embedded.*	work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/btstack_uart_block_embedded.*	work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/hal_cpu.h			work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/hal_led.h			work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/hal_tick.h			work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/platform/embedded/hal_uart_dma.h		work/demos/Warp/src/btstack/
 	
 
-	cp -r ../../../btstack/src/*                    				work/demos/Warp/src/btstack/
+	cp -r ../../src/btstack/src/*                    				work/demos/Warp/src/btstack/
 
 	# cp -r ../../../btstack/src/*                    				work/demos/Warp/src/
 	#a bit of a hack to get it to compile properly FIXME:
