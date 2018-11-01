@@ -53,38 +53,40 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-// comment out the header file to disable devices
-// #include "devBMX055.h"
-// #include "devADXL362.h"
-// #include "devMMA8451Q.h"
-// #include "devLPS25H.h"
-// #include "devHDC1000.h"
-// #include "devMAG3110.h"
-// #include "devSI7021.h"
-// #include "devL3GD20H.h"
-// #include "devBME680.h"
-// #include "devTCS34725.h"
-// #include "devSI4705.h"
-// #include "devCCS811.h"
-// #include "devAMG8834.h"
+/*
+*	Comment out the header file to disable devices
+*/
+//#include "devBMX055.h"
+//#include "devADXL362.h"
+//#include "devMMA8451Q.h"
+//#include "devLPS25H.h"
+//#include "devHDC1000.h"
+//#include "devMAG3110.h"
+//#include "devSI7021.h"
+//#include "devL3GD20H.h"
+//#include "devBME680.h"
+//#include "devTCS34725.h"
+//#include "devSI4705.h"
+//#include "devCCS811.h"
+//#include "devAMG8834.h"
 #include "devPAN1326.h"
 #include "devAS7262.h"
 // #include "devAS7263.h"
-
 // #define SEGGER_RTT_printf_ENABLE
 // #define SEGGER_RTT_WriteString_ENABLE //parital impliemtnt
 
 
-///////////////////////
-//BTstack includes
-///////////////////////
+
+/*
+*	BTstack includes
+*/
 #include "btstack_main.h"
 
 
-////////////////////////
-//FELIX includes 
-///////////////////////
-// Note - felix functions arent bound by global printf disable 
+/*
+*	ELIX includes 
+*	Note - felix functions arent bound by global printf disable 
+*/
 // #define FELIX
 
 
@@ -209,13 +211,13 @@ void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice
 								uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
-int					char2int(int character);
+int						char2int(int character);
 void					enableSssupply(uint16_t voltageMillivolts);
 void					disableSssupply(void);
 void					activateAllLowPowerSensorModes(void);
 void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
-int					read4digits(void);
+int						read4digits(void);
 
 
 
@@ -344,11 +346,13 @@ sleepUntilReset(void)
 void
 enableLPUARTpins(void)
 {
-	//Enable UART CLOCK
+	/*	Enable UART CLOCK */
 	CLOCK_SYS_EnableLpuartClock(0);
 
-	//set UART pin association
-	//see page 99 in https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
+	/*
+	*	set UART pin association
+	*	see page 99 in https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
+	*/
 
 	#ifdef warp_devPAN1326_ENABLE
 	/*	Warp KL03_UART_HCI_TX	--> PTB3 (ALT3)	--> PAN1326 HCI_RX */
@@ -356,10 +360,9 @@ enableLPUARTpins(void)
 	/*	Warp KL03_UART_HCI_RX	--> PTB4 (ALT3)	--> PAN1326 HCI_RX */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
 
-	// FIXME:
+	// FIXME: Partial Implementation
 	/*	Warp PTA6 --> PAN1326 HCI_RTS */
 	/*	Warp PTA7 --> PAN1326 HCI_CTS */
-
 	#endif
 
 	/*
