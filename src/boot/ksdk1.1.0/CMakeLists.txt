@@ -5,7 +5,7 @@ SET(CMAKE_SYSTEM_NAME Generic)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
 # THE VERSION NUMBER
-SET (Tutorial_VERSION_MAJOR 1)
+SET (Tutorial_VERSION_MAJOR 1)  
 SET (Tutorial_VERSION_MINOR 0)
 
 # ENABLE ASM
@@ -71,6 +71,8 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -79,8 +81,10 @@ ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/startup/MKL03Z4)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc) 
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ENDIF()
 
 # ADD_EXECUTABLE
@@ -106,7 +110,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../src/devAS7262.c"
     "${ProjDirPath}/../../src/devAS7263.c"
     "${ProjDirPath}/../../src/SEGGER_RTT.c"
-    "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"
+    # "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"
     "${ProjDirPath}/../../../../platform/drivers/src/i2c/fsl_i2c_irq.c"
     "${ProjDirPath}/../../../../platform/drivers/src/spi/fsl_spi_irq.c"
     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/system_MKL03Z4.c"
@@ -114,7 +118,35 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/startup.h"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
+    
+    # "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
+    # "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
+    
+    "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"            #~0.3kb   
+    "${ProjDirPath}/../../src/btstack/btstack_memory.c"                 #~0.5kb  
+    "${ProjDirPath}/../../src/btstack/btstack_memory_pool.c"            #~0.2kb
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop.c"               #~0.4kb
+    "${ProjDirPath}/../../src/btstack/btstack_run_loop_embedded.c"      #~0.8kb
+    
+    "${ProjDirPath}/../../src/btstack/hal_cpu.c"                        #~0.3kb 
+    "${ProjDirPath}/../../src/btstack/hal_tick.c"	                    #~0      
+    # "${ProjDirPath}/../../src/btstack/hci_dump.c"		                #~0
+    "${ProjDirPath}/../../src/btstack/btstack_util.c"			        #~0        
+	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         #~5kB          
+	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"                    #~5kB  
+    
+    "${ProjDirPath}/../../src/btstack/btstack_uart_block_embedded.c"    #~1kb
+    "${ProjDirPath}/../../src/btstack/hal_uart_dma.c"                   #~0.5kB   		 
+    "${ProjDirPath}/../../src/btstack/hci.c"			                #~12kB      		 
+    "${ProjDirPath}/../../src/btstack/ad_parser.c"			            #~0      		 
+    "${ProjDirPath}/../../src/btstack/hci_cmd.c"		                #~1kB          		 
+    "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"               #~0.5kB             
+
 )
+#contribution to .text overflow amount ^
+
+
+
 SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
 
 TARGET_LINK_LIBRARIES(Warp -Wl,--start-group)
@@ -134,7 +166,7 @@ TARGET_LINK_LIBRARIES(Warp -Wl,--end-group)
 
 # MAP FILE
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}  -Xlinker -Map=debug/Warp.map")
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}  -Xlinker -Map=release/Warp.map")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Xlinker --cref -Xlinker -Map=release/Warp.map ")
 
 # BIN AND HEX
 ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Oihex ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.hex)

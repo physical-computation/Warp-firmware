@@ -34,6 +34,9 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+// #define AS7262_DGBUG
+
 #include <stdlib.h>
 
 #include "fsl_misc_utilities.h"
@@ -54,6 +57,9 @@
 extern volatile WarpI2CDeviceState	deviceAS7262State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 
+//Public functions for toggling LED
+WarpStatus LEDonAS7262(void);
+WarpStatus LEDoffAS7262(void);
 
 
 void
@@ -79,15 +85,17 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
 	 */
 	uint8_t		cmdBuf_write[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0xFF};
+	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
+	i2c_status_t	returnValue;
+
 	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
 	uint8_t		cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
 	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
-	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
-	i2c_status_t	returnValue;
 
 
 	if (deviceRegister > 0x2B)
 	{
+		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Bad Command");
 		return kWarpStatusBadDeviceCommand;
 	}
 
@@ -99,7 +107,101 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 
 
 	cmdBuf_write[1] = deviceRegister;
+
+	/*
+	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
+	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
+	 */
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request read\r\n");
+	#endif
+
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave /* The pointer to the I2C device information structure */,
+							cmdBuf_write /* The pointer to the commands to be transferred */,
+							2 /* The length in bytes of the commands to be transferred */,
+							NULL /* The pointer to the data to be transferred */,
+							0 /* The length in bytes of the data to be transferred */,
+							500 /* timeout in milliseconds */);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+
+
+	/*
+	 *	Read transaction which reads from the READ register 0x02.
+	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
+	 */
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set register to read\r\n");
+	#endif
+
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave /* The pointer to the I2C device information structure */,
+							cmdBuf_read /* The pointer to the commands to be transferred */,
+							1 /* The length in bytes of the commands to be transferred */,
+							NULL /* The pointer to the data to be transferred */,
+							0 /* The length in bytes of the data to be transferred */,
+							500 /* timeout in milliseconds */);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+
+
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Recv data\r\n");
+	#endif
+
+	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave /* The pointer to the I2C device information structure */,
+							cmdBuf_read /* The pointer to the commands to be transferred */,
+							1 /* The length in bytes of the commands to be transferred */,
+							(uint8_t *)deviceAS7262State.i2cBuffer /* The pointer to the data to be transferred */,
+							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
+							500 /* timeout in milliseconds */);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+
+	if (returnValue == kStatus_I2C_Success)
+	{
+		//...
+	}
+	else
+	{
+		#ifdef AS7262_DGBUG		
+		SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : comm fail");
+		#endif
+
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+
+WarpStatus
+LEDonAS7262(void) {
+	i2c_status_t	returnValue;
+	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
+	uint8_t		cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
 	
+
+	i2c_device_t slave =
+	{ 
+		.address = deviceAS7262State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
 	/*
 	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
 	 */
@@ -129,84 +231,56 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
+
+	if (returnValue == kStatus_I2C_Success)
+	{
+		//...
+	}
+	else
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
+	return kWarpStatusOK;
+}
 
+WarpStatus
+LEDoffAS7262(void) {
 
-	/*
-	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
-	 *	Write transaction writes the value of the virtual register one wants to read from to the WRITE register 0x01.
-	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_write /* The pointer to the commands to be transferred */,
-							2 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
+	uint8_t		cmdBuf_write[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0xFF};	
+	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
+	i2c_status_t	returnValue;
 
+	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
+	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
 
-
-	/*
-	 *	Read transaction which reads from the READ register 0x02.
-	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
-	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_read /* The pointer to the commands to be transferred */,
-							1 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-
-
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_read /* The pointer to the commands to be transferred */,
-							1 /* The length in bytes of the commands to be transferred */,
-							(uint8_t *)deviceAS7262State.i2cBuffer /* The pointer to the data to be transferred */,
-							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-
+	i2c_device_t slave =
+	{ 
+		.address = deviceAS7262State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+		
+	#ifdef AS7262_DGBUG	
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - request register read\r\n");
+	#endif
 
 	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
-							2 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-
+					0 /* I2C peripheral instance */,
+					&slave /* The pointer to the I2C device information structure */,
+					cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
+					2 /* The length in bytes of the commands to be transferred */,
+					NULL /* The pointer to the data to be transferred */,
+					0 /* The length in bytes of the data to be transferred */,
+					500 /* timeout in milliseconds */);
 
 	/*
 	 *	This turns off the LED after finish reading the data
 	*/
+
+	#ifdef AS7262_DGBUG
+	SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Sending data - set data to write\r\n");
+	#endif
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -215,7 +289,12 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
+
+	if (returnValue == kStatus_I2C_Success)
+	{
+		//...
+	}
+	else
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
