@@ -110,7 +110,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../src/devAS7262.c"
     "${ProjDirPath}/../../src/devAS7263.c"
     "${ProjDirPath}/../../src/SEGGER_RTT.c"
-    "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"
+    # "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"
     "${ProjDirPath}/../../../../platform/drivers/src/i2c/fsl_i2c_irq.c"
     "${ProjDirPath}/../../../../platform/drivers/src/spi/fsl_spi_irq.c"
     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/system_MKL03Z4.c"
@@ -119,7 +119,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
     
-    "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
+    # "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
     # "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
     
     "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"            #~0.3kb   
@@ -130,7 +130,7 @@ ADD_EXECUTABLE(Warp
     
     "${ProjDirPath}/../../src/btstack/hal_cpu.c"                        #~0.3kb 
     "${ProjDirPath}/../../src/btstack/hal_tick.c"	                    #~0      
-    "${ProjDirPath}/../../src/btstack/hci_dump.c"		                #~0
+    # "${ProjDirPath}/../../src/btstack/hci_dump.c"		                #~0
     "${ProjDirPath}/../../src/btstack/btstack_util.c"			        #~0        
 	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         #~5kB          
 	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"                    #~5kB  
