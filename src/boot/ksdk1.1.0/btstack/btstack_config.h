@@ -13,11 +13,11 @@
 #define ENABLE_BLE
 #define ENABLE_LE_PERIPHERAL
 // #define ENABLE_LE_CENTRAL
-#define ENABLE_CLASSIC
+// #define ENABLE_CLASSIC
 // #define ENABLE_LOG_INFO
 // #define ENABLE_LOG_ERROR
 // #define ENABLE_EHCILL
-#define ENABLE_SCO_OVER_HCI
+// #define ENABLE_SCO_OVER_HCI
 // #define ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
 
 // BTstack configuration. buffers, sizes, ...

@@ -68,7 +68,7 @@
 // #include "devAMG8834.h"
 #include "devPAN1326.h"
 #include "devAS7262.h"
-#include "devAS7263.h"
+// #include "devAS7263.h"
 
 // #define SEGGER_RTT_printf_ENABLE
 // #define SEGGER_RTT_WriteString_ENABLE //parital impliemtnt
@@ -1328,6 +1328,8 @@ main(void)
 		SEGGER_RTT_printf(0, "\r\tPMC_REGSC=0x%02x\t\t\tSIM_SCGC4=0x%02x\n\n", PMC_REGSC, SIM_SCGC4);
 
 		SEGGER_RTT_printf(0, "\r\t%ds in RTC Handler to-date,\t%d Pmgr Errors\n", gWarpSleeptimeSeconds, powerManagerCallbackStructure.errorCount);
+		#else
+		SEGGER_RTT_WriteString(0, "\r\t\t WARNING: Printf disabled. Partial serial text output\n\n");
 		#endif
 
 		SEGGER_RTT_WriteString(0, "\rSelect:\n");
@@ -2818,7 +2820,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			 *	AS7262: VDD 2.7--3.6
 			 */
 			#ifdef warp_devAS7262_ENABLE			
-			loopForSesor(	"\r\nAS7262:\n\r",		/*	tagString			*/
+			loopForSensor(	"\r\nAS7262:\n\r",		/*	tagString			*/
 					&readSensorRegisterAS7262,	/*	readSensorRegisterFunction	*/
 					&deviceAS7262State,		/*	i2cDeviceState			*/
 					NULL,				/*	spiDeviceState			*/
