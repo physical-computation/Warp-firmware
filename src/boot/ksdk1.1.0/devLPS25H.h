@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devLPS25H_ENABLE
+#define warp_devLPS25H_ENABLE
+#endif
 
 void		initLPS25H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterLPS25H(uint8_t deviceRegister);

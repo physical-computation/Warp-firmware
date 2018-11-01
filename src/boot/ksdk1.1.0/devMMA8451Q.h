@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devMMA8451Q_ENABLE
+#define warp_devMMA8451Q_ENABLE
+#endif
 
 void		initMMA8451Q(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterMMA8451Q(uint8_t deviceRegister);

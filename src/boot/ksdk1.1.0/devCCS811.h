@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devCCS811_ENABLE
+#define warp_devCCS811_ENABLE
+#endif
 
 void		initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterCCS811(uint8_t deviceRegister);
