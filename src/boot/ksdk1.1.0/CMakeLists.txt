@@ -120,7 +120,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
     
     "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
-    "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
+    # "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
     
     "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"            #~0.3kb   
     "${ProjDirPath}/../../src/btstack/btstack_memory.c"                 #~0.5kb  
