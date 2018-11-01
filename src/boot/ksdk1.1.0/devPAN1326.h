@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devPAN1326_ENABLE
+#define warp_devPAN1326_ENABLE
+#endif
 
 void	initPAN1326B(WarpUARTDeviceState volatile *  deviceStatePointer);
 void	initPAN1323ETU(WarpUARTDeviceState volatile *  deviceStatePointer);

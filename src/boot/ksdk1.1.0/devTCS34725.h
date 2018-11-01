@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devTCS34725_ENABLE
+#define warp_devTCS34725_ENABLE
+#endif
 
 void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister);

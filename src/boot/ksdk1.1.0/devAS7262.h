@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef warp_devAS7262_ENABLE
+#define warp_devAS7262_ENABLE
+#endif
 
 void		initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterAS7262(uint8_t deviceRegister);

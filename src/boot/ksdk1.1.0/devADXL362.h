@@ -35,6 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef warp_devADXL362_ENABLE
+#define warp_devADXL362_ENABLE
+#endif
 
 
 void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer);

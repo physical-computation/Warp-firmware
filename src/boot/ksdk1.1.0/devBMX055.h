@@ -35,6 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef warp_devBMX055_ENABLE
+#define warp_devBMX055_ENABLE
+#endif
 
 
 void		initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
