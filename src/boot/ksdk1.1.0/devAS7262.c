@@ -289,7 +289,12 @@ LEDoffAS7262(void) {
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
 							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
+
+	if (returnValue == kStatus_I2C_Success)
+	{
+		//...
+	}
+	else
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}

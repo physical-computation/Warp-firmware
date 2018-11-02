@@ -47,6 +47,7 @@
 #include "fsl_power_manager.h"
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
+#include "fsl_lpuart_driver.h"
 
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
@@ -183,7 +184,8 @@ volatile WarpI2CDeviceState			deviceAS7263State;
 volatile i2c_master_state_t			i2cMasterState;
 volatile spi_master_state_t			spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
-
+volatile lpuart_user_config_t 		lpuartUserConfig;
+volatile lpuart_state_t 			lpuartState;
 
 /*
  *	TODO: move magic default numbers into constant definitions.
@@ -509,6 +511,7 @@ disableI2Cpins(void)
 }
 
 
+// TODO: add pin states for pan1326 lp states
 void
 lowPowerPinStates(void)
 {
@@ -1307,7 +1310,6 @@ main(void)
 	OSA_TimeDelay(1000);
 
 
-
 	while (1)
 	{
 		/*
@@ -1361,6 +1363,7 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
 		SEGGER_RTT_WriteString(0, "\r- 't': dump processor state.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'w': bluetooth setup.\n");
 		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
 		//Theres also a case for '#' but it doesn not have a menu item.
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
@@ -2199,6 +2202,7 @@ loopForSensor(	const char *  tagString,
 		bool  chatty
 		)
 {
+#ifndef WARP_FRDMKL03
 	WarpStatus		status;
 	uint8_t			address = min(minAddress, baseAddress);
 	int			readCount = repetitionsPerAddress + 1;
@@ -2207,8 +2211,7 @@ loopForSensor(	const char *  tagString,
 	int			nCorrects = 0;
 	int			nBadCommands = 0;
 	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
-	//	uint16_t		voltageTrace[readCount];
-
+	uint16_t		voltageTrace[readCount];
 	bool 		LEDAS7262 = 0;
 
 	if (tagString == "\r\nAS7262:\n\r") {
@@ -2224,7 +2227,7 @@ loopForSensor(	const char *  tagString,
 			#endif
 	}
 
-//	memset(voltageTrace, 0, readCount*sizeof(uint16_t));
+	memset(voltageTrace, 0, readCount*sizeof(uint16_t));
 	enableSssupply(actualSssupplyMillivolts);
 	OSA_TimeDelay(100);
 			
