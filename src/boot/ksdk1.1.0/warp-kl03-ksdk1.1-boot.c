@@ -56,29 +56,30 @@
 /*
 *	Comment out the header file to disable devices
 */
-//#include "devBMX055.h"
-//#include "devADXL362.h"
-//#include "devMMA8451Q.h"
-//#include "devLPS25H.h"
-//#include "devHDC1000.h"
-//#include "devMAG3110.h"
-//#include "devSI7021.h"
-//#include "devL3GD20H.h"
-//#include "devBME680.h"
-//#include "devTCS34725.h"
-//#include "devSI4705.h"
-//#include "devCCS811.h"
-//#include "devAMG8834.h"
+#include "devBMX055.h"
+#include "devADXL362.h"
+#include "devMMA8451Q.h"
+#include "devLPS25H.h"
+#include "devHDC1000.h"
+#include "devMAG3110.h"
+#include "devSI7021.h"
+#include "devL3GD20H.h"
+#include "devBME680.h"
+#include "devTCS34725.h"
+#include "devSI4705.h"
+#include "devCCS811.h"
+#include "devAMG8834.h"
 #include "devPAN1326.h"
 #include "devAS7262.h"
-// #include "devAS7263.h"
-// #define SEGGER_RTT_printf_ENABLE
+#include "devAS7263.h"
+
+#define SEGGER_RTT_printf_ENABLE
 // #define SEGGER_RTT_WriteString_ENABLE /* parital impliemtnt */
 
 /*
 *	BTstack includes
 */
-#include "btstack_main.h"
+// #include "btstack_main.h"
 
 
 #ifdef FELIX
@@ -386,7 +387,7 @@ disableLPUARTpins(void)
 	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_TX);
 	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_RX);
 
-	/* Disable LPUART CLOCK 8?
+	/* Disable LPUART CLOCK */
 	CLOCK_SYS_DisableLpuartClock(0);
 
 }
@@ -2272,6 +2273,7 @@ loopForSensor(	const char *  tagString,
 		#endif
 	}
 	*/
+#endif
 	return;
 }
 
