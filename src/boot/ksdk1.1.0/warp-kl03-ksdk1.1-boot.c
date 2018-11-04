@@ -2132,10 +2132,10 @@ loopForSensor(	const char *  tagString,
 	{
 		if (LEDAS7262 == 1) 
 		{	
-			LEDonAS7262(); /* returns kwarpStatus if needed */
+			LedOnAS7262(); /* returns kwarpStatus if needed */
 			OSA_TimeDelay(1000);
 		} else {
-			LEDoffAS7262();
+			LedOffAS7262();
 		}
 	}
 
@@ -2153,9 +2153,9 @@ loopForSensor(	const char *  tagString,
 			
 			if (LEDAS7262 == 1) 
 			{	
-				LEDonAS7262(); //returns kwarpStatus if needed
+				LedOnAS7262(); //returns kwarpStatus if needed
 			} else {
-				LEDoffAS7262();
+				LedOffAS7262();
 			}
 
 			SEGGER_RTT_WriteString(0, "\r\n\t\t reading addresses");
@@ -2243,7 +2243,7 @@ loopForSensor(	const char *  tagString,
 	{	
 		if (LEDAS7262 == 1) 
 		{
-			LEDoffAS7262();
+			LedOffAS7262();
 			SEGGER_RTT_WriteString(0, "\t\t End - LED Disabled");
 		}
 	}
