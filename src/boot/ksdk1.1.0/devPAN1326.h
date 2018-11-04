@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef warp_devPAN1326_ENABLE
-#define warp_devPAN1326_ENABLE
+#ifndef kWarp_devPAN1326_ENABLE
+#define kWarp_devPAN1326_ENABLE
 #endif
 
 void	initPAN1326B(WarpUARTDeviceState volatile *  deviceStatePointer);

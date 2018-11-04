@@ -74,7 +74,7 @@
 #include "devAS7263.h"
 
 #define SEGGER_RTT_printf_ENABLE
-// #define SEGGER_RTT_WriteString_ENABLE /* parital impliemtnt */
+/* #define SEGGER_RTT_WriteString_ENABLE /* parital impliemtnt */
 
 /*
 *	BTstack includes
@@ -100,70 +100,70 @@ uint16_t felixDataBuffer[12];
 
 
 
-#ifdef warp_devADXL362_ENABLE
+#ifdef kWarp_devADXL362_ENABLE
 volatile WarpSPIDeviceState			deviceADXL362State;
 #endif
 
-#ifdef warp_devBMX055_ENABLE
+#ifdef kWarp_devBMX055_ENABLE
 volatile WarpI2CDeviceState			deviceBMX055accelState;
 volatile WarpI2CDeviceState			deviceBMX055gyroState;
 volatile WarpI2CDeviceState			deviceBMX055magState;
 #endif
 
-#ifdef warp_devMMA8451Q_ENABLE
+#ifdef kWarp_devMMA8451Q_ENABLE
 volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
-#ifdef warp_devLPS25H_ENABLE
+#ifdef kWarp_devLPS25H_ENABLE
 volatile WarpI2CDeviceState			deviceLPS25HState;
 #endif
 
-#ifdef warp_devHDC1000_ENABLE
+#ifdef kWarp_devHDC1000_ENABLE
 volatile WarpI2CDeviceState			deviceHDC1000State;
 #endif
 
-#ifdef warp_devMAG3110_ENABLE
+#ifdef kWarp_devMAG3110_ENABLE
 volatile WarpI2CDeviceState			deviceMAG3110State;
 #endif
 
-#ifdef warp_devSI7021_ENABLE
+#ifdef kWarp_devSI7021_ENABLE
 volatile WarpI2CDeviceState			deviceSI7021State;
 #endif
 
-#ifdef warp_devL3GD20H_ENABLE
+#ifdef kWarp_devL3GD20H_ENABLE
 volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
-#ifdef warp_devBME680_ENABLE
+#ifdef kWarp_devBME680_ENABLE
 volatile WarpI2CDeviceState			deviceBME680State;
 #endif
 
-#ifdef warp_devTCS34725_ENABLE
+#ifdef kWarp_devTCS34725_ENABLE
 volatile WarpI2CDeviceState			deviceTCS34725State;
 #endif
 
-#ifdef warp_devSI4705_ENABLE
+#ifdef kWarp_devSI4705_ENABLE
 volatile WarpI2CDeviceState			deviceSI4705State;
 #endif
 
-#ifdef warp_devCCS811_ENABLE
+#ifdef kWarp_devCCS811_ENABLE
 volatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
-#ifdef warp_devAMG8834_ENABLE
+#ifdef kWarp_devAMG8834_ENABLE
 volatile WarpI2CDeviceState			deviceAMG8834State;
 #endif
 
-#ifdef warp_devPAN1326_ENABLE
+#ifdef kWarp_devPAN1326_ENABLE
 volatile WarpUARTDeviceState		devicePAN1326BState;
 volatile WarpUARTDeviceState		devicePAN1323ETUState;
 #endif
 
-#ifdef warp_devAS7262_ENABLE
+#ifdef kWarp_devAS7262_ENABLE
 volatile WarpI2CDeviceState			deviceAS7262State;
 #endif
 
-#ifdef warp_devAS7263_ENABLE
+#ifdef kWarp_devAS7263_ENABLE
 volatile WarpI2CDeviceState			deviceAS7263State;
 #endif
 
@@ -320,11 +320,11 @@ sleepUntilReset(void)
 {
 	while (1)
 	{	
-		#ifdef warp_devSI4705_ENABLE
+		#ifdef kWarp_devSI4705_ENABLE
 		GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
 		#endif
 		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
-		#ifdef warp_devSI4705_ENABLE		
+		#ifdef kWarp_devSI4705_ENABLE		
 		GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 		#endif
 		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */);
@@ -343,7 +343,7 @@ enableLPUARTpins(void)
 	*	see page 99 in https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
 	*/
 
-	#ifdef warp_devPAN1326_ENABLE
+	#ifdef kWarp_devPAN1326_ENABLE
 	/*	Warp KL03_UART_HCI_TX	--> PTB3 (ALT3)	--> PAN1326 HCI_RX */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
 	/*	Warp KL03_UART_HCI_RX	--> PTB4 (ALT3)	--> PAN1326 HCI_RX */
@@ -379,7 +379,7 @@ disableLPUARTpins(void)
 	/*	Warp KL03_UART_HCI_TX	--> PTB3 (GPIO) */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAsGpio);
 
-	#ifdef warp_devPAN1326_ENABLE
+	#ifdef kWarp_devPAN1326_ENABLE
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
 	#endif
@@ -610,7 +610,7 @@ lowPowerPinStates(void)
 #ifdef WARP_FRDMKL03
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
 #else
-	#ifdef warp_devPAN1326_ENABLE
+	#ifdef kWarp_devPAN1326_ENABLE
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 	#endif
 #endif
@@ -628,7 +628,7 @@ lowPowerPinStates(void)
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
 
-	#ifdef warp_devADXL362_ENABLE
+	#ifdef kWarp_devADXL362_ENABLE
 	GPIO_DRV_SetPinOutput(kWarpPinADXL362_CS);
 	#endif
 
@@ -1195,67 +1195,67 @@ main(void)
 	/*
 	 *	Initialize all the sensors
 	 */
-	#ifdef warp_devBMX055_ENABLE
+	#ifdef kWarp_devBMX055_ENABLE
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
 	#endif
 
 	
-	#ifdef warp_devADXL362_ENABLE
+	#ifdef kWarp_devADXL362_ENABLE
 	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
 	#endif	
 	
-	#ifdef warp_devLPS25H_ENABLE
+	#ifdef kWarp_devLPS25H_ENABLE
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 	#endif
 
-	#ifdef warp_devHDC1000_ENABLE
+	#ifdef kWarp_devHDC1000_ENABLE
 	initHDC1000(0x43	/* i2cAddress */,	&deviceHDC1000State	);
 	#endif
 
-	#ifdef warp_devMAG3110_ENABLE
+	#ifdef kWarp_devMAG3110_ENABLE
 	initMAG3110(0x0E	/* i2cAddress */,	&deviceMAG3110State	);
 	#endif
 
-	#ifdef warp_devSI7021_ENABLE
+	#ifdef kWarp_devSI7021_ENABLE
 	initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State	);
 	#endif
 
-	#ifdef warp_devL3GD20H_ENABLE
+	#ifdef kWarp_devL3GD20H_ENABLE
 	initL3GD20H(0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
 	#endif
 
-	#ifdef warp_devBME680_ENABLE
+	#ifdef kWarp_devBME680_ENABLE
 	initBME680(	0x77	/* i2cAddress */,	&deviceBME680State	);
 	#endif
 
-	#ifdef warp_devTCS34725_ENABLE
+	#ifdef kWarp_devTCS34725_ENABLE
 	initTCS34725(0x29	/* i2cAddress */,	&deviceTCS34725State	);
 	#endif
 
-	#ifdef warp_devSI4705_ENABLE
+	#ifdef kWarp_devSI4705_ENABLE
 	initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State	);
 	#endif
 
-	#ifdef warp_devCCS811_ENABLE
+	#ifdef kWarp_devCCS811_ENABLE
 	initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State	);
 	#endif
 
-	#ifdef warp_devAMG8834_ENABLE
+	#ifdef kWarp_devAMG8834_ENABLE
 	initAMG8834(0x3A	/* i2cAddress */,	&deviceAMG8834State	);
 	#endif
-	#ifdef warp_devAS7262_ENABLE
+	#ifdef kWarp_devAS7262_ENABLE
 	initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State	);
 	#endif
-	#ifdef warp_devAS7263_ENABLE
+	#ifdef kWarp_devAS7263_ENABLE
 	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
 	#endif
 
 	/*
 	 *	Initialization: Devices hanging off SPI
 	 */
-	#ifdef warp_devADXL362_ENABLE
+	#ifdef kWarp_devADXL362_ENABLE
 	initADXL362(&deviceADXL362State);
 	#endif
 
@@ -1268,7 +1268,7 @@ main(void)
 	 *	Initialization: the PAN1326, generating its 32k clock
 	 */
 	//Disable for now
-	#ifdef warp_devPAN1326_ENABLE
+	#ifdef kWarp_devPAN1326_ENABLE
 	initPAN1326B(&devicePAN1326BState);
 	#endif
 
@@ -1362,13 +1362,13 @@ main(void)
 			case 'a':
 			{
 				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
-				#ifdef warp_devADXL362_ENABLE
+				#ifdef kWarp_devADXL362_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362			(0x00--0x2D): 1.6V  -- 3.5V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362			(0x00--0x2D): 1.6V  -- 3.5V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devBMX055_ENABLE
+				#ifdef kWarp_devBMX055_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro			(0x00--0x3F): 2.4V  -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
@@ -1378,86 +1378,86 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devMMA8451Q_ENABLE
+				#ifdef kWarp_devMMA8451Q_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devLPS25H_ENABLE
+				#ifdef kWarp_devLPS25H_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 				
-				#ifdef warp_devMAG3110_ENABLE				
+				#ifdef kWarp_devMAG3110_ENABLE				
 				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devHDC1000_ENABLE
+				#ifdef kWarp_devHDC1000_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V *UNAVAILABLE* \n");
 				#endif
 				
-				#ifdef warp_devSI7021_ENABLE
+				#ifdef kWarp_devSI7021_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devL3GD20H_ENABLE				
+				#ifdef kWarp_devL3GD20H_ENABLE				
 				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 				
-				#ifdef warp_devBME680_ENABLE
+				#ifdef kWarp_devBME680_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 				
-				#ifdef warp_devTCS34725_ENABLE
+				#ifdef kWarp_devTCS34725_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V *UNAVAILABLE* \n");
 				#endif
 				
-				#ifdef warp_devSI4705_ENABLE
+				#ifdef kWarp_devSI4705_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devPAN1326_ENABLE
+				#ifdef kWarp_devPAN1326_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a) *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devCCS811_ENABLE
+				#ifdef kWarp_devCCS811_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devAMG8834_ENABLE
+				#ifdef kWarp_devAMG8834_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V *UNAVAILABLE* \n");
 				#endif
 
-				#ifdef warp_devAS7262_ENABLE
+				#ifdef kWarp_devAS7262_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V *UNAVAILABLE* \n");
 				#endif
 
 
-				#ifdef warp_devAS7263_ENABLE
+				#ifdef kWarp_devAS7263_ENABLE
 				SEGGER_RTT_WriteString(0, "\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V *UNAVAILABLE* \n");
@@ -1716,7 +1716,7 @@ main(void)
 
 				if (i2cAddress == 0x99)
 				{
-					#ifdef warp_devADXL362_ENABLE
+					#ifdef kWarp_devADXL362_ENABLE
 					#ifdef SEGGER_RTT_printf_ENABLE
 					SEGGER_RTT_printf(0, "\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);
 					#endif
@@ -1997,7 +1997,7 @@ main(void)
 					{
 						case '0':
 						{
-							#ifdef warp_devPAN1326_ENABLE
+							#ifdef kWarp_devPAN1326_ENABLE
 							SEGGER_RTT_WriteString(0, "\r\tDisabling PAN1326 \n");
 							GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 							ble_disable();
@@ -2008,7 +2008,7 @@ main(void)
 						}
 						case '1':
 						{
-							#ifdef warp_devPAN1326_ENABLE
+							#ifdef kWarp_devPAN1326_ENABLE
 							SEGGER_RTT_WriteString(0, "\r\tEnabling PAN1326... \n");
 							GPIO_DRV_SetPinOutput(kWarpPinPAN1326_nSHUTD);
 							enableLPUARTpins();
@@ -2295,7 +2295,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	ADXL362: VDD 1.6--3.5
 			 */
-			#ifdef warp_devADXL362_ENABLE
+			#ifdef kWarp_devADXL362_ENABLE
 			loopForSensor(	"\r\nADXL362:\n\r",		/*	tagString			*/
 					&readSensorRegisterADXL362,	/*	readSensorRegisterFunction	*/
 					NULL,				/*	i2cDeviceState			*/
@@ -2323,7 +2323,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MMA8451Q: VDD 1.95--3.6
 			 */
-			#ifdef warp_devMMA8451Q_ENABLE
+			#ifdef kWarp_devMMA8451Q_ENABLE
 			loopForSensor(	"\r\nMMA8451Q:\n\r",		/*	tagString			*/
 					&readSensorRegisterMMA8451Q,	/*	readSensorRegisterFunction	*/
 					&deviceMMA8451QState,		/*	i2cDeviceState			*/
@@ -2352,7 +2352,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BME680: VDD 1.7--3.6
 			 */
-			#ifdef warp_devBME680_ENABLE
+			#ifdef kWarp_devBME680_ENABLE
 			loopForSensor(	"\r\nBME680:\n\r",		/*	tagString			*/
 					&readSensorRegisterBME680,	/*	readSensorRegisterFunction	*/
 					&deviceBME680State,		/*	i2cDeviceState			*/
@@ -2380,7 +2380,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055accel: VDD 2.4V -- 3.6V
 			 */
-			#ifdef warp_devBMX055_ENABLE
+			#ifdef kWarp_devBMX055_ENABLE
 			loopForSensor(	"\r\nBMX055accel:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055accel,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055accelState,	/*	i2cDeviceState			*/
@@ -2409,7 +2409,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055gyro: VDD 2.4V -- 3.6V
 			 */
-			#ifdef warp_devBMX055_ENABLE
+			#ifdef kWarp_devBMX055_ENABLE
 			loopForSensor(	"\r\nBMX055gyro:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055gyro,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055gyroState,		/*	i2cDeviceState			*/
@@ -2437,7 +2437,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055mag: VDD 2.4V -- 3.6V
 			 */
-			#ifdef warp_devBMX055_ENABLE
+			#ifdef kWarp_devBMX055_ENABLE
 			loopForSensor(	"\r\nBMX055mag:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055mag,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055magState,		/*	i2cDeviceState			*/
@@ -2466,7 +2466,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MAG3110: VDD 1.95 -- 3.6
 			 */
-			#ifdef warp_devMAG3110_ENABLE			
+			#ifdef kWarp_devMAG3110_ENABLE			
 			loopForSensor(	"\r\nMAG3110:\n\r",		/*	tagString			*/
 					&readSensorRegisterMAG3110,	/*	readSensorRegisterFunction	*/
 					&deviceMAG3110State,		/*	i2cDeviceState			*/
@@ -2494,7 +2494,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	L3GD20H: VDD 2.2V -- 3.6V
 			 */
-			#ifdef warp_devL3GD20H_ENABLE			
+			#ifdef kWarp_devL3GD20H_ENABLE			
 			loopForSensor(	"\r\nL3GD20H:\n\r",		/*	tagString			*/
 					&readSensorRegisterL3GD20H,	/*	readSensorRegisterFunction	*/
 					&deviceL3GD20HState,		/*	i2cDeviceState			*/
@@ -2522,7 +2522,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	LPS25H: VDD 1.7V -- 3.6V
 			 */
-			#ifdef warp_devLPS25H_ENABLE			
+			#ifdef kWarp_devLPS25H_ENABLE			
 			loopForSensor(	"\r\nLPS25H:\n\r",		/*	tagString			*/
 					&readSensorRegisterLPS25H,	/*	readSensorRegisterFunction	*/
 					&deviceLPS25HState,		/*	i2cDeviceState			*/
@@ -2550,7 +2550,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	TCS34725: VDD 2.7V -- 3.3V
 			 */
-			#ifdef warp_devTCS34725_ENABLE			
+			#ifdef kWarp_devTCS34725_ENABLE			
 			loopForSensor(	"\r\nTCS34725:\n\r",		/*	tagString			*/
 					&readSensorRegisterTCS34725,	/*	readSensorRegisterFunction	*/
 					&deviceTCS34725State,		/*	i2cDeviceState			*/
@@ -2578,7 +2578,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI4705: VDD 2.7V -- 5.5V
 			 */
-			#ifdef warp_devSI4705_ENABLE			
+			#ifdef kWarp_devSI4705_ENABLE			
 			loopForSensor(	"\r\nSI4705:\n\r",		/*	tagString			*/
 					&readSensorRegisterSI4705,	/*	readSensorRegisterFunction	*/
 					&deviceSI4705State,		/*	i2cDeviceState			*/
@@ -2606,7 +2606,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	HDC1000: VDD 3V--5V
 			 */
-			#ifdef warp_devHDC1000_ENABLE			
+			#ifdef kWarp_devHDC1000_ENABLE			
 			loopForSensor(	"\r\nHDC1000:\n\r",		/*	tagString			*/
 					&readSensorRegisterHDC1000,	/*	readSensorRegisterFunction	*/
 					&deviceHDC1000State,		/*	i2cDeviceState			*/
@@ -2634,7 +2634,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI7021: VDD 1.9V -- 3.6V
 			 */
-			#ifdef warp_devSI7021_ENABLE			
+			#ifdef kWarp_devSI7021_ENABLE			
 			loopForSensor(	"\r\nSI7021:\n\r",		/*	tagString			*/
 					&readSensorRegisterSI7021,	/*	readSensorRegisterFunction	*/
 					&deviceSI7021State,		/*	i2cDeviceState			*/
@@ -2662,7 +2662,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	CCS811: VDD 1.8V -- 3.6V
 			 */
-			#ifdef warp_devCCS811_ENABLE			
+			#ifdef kWarp_devCCS811_ENABLE			
 			loopForSensor(	"\r\nCCS811:\n\r",		/*	tagString			*/
 					&readSensorRegisterCCS811,	/*	readSensorRegisterFunction	*/
 					&deviceCCS811State,		/*	i2cDeviceState			*/
@@ -2690,7 +2690,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AMG8834: VDD ?V -- ?V
 			 */
-			#ifdef warp_devAMG8834_ENABLE			
+			#ifdef kWarp_devAMG8834_ENABLE			
 			loopForSensor(	"\r\nAMG8834:\n\r",		/*	tagString			*/
 					&readSensorRegisterAMG8834,	/*	readSensorRegisterFunction	*/
 					&deviceAMG8834State,		/*	i2cDeviceState			*/
@@ -2719,7 +2719,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AS7262: VDD 2.7--3.6
 			 */
-			#ifdef warp_devAS7262_ENABLE			
+			#ifdef kWarp_devAS7262_ENABLE			
 			loopForSensor(	"\r\nAS7262:\n\r",		/*	tagString			*/
 					&readSensorRegisterAS7262,	/*	readSensorRegisterFunction	*/
 					&deviceAS7262State,		/*	i2cDeviceState			*/
@@ -2747,7 +2747,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AS7263: VDD 2.7--3.6
 			 */
-			#ifdef warp_devAS7263_ENABLE			
+			#ifdef kWarp_devAS7263_ENABLE			
 			loopForSensor(	"\r\nAS7263:\n\r",		/*	tagString			*/
 					&readSensorRegisterAS7263,	/*	readSensorRegisterFunction	*/
 					&deviceAS7263State,		/*	i2cDeviceState			*/
@@ -2902,7 +2902,7 @@ powerupAllSensors(void)
 	 *
 	 *	Write '1' to power control bit of register 0x4B. See page 134.
 	 */
-	#ifdef warp_devBMX055_ENABLE
+	#ifdef kWarp_devBMX055_ENABLE
 	status = writeByteToI2cDeviceRegister(	deviceBMX055magState.i2cAddress		/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x4B					/*	commandByte		*/,
@@ -2943,7 +2943,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
 	 */
-	#ifdef warp_devBMX055_ENABLE
+	#ifdef kWarp_devBMX055_ENABLE
 	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x11					/*	commandByte		*/,
@@ -2967,7 +2967,7 @@ activateAllLowPowerSensorModes(void)
 	 *	Write '1' to deep suspend bit of register 0x11. See page 81.
 	 */
 
-	#ifdef warp_devBMX055_ENABLE
+	#ifdef kWarp_devBMX055_ENABLE
 	status = writeByteToI2cDeviceRegister(	deviceBMX055gyroState.i2cAddress	/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x11					/*	commandByte		*/,
@@ -3036,7 +3036,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	POR state seems to be powered down.
 	 */
-	#ifdef warp_devL3GD20H_ENABLE
+	#ifdef kWarp_devL3GD20H_ENABLE
 	status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 						true				/*	sendCommandByte		*/,
 						0x20				/*	commandByte		*/,
@@ -3063,7 +3063,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	Make it go to sleep state. See page 17, 18, and 19.
 	 */
-	#ifdef warp_devTCS34725_ENABLE
+	#ifdef kWarp_devTCS34725_ENABLE
 	status = writeByteToI2cDeviceRegister(	deviceTCS34725State.i2cAddress	/*	i2cAddress		*/,
 						true				/*	sendCommandByte		*/,
 						0x00				/*	commandByte		*/,
@@ -3084,7 +3084,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
-	#ifdef warp_devSI4705_ENABLE
+	#ifdef kWarp_devSI4705_ENABLE
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 	#endif
 
@@ -3102,7 +3102,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
-	#ifdef warp_devPAN1326_ENABLE
+	#ifdef kWarp_devPAN1326_ENABLE
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 	#endif
 #endif
@@ -3195,7 +3195,7 @@ activateAllLowPowerSensorModes(void)
 
 		SEGGER_RTT_WriteString(0, "\r\n");
 		SEGGER_RTT_WriteString(0, "\r\t\tBluetooth Status \n");
-		#ifdef warp_devPAN1326_ENABLE 
+		#ifdef kWarp_devPAN1326_ENABLE 
 			#ifdef SEGGER_RTT_printf_ENABLE
 			SEGGER_RTT_printf(0, "\r\t Bluetooth module = some mod, \tBluetooth MAC Address=%dmV\n", modADR);
 			SEGGER_RTT_printf(0, "\r\t Bluetooth Powwer= NULL,\tBluetooth Discovery=NULL\n");
@@ -3210,7 +3210,7 @@ activateAllLowPowerSensorModes(void)
 
 		SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
 
-		#ifdef warp_devPAN1326_ENABLE 
+		#ifdef kWarp_devPAN1326_ENABLE 
 		SEGGER_RTT_WriteString(0, "\r\t- '0' Disable PAN1326C\n");
 		SEGGER_RTT_WriteString(0, "\r\t- '1' Enable PAN1326C\n");
 		#else

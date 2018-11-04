@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef warp_devHDC1000_ENABLE
-#define warp_devHDC1000_ENABLE
+#ifndef kWarp_devHDC1000_ENABLE
+#define kWarp_devHDC1000_ENABLE
 #endif
 
 void		initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

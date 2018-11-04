@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef warp_devBMX055_ENABLE
-#define warp_devBMX055_ENABLE
+#ifndef kWarp_devBMX055_ENABLE
+#define kWarp_devBMX055_ENABLE
 #endif
 
 
