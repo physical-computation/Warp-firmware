@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devMAG3110_ENABLE
-#define kWarp_devMAG3110_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVMAG3110
+#define WARP_BUILD_ENABLE_DEVMAG3110
 #endif
 
 void		initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

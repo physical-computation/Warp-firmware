@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devL3GD20H_ENABLE
-#define kWarp_devL3GD20H_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVL3GD20H
+#define WARP_BUILD_ENABLE_DEVL3GD20H
 #endif
 
 void		initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

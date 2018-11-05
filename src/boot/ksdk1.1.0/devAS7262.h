@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devAS7262_ENABLE
-#define kWarp_devAS7262_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVAS7262
+#define WARP_BUILD_ENABLE_DEVAS7262
 #endif
 
 void		initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

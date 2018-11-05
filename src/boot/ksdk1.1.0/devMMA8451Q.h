@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devMMA8451Q_ENABLE
-#define kWarp_devMMA8451Q_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVMMA8451Q
+#define WARP_BUILD_ENABLE_DEVMMA8451Q
 #endif
 
 void		initMMA8451Q(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

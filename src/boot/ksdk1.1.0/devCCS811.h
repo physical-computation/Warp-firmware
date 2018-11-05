@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devCCS811_ENABLE
-#define kWarp_devCCS811_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVCCS811
+#define WARP_BUILD_ENABLE_DEVCCS811
 #endif
 
 void		initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

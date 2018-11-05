@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devBME680_ENABLE
-#define kWarp_devBME680_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVBME680
+#define WARP_BUILD_ENABLE_DEVBME680
 #endif
 
 void		initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devSI4705_ENABLE
-#define kWarp_devSI4705_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVSI4705
+#define WARP_BUILD_ENABLE_DEVSI4705
 #endif
 
 void		initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

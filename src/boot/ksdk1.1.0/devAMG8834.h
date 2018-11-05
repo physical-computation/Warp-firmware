@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef warp_devAMG8834_ENABLE
-#define warp_devAMG8834_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVAMG8834
+#define WARP_BUILD_ENABLE_DEVAMG8834
 #endif
 
 void		initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);

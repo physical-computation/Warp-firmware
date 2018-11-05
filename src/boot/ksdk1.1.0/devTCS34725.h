@@ -35,8 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef kWarp_devTCS34725_ENABLE
-#define kWarp_devTCS34725_ENABLE
+#ifndef WARP_BUILD_ENABLE_DEVTCS34725
+#define WARP_BUILD_ENABLE_DEVTCS34725
 #endif
 
 void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
