@@ -8,31 +8,31 @@
 /*
  *	On Warp, these are the alternative functions we have chosen:
  *
- *	Pin Name					Default		Configuration				Revision Notes
+ *	Pin Name			Default		Configuration				Revision Notes
  *	=========================	========	====================================================================================
- *	PTA0/IRQ_0/LLWU_P7			SWD_CLK		ALT1		PTA0/ IRQ_0/LLWU_P7
+ *	PTA0/IRQ_0/LLWU_P7		SWD_CLK		ALT1		PTA0/ IRQ_0/LLWU_P7
  *	PTA1/IRQ_1/LPTMR0_ALT1		RESET_b		ALT1		PTA1/IRQ_1/LPTMR0_ALT1
- *	PTA2						SWD_DIO		ALT1		PTA2
- *	PTA3						EXTAL0		DEFAULT		EXTAL0
- *	PTA4						XTAL0		DEFAULT		XTAL0
- *	PTA5/RTC_CLK_IN				DISABLED	ALT1 		PTA5
- *	PTA6						DISABLED	ALT3		SPI0_MISO
- *	PTA7/IRQ_4					DISABLED	ALT3		SPI0_MOSI
- *	PTA8						ADC0_SE2	ALT1		PTA8
- *	PTA9						ADC0_SE2	ALT1		PTA9			(was ALT3 + SPI0_SCK in Warp v2)
+ *	PTA2				SWD_DIO		ALT1		PTA2
+ *	PTA3				EXTAL0		DEFAULT		EXTAL0
+ *	PTA4				XTAL0		DEFAULT		XTAL0
+ *	PTA5/RTC_CLK_IN			DISABLED	ALT1 		PTA5
+ *	PTA6				DISABLED	ALT3		SPI0_MISO
+ *	PTA7/IRQ_4			DISABLED	ALT3		SPI0_MOSI
+ *	PTA8				ADC0_SE2	ALT1		PTA8
+ *	PTA9				ADC0_SE2	ALT1		PTA9			(was ALT3 + SPI0_SCK in Warp v2)
  *	PTA12/IRQ_13/LPTMR0_ALT2	ADC0_SE0	ALT1		PTA12/IRQ_13/LPTMR0_ALT2
  *
- *	PTB0/IRQ_5/LLWU_P4			ADC0_SE9	ALT3		SPI0_SCK		(was  ALT1 + PTB0/IRQ_5/LLWU_P4 in Warp v2)
- *	PTB1/IRQ_6					ADC0_SE8	DEFAULT		ADC0_SE8
- *	PTB2/IRQ_7					VREF_OUT	ALT1		PTB2/IRQ_7
- *	PTB3/IRQ_10					DISABLED	ALT2		I2C0_SCL
- *	PTB4/IRQ_11					DISABLED	ALT2		I2C0_SDA
- *	PTB5/IRQ_12					NMI_b		ALT1		PTB5/IRQ_12
-  *	PTB6						DISABLED	ALT1		PTB6			(was unused in Warp v2)
- *	PTB7						DISABLED	ALT1		PTB7			(was unused in Warp v2)
- *	PTB10						DISABLED	ALT1		PTB10			(was unused in Warp v2)
- *	PTB11						DISABLED	ALT1		PTB11
- *	PTB13/CLKOUT32K				DISABLED	ALT1		PTB13/CLKOUT32K
+ *	PTB0/IRQ_5/LLWU_P4		ADC0_SE9	ALT3		SPI0_SCK		(was  ALT1 + PTB0/IRQ_5/LLWU_P4 in Warp v2)
+ *	PTB1/IRQ_6			ADC0_SE8	DEFAULT		ADC0_SE8
+ *	PTB2/IRQ_7			VREF_OUT	ALT1		PTB2/IRQ_7
+ *	PTB3/IRQ_10			DISABLED	ALT2		I2C0_SCL
+ *	PTB4/IRQ_11			DISABLED	ALT2		I2C0_SDA
+ *	PTB5/IRQ_12			NMI_b		ALT1		PTB5/IRQ_12
+  *	PTB6				DISABLED	ALT1		PTB6			(was unused in Warp v2)
+ *	PTB7				DISABLED	ALT1		PTB7			(was unused in Warp v2)
+ *	PTB10				DISABLED	ALT1		PTB10			(was unused in Warp v2)
+ *	PTB11				DISABLED	ALT1		PTB11
+ *	PTB13/CLKOUT32K			DISABLED	ALT1		PTB13/CLKOUT32K
  *
  *	Historical notes:
  *		A long time ago, before switching to SEGGER RTT for print, we repurposed PTB3/PTB4 for LPUART0_TX/RX for debug prints,
@@ -63,13 +63,13 @@ enum _gpio_pins
 	kWarpPinTPS82740_VSEL3			= GPIO_MAKE_PIN(HW_GPIOB, 5),		/*	Warp TPS82740_VSEL3	--> PTB5									*/
 	kWarpPinTS5A3154_IN			= GPIO_MAKE_PIN(HW_GPIOB, 6),		/*	Warp TS5A3154_IN	--> PTB6		(was unused in Warp v2)					*/
 	kWarpPinSI4705_nRST			= GPIO_MAKE_PIN(HW_GPIOB, 7),		/*	Warp SI4705_nRST	--> PTB7		(was unused in Warp v2)					*/
-	kWarpPinPAN1326_nSHUTD		= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	Warp PAN1326_nSHUTD	--> PTB10		(was unused in Warp v2)					*/
-	kWarpPinISL23415_nCS		= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	Warp ISL23415_nCS	--> PTB11		(was TPS82675_MODE in Warp v2)				*/
+	kWarpPinPAN1326_nSHUTD			= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	Warp PAN1326_nSHUTD	--> PTB10		(was unused in Warp v2)					*/
+	kWarpPinISL23415_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	Warp ISL23415_nCS	--> PTB11		(was TPS82675_MODE in Warp v2)				*/
 	kWarpPinCLKOUT32K			= GPIO_MAKE_PIN(HW_GPIOB, 13),		/*	Warp KL03_CLKOUT32K	--> PTB13									*/
 
 #ifdef WARP_FRDMKL03
 	kWarpPinUnusedPTB2			= GPIO_MAKE_PIN(HW_GPIOB, 2),		/*	PTB2: unused												*/
-	kWarpPinPAN1323_nSHUTD		= GPIO_MAKE_PIN(HW_GPIOB, 3),		/*	For FRDM<->PAN1323ETU	--> PTB3									*/
+	kWarpPinPAN1323_nSHUTD			= GPIO_MAKE_PIN(HW_GPIOB, 3),		/*	For FRDM<->PAN1323ETU	--> PTB3									*/
 	kWarpPinUnusedPTB4			= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	PTB4: unused												*/
 	kWarpPinUnusedPTA6			= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	PTA6: unused												*/
 	kWarpPinUnusedPTA7			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	PTA7: unused												*/
