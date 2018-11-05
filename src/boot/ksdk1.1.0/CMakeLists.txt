@@ -5,7 +5,7 @@ SET(CMAKE_SYSTEM_NAME Generic)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
 # THE VERSION NUMBER
-SET (Tutorial_VERSION_MAJOR 1)  
+SET (Tutorial_VERSION_MAJOR 1)
 SET (Tutorial_VERSION_MINOR 0)
 
 # ENABLE ASM
@@ -34,7 +34,7 @@ SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -g  -mcpu=cortex-m0plus  -mt
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g  -mcpu=cortex-m0plus  -mthumb  -MMD  -MP  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99 -fshort-enums")
 
 # DEBUG LD FLAGS
-SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -g  --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x200  -Xlinker --defsym=__heap_size__=0x50")
+SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -g  --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x2E0  -Xlinker --defsym=__heap_size__=0x00")
 
 # RELEASE ASM FLAGS
 SET(CMAKE_ASM_FLAGS_RELEASE "${CMAKE_ASM_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mthumb  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99")
@@ -43,7 +43,7 @@ SET(CMAKE_ASM_FLAGS_RELEASE "${CMAKE_ASM_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mt
 SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mthumb  -MMD  -MP  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99 -fshort-enums")
 
 # RELEASE LD FLAGS
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x200  -Xlinker --defsym=__heap_size__=0x50")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x2E0  -Xlinker --defsym=__heap_size__=0x00")
 
 # ASM MACRO
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG}  -DDEBUG")
@@ -70,9 +70,8 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
+	INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
+	
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -81,10 +80,8 @@ ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/startup/MKL03Z4)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc) 
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src) #FIXME:
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../demos/Warp/src/btstack) #FIXME: added to fix link errors 
 ENDIF()
 
 # ADD_EXECUTABLE
@@ -118,10 +115,7 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/startup.h"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
-    
-    # "${ProjDirPath}/../../src/btstack/led_counter.c"                    #~4kb
-    # "${ProjDirPath}/../../src/btstack/hal_led.c" 			            #~0.2kb	  
-    
+        
     "${ProjDirPath}/../../src/btstack/btstack_linked_list.c"            #~0.3kb   
     "${ProjDirPath}/../../src/btstack/btstack_memory.c"                 #~0.5kb  
     "${ProjDirPath}/../../src/btstack/btstack_memory_pool.c"            #~0.2kb
@@ -130,8 +124,7 @@ ADD_EXECUTABLE(Warp
     
     "${ProjDirPath}/../../src/btstack/hal_cpu.c"                        #~0.3kb 
     "${ProjDirPath}/../../src/btstack/hal_tick.c"	                    #~0      
-    # "${ProjDirPath}/../../src/btstack/hci_dump.c"		                #~0
-    "${ProjDirPath}/../../src/btstack/btstack_util.c"			        #~0        
+    "${ProjDirPath}/../../src/btstack/btstack_util.c"			        #~0       / 
 	"${ProjDirPath}/../../src/btstack/btstack_chipset_cc256x.c"         #~5kB          
 	"${ProjDirPath}/../../src/btstack/cc2564cInit.c"                    #~5kB  
     
@@ -143,10 +136,6 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../src/btstack/hci_transport_h4.c"               #~0.5kB             
 
 )
-#contribution to .text overflow amount ^
-
-
-
 SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
 
 TARGET_LINK_LIBRARIES(Warp -Wl,--start-group)
@@ -166,7 +155,7 @@ TARGET_LINK_LIBRARIES(Warp -Wl,--end-group)
 
 # MAP FILE
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}  -Xlinker -Map=debug/Warp.map")
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Xlinker --cref -Xlinker -Map=release/Warp.map ")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}  -Xlinker -Map=release/Warp.map")
 
 # BIN AND HEX
 ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Oihex ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.hex)
