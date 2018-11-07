@@ -108,3 +108,6 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
   year = 2018,
 }
 
+
+### Acknowledgements
+This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
