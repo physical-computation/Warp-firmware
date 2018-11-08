@@ -34,7 +34,7 @@ SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -g  -mcpu=cortex-m0plus  -mt
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g  -mcpu=cortex-m0plus  -mthumb  -MMD  -MP  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99 -fshort-enums")
 
 # DEBUG LD FLAGS
-SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -g  --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x200  -Xlinker --defsym=__heap_size__=0x50")
+SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -g  --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x2E0  -Xlinker --defsym=__heap_size__=0x00")
 
 # RELEASE ASM FLAGS
 SET(CMAKE_ASM_FLAGS_RELEASE "${CMAKE_ASM_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mthumb  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99")
@@ -43,7 +43,7 @@ SET(CMAKE_ASM_FLAGS_RELEASE "${CMAKE_ASM_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mt
 SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mcpu=cortex-m0plus  -mthumb  -MMD  -MP  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mapcs  -std=gnu99 -fshort-enums")
 
 # RELEASE LD FLAGS
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x200  -Xlinker --defsym=__heap_size__=0x50")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} --specs=nano.specs  -lm  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -Os  -mthumb  -mapcs  -Xlinker --gc-sections  -Xlinker -static  -Xlinker -z  -Xlinker muldefs  -Xlinker --defsym=__stack_size__=0x2E0  -Xlinker --defsym=__heap_size__=0x00")
 
 # ASM MACRO
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG}  -DDEBUG")
@@ -70,8 +70,7 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
-	INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
-	
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/Warp)
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -115,7 +114,6 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../platform/startup/startup.h"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/Warp/gpio_pins.h"
-
 )
 SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
 
