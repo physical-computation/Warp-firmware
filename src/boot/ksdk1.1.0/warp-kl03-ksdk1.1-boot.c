@@ -1,26 +1,20 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell. Modified 2018. Youchao Wang
-
+	Authored 2016-2018. Phillip Stanley-Marbell.
 	All rights reserved.
-
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions
 	are met:
-
 	*	Redistributions of source code must retain the above
 		copyright notice, this list of conditions and the following
 		disclaimer.
-
 	*	Redistributions in binary form must reproduce the above
 		copyright notice, this list of conditions and the following
 		disclaimer in the documentation and/or other materials
 		provided with the distribution.
-
 	*	Neither the name of the author nor the names of its
 		contributors may be used to endorse or promote products
 		derived from this software without specific prior written
 		permission.
-
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -68,7 +62,6 @@
 #include "devPAN1326.h"
 #include "devAS7262.h"
 #include "devAS7263.h"
-#include "devSSD1331.h"
 
 
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
@@ -822,6 +815,166 @@ dumpProcessorState(void)
 	SEGGER_RTT_printf(0, "\r\tTPM clock: %d\n", CLOCK_SYS_GetTpmGateCmd(0));
 }
 
+void
+endlessLoop(long iterations)
+{
+	int value;
+	for (volatile long i = 0; i < iterations; i++)
+	{
+		value = 99 + i * 254;
+	}
+}
+
+uint8_t
+checkSum(uint8_t *  pointer, uint16_t length) //https://stackoverflow.com/questions/31151032/writing-an-8-bit-checksum-in-c
+{
+	unsigned int sum;
+	for ( sum = 0 ; length != 0 ; length-- )
+	{
+		sum += *(pointer++);
+	}
+	return (uint8_t)sum;
+}
+
+bool
+writeToMMA8451Q(uint16_t	menuI2cPullupValue)
+{
+	/*
+	 *	writing the control bytes
+	 */
+	
+	uint8_t		i2cAddress, payloadByte[1], commandByte[1];
+	i2c_status_t	i2cStatus;
+	WarpStatus	status;
+
+	i2cAddress = 0x1D; /* acc addr, 7-bit */
+	
+	i2c_device_t slave =
+	{
+		.address = i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+	
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	uint8_t	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
+	commandByte[0] = menuRegisterAddress;
+	payloadByte[0] = 0x00; /*	Disable FIFO	*/
+		
+	i2cStatus = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (i2cStatus != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
+		return false;
+	}
+	
+	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
+	commandByte[0] = menuRegisterAddress;
+	payloadByte[0] = 0x03;  /* Enable fast read 8bit, 800Hz, normal, active mode */
+		
+	i2cStatus = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (i2cStatus != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
+		return false;
+	}
+	
+	disableI2Cpins();
+	return true;
+}
+
+bool
+readFromMMA8451Q(void)
+{
+	enableI2Cpins(1);
+
+	uint8_t cmdBuf[1]	= {0xFF};
+	uint8_t	acc[3];
+
+	i2c_status_t		returnValue; /* saved for use later in debugging */
+
+	i2c_device_t slave =
+	{
+		.address = deviceMMA8451QState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	cmdBuf[0] = 0x01;
+	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave,
+							cmdBuf,
+							1,
+							(uint8_t *)deviceMMA8451QState.i2cBuffer,
+							1,
+							500 /* timeout in milliseconds */);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return false;
+	}
+	acc[0] = deviceMMA8451QState.i2cBuffer[0];
+	SEGGER_RTT_printf(0, "\nReading from sensor X: %d", acc[0]);
+
+	cmdBuf[0] = 0x03;
+	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave,
+							cmdBuf,
+							1,
+							(uint8_t *)deviceMMA8451QState.i2cBuffer,
+							1,
+							500 /* timeout in milliseconds */);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return false;
+	}
+	acc[1] = deviceMMA8451QState.i2cBuffer[0];
+	SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", acc[1]);
+
+
+	cmdBuf[0] = 0x05;
+	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+							0 /* I2C peripheral instance */,
+							&slave,
+							cmdBuf,
+							1,
+							(uint8_t *)deviceMMA8451QState.i2cBuffer,
+							1,
+							500 /* timeout in milliseconds */);	
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return false;
+	}
+	acc[2] = deviceMMA8451QState.i2cBuffer[0];
+	SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", acc[2]);
+
+	if(acc[0] == acc[1] && acc[1] == acc[2] && (acc[2] == 0 || acc[2] == 255))
+	{
+		return false;
+	}
+	
+	return true;
+}
+
 int
 main(void)
 {
@@ -829,7 +982,7 @@ main(void)
 	WarpSensorDevice			menuTargetSensor = kWarpSensorADXL362;
 	uint16_t				menuI2cPullupValue = 32768;
 	uint8_t					menuRegisterAddress = 0x00;
-	uint16_t				menuSupplyVoltage = 3300;
+	uint16_t				menuSupplyVoltage = 0;
 
 
 	rtc_datetime_t				warpBootDate;
@@ -916,7 +1069,7 @@ main(void)
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
 
-	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp-adapted, in 3... ");
+	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp, in 3... ");
 	OSA_TimeDelay(500);
 	SEGGER_RTT_WriteString(0, "2... ");
 	OSA_TimeDelay(500);
@@ -1042,7 +1195,7 @@ main(void)
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	); //modified the address
+	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 	initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
@@ -1089,275 +1242,747 @@ main(void)
 	disableSssupply();
 
 
-	powerupAllSensors();
-
 	/*
-	 *	writing the control bytes for MMA8451Q
+	 *	TODO: initialize the kWarpPinKL03_VDD_ADC, write routines to read the VDD and temperature
 	 */
-	
-	uint8_t		i2cAddress, payloadByte[2], commandByte[1];
-	i2c_status_t	i2cStatus;
-	WarpStatus	status;
 
-	i2cAddress = 0x1C; /* acc addr, 7-bit */
-	
-	i2c_device_t slave =
-	{
-		.address = i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-	
-	enableSssupply(menuSupplyVoltage);
-	enableI2Cpins(menuI2cPullupValue);
 
 	/*
 	 *	Wait for supply and pull-ups to settle.
 	 */
 	OSA_TimeDelay(1000);
 
-	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x00; /*	Disable FIFO	*/
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-	}
-	
-	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x03;  /* Enable fast read 8bit, 800Hz, normal, active mode */
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-	}
-	
-	disableI2Cpins();
-	/*	Essential writes complete for MMA8451Q	*/
 
-	/*
-	 *	writing the control bytes for HDC1000
-	 */
-
-	i2cAddress = 0x77;
-	
-	enableSssupply(menuSupplyVoltage);
-	enableI2Cpins(menuI2cPullupValue);
-
-	/*
-	 *	Wait for supply and pull-ups to settle.
-	 */
-	OSA_TimeDelay(1000);
-
-	menuRegisterAddress = 0x02; /*	configuration register	*/ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x10; /*	MSB	*/
-	payloadByte[1] = 0x00; /*	LSB	*/
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							2,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-	}
-	
-	menuRegisterAddress = 0x00; /* Another write to trigger measurement */ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x00;  /* Enable fast read 8bit, 800Hz, normal, active mode */
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							0,   // Pip: if txSize is zero, don't try to send anything
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-	}
-	
-	disableI2Cpins();
-	/*	Essential writes complete for HDC1000	*/
-
-	SEGGER_RTT_WriteString(0, "X, Y, Z, Temperature, Humidity\n");
 
 	while (1)
 	{
 		/*
-		 *	Adapted from Warp-firmware by Youchao Wang
-		 */
-		
-		/*
-		 *	Read values from the accel sensor, the default full scale value range is 2g
-		 *	and the high-pass filter is disabled
-		 *	the measurement range is -2g to +1.99975g, and each count corresponds to 1g/64 (15.6mg)
-		 */
-		
-		/*
-		 *	Parameters known: mass m = 2kg, cable diameter D = 0.3m, cable length l = 1.2m, deltaT = 2e-5
-		 *	density rho = 1.0kg/m^3, viscosity mu = 0.89*10^3 Pa/s (kg/m*s)
-		 */
-		
-		double	l = 1.2;
-		double	D = 0.3;
-		double 	m = 2.0;
-		double 	deltaT = 2e-5;
-		double 	rho = 1.0;
-		double 	mu = 0.00089;
-
-		u_int32_t	PIOne[100], PITwo[100],PIThree[100],PIFour[100],PIFive[100],PISix[100],PISeven[100],PIEight[100];
-		
-		u_int8_t	accX[100], accY[100], accZ[100];
-		double 	accValueX[100], accValueY[100], accValueZ[100]; 
-		double 	accValueSqrt[100], accValueTotal[100];  
-		
-		double 	speValueX[100], speValueY[100], speValueZ[100];
-		double 	speValueSqrt[100], speValueTotal[100];
-
-		double 	forceValue[100];
-		
-
-		u_int8_t	temperature[2], humidity[2];
-		u_int16_t	temperatureTot, humidityTot;
-		/*
-		 *	I2C operations
+		 *	Do not, e.g., lowPowerPinStates() on each iteration, because we actually
+		 *	want to use menu to progressiveley change the machine state with various
+		 *	commands.
 		 */
 
-		enableI2Cpins(1);
+		SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
+		SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t    Cambridge / Physcomplab / PSM\t\t\t\t  ]\n\n");
 		
-		uint8_t cmdBuf[1]	= {0xFF};
-		
-		i2c_status_t		returnValue; /* saved for use later in debugging */
+		SEGGER_RTT_printf(0, "\r\tSupply=%dmV,\tDefault Target Read Register=0x%02x\n",
+								menuSupplyVoltage, menuRegisterAddress);
+		SEGGER_RTT_printf(0, "\r\tI2C=%dkb/s,\tSPI=%dkb/s,\tUART=%dkb/s,\tI2C Pull-Up=%d\n\n",
+								gWarpI2cBaudRateKbps, gWarpSpiBaudRateKbps, gWarpUartBaudRateKbps, menuI2cPullupValue);
 
-		i2c_device_t slave =
+		SEGGER_RTT_printf(0, "\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TSR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TSR);
+		SEGGER_RTT_printf(0, "\r\tMCG_C1=0x%02x\t\t\tMCG_C2=0x%02x\t\tMCG_S=0x%02x\n", MCG_C1, MCG_C2, MCG_S);
+		SEGGER_RTT_printf(0, "\r\tMCG_SC=0x%02x\t\t\tMCG_MC=0x%02x\t\tOSC_CR=0x%02x\n", MCG_SC, MCG_MC, OSC_CR);
+		SEGGER_RTT_printf(0, "\r\tSMC_PMPROT=0x%02x\t\t\tSMC_PMCTRL=0x%02x\t\tSCB->SCR=0x%02x\n", SMC_PMPROT, SMC_PMCTRL, SCB->SCR);
+		SEGGER_RTT_printf(0, "\r\tPMC_REGSC=0x%02x\t\t\tSIM_SCGC4=0x%02x\n\n", PMC_REGSC, SIM_SCGC4);
+
+		SEGGER_RTT_printf(0, "\r\t%ds in RTC Handler to-date,\t%d Pmgr Errors\n", gWarpSleeptimeSeconds, powerManagerCallbackStructure.errorCount);
+
+		SEGGER_RTT_WriteString(0, "\rSelect:\n");
+		SEGGER_RTT_WriteString(0, "\r- 'a': set default sensor.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'b': set I2C baud rate.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'c': set SPI baud rate.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'd': set UART baud rate.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'e': set default register address.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'f': write byte to sensor.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'g': set default SSSUPPLY.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'h': powerdown command to all sensors.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'i': set pull-up enable value.\n");
+		SEGGER_RTT_printf(0, "\r- 'j': repeat read reg 0x%02x on sensor #%d.\n", menuRegisterAddress, menuTargetSensor);
+		SEGGER_RTT_WriteString(0, "\r- 'k': sleep until reset.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'l': send repeated byte on I2C.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'm': send repeated byte on SPI.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'n': enable SSSUPPLY.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'o': disable SSSUPPLY.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
+		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
+		SEGGER_RTT_WriteString(0, "\r- 't': dump processor state.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'y': stress test (need a force quit)\n");
+		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
+
+		key = SEGGER_RTT_WaitKey();
+
+		switch (key)
 		{
-			.address = deviceMMA8451QState.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps
-		};
+			/*
+			 *		Select sensor
+			 */
+			case 'a':
+			{
+				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362			(0x00--0x2D): 1.6V  -- 3.5V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'f' PAN1326			(n/a)\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
 
-		/*	
-		 *	Update the data buffer in a loop, as the first fill (100 sets of data)
-		 */
+				key = SEGGER_RTT_WaitKey();
 
-		for(int i = 0; i < 100; i++)
-		{
-			i2cAddress = 0x1C;
+				switch(key)
+				{
+					case '1':
+					{
+						menuTargetSensor = kWarpSensorADXL362;
 
-			cmdBuf[0] = 0x01;
-			returnValue = I2C_DRV_MasterReceiveDataBlocking(
-									0 /* I2C peripheral instance */,
-									&slave,
-									cmdBuf,
-									1,
-									(uint8_t *)deviceMMA8451QState.i2cBuffer,
-									1,
-									500 /* timeout in milliseconds */);
-			accX[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueX[i] = accX[i] / 64.0;
-									
-			cmdBuf[0] = 0x03;
-			returnValue = I2C_DRV_MasterReceiveDataBlocking(
-									0 /* I2C peripheral instance */,
-									&slave,
-									cmdBuf,
-									1,
-									(uint8_t *)deviceMMA8451QState.i2cBuffer,
-									1,
-									500 /* timeout in milliseconds */);
-			accY[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueY[i] = accY[i] / 64.0;
-			
-			cmdBuf[0] = 0x05;
-			returnValue = I2C_DRV_MasterReceiveDataBlocking(
-									0 /* I2C peripheral instance */,
-									&slave,
-									cmdBuf,
-									1,
-									(uint8_t *)deviceMMA8451QState.i2cBuffer,
-									1,
-									500 /* timeout in milliseconds */);	
-			accZ[i] = deviceMMA8451QState.i2cBuffer[0];
-			accValueZ[i] = (double) accZ[i] / 64.0;	/* as a proof of concept, using 8bit resolution */				
+						break;
+					}
 
-			SEGGER_RTT_printf(0, "%d,%d,%d,",accX[i],accY[i],accZ[i]);
+					case '2':
+					{
+						menuTargetSensor = kWarpSensorBMX055accel;
 
-		i2cAddress = 0x77;
-		/*
-		 *	Trigger next temp+humidity acquisition
-		 */
-		menuRegisterAddress = 0x00; /* Another write to trigger measurement */ 
-		commandByte[0] = menuRegisterAddress;
-		payloadByte[0] = 0x00;  /*  */
-		
-		i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							0,   // Pip: if txSize is zero, don't try to send anything
-							1000);
-		if (i2cStatus != kStatus_I2C_Success)
-		{
-			SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
+						break;
+					}
+
+					case '3':
+					{
+						menuTargetSensor = kWarpSensorBMX055gyro;
+
+						break;
+					}
+
+					case '4':
+					{
+						menuTargetSensor = kWarpSensorBMX055mag;
+
+						break;
+					}
+
+					case '5':
+					{
+						menuTargetSensor = kWarpSensorMMA8451Q;
+
+						break;
+					}
+
+					case '6':
+					{
+						menuTargetSensor = kWarpSensorLPS25H;
+
+						break;
+					}
+
+					case '7':
+					{
+						menuTargetSensor = kWarpSensorMAG3110;
+
+						break;
+					}
+
+					case '8':
+					{
+						menuTargetSensor = kWarpSensorHDC1000;
+
+						break;
+					}
+
+					case '9':
+					{
+						menuTargetSensor = kWarpSensorSI7021;
+
+						break;
+					}
+
+					case 'a':
+					{
+						menuTargetSensor = kWarpSensorL3GD20H;
+
+						break;
+					}
+
+					case 'b':
+					{
+						menuTargetSensor = kWarpSensorBME680;
+
+						break;
+					}
+
+					case 'd':
+					{
+						menuTargetSensor = kWarpSensorTCS34725;
+
+						break;
+					}
+
+					case 'e':
+					{
+						menuTargetSensor = kWarpSensorSI4705;
+
+						break;
+					}
+
+					case 'f':
+					{
+						menuTargetSensor = kWarpSensorPAN1326;
+
+						break;
+					}
+
+					case 'g':
+					{
+						menuTargetSensor = kWarpSensorCCS811;
+
+						break;
+					}
+
+					case 'h':
+					{
+						menuTargetSensor = kWarpSensorAMG8834;
+
+						break;
+					}
+
+					case 'j':
+					{
+						menuTargetSensor = kWarpSensorAS7262;
+
+						break;
+					}
+
+					case 'k':
+					{
+						menuTargetSensor = kWarpSensorAS7263;
+
+						break;
+					}
+
+					default:
+					{
+						SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);
+					}
+				}
+
+				break;
+			}
+
+			/*
+			 *	Change default I2C baud rate
+			 */
+			case 'b':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tSet I2C baud rate in kbps (e.g., '0001')> ");
+				gWarpI2cBaudRateKbps = read4digits();
+
+				/*
+				 *	Round 9999kbps to 10Mbps
+				 */
+				if (gWarpI2cBaudRateKbps == 9999)
+				{
+					gWarpI2cBaudRateKbps = 10000;
+				}
+
+				SEGGER_RTT_printf(0, "\r\n\tI2C baud rate set to %d kb/s", gWarpI2cBaudRateKbps);
+
+				break;
+			}
+
+			/*
+			 *	Change default SPI baud rate
+			 */
+			case 'c':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tSet SPI baud rate in kbps (e.g., '0001')> ");
+				gWarpSpiBaudRateKbps = read4digits();
+
+				/*
+				 *	Round 9999kbps to 10Mbps
+				 */
+				if (gWarpSpiBaudRateKbps == 9999)
+				{
+					gWarpSpiBaudRateKbps = 10000;
+				}
+
+				SEGGER_RTT_printf(0, "\r\n\tSPI baud rate: %d kb/s", gWarpSpiBaudRateKbps);
+
+				break;
+			}
+
+			/*
+			 *	Change default UART baud rate
+			 */
+			case 'd':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tSet UART baud rate in kbps (e.g., '0001')> ");
+				gWarpUartBaudRateKbps = read4digits();
+				SEGGER_RTT_printf(0, "\r\n\tUART baud rate: %d kb/s", gWarpUartBaudRateKbps);
+
+				break;
+			}
+
+			/*
+			 *	Set register address for subsequent operations
+			 */
+			case 'e':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tEnter 2-nybble register hex address (e.g., '3e')> ");
+				menuRegisterAddress = readHexByte();
+				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n\n", menuRegisterAddress);
+
+				break;
+			}
+
+			/*
+			 *	Write byte to sensor
+			 */
+			case 'f':
+			{
+				uint8_t		i2cAddress, payloadByte[1], commandByte[1];
+				i2c_status_t	i2cStatus;
+				WarpStatus	status;
+	
+
+				SEGGER_RTT_WriteString(0, "\r\n\tEnter I2C addr. (e.g., '0f') or '99' for SPI > ");
+				i2cAddress = readHexByte();
+				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n", i2cAddress);
+
+
+				SEGGER_RTT_WriteString(0, "\r\n\tEnter hex byte to send (e.g., '0f')> ");
+				payloadByte[0] = readHexByte();
+				SEGGER_RTT_printf(0, "\r\n\tEntered [0x%02x].\n", payloadByte[0]);
+
+				if (i2cAddress == 0x99)
+				{
+					SEGGER_RTT_printf(0, "\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);
+					status = writeSensorRegisterADXL362(	0x0A			/* command == write register	*/,
+										menuRegisterAddress,
+										payloadByte[0]		/* writeValue			*/
+									);
+					if (status != kWarpStatusOK)
+					{
+						SEGGER_RTT_printf(0, "\r\n\tSPI write failed, error %d.\n\n", status);
+					}
+				}
+				else
+				{
+					i2c_device_t slave =
+					{
+						.address = i2cAddress,
+						.baudRate_kbps = gWarpI2cBaudRateKbps
+					};
+
+					enableSssupply(menuSupplyVoltage);
+					enableI2Cpins(menuI2cPullupValue);
+
+					/*
+					 *	Wait for supply and pull-ups to settle.
+					 */
+					OSA_TimeDelay(1000);
+
+					commandByte[0] = menuRegisterAddress;
+					i2cStatus = I2C_DRV_MasterSendDataBlocking(
+											0 /* I2C instance */,
+											&slave,
+											commandByte,
+											1,
+											payloadByte,
+											1,
+											1000);
+					if (i2cStatus != kStatus_I2C_Success)
+					{
+						SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
+					}
+					disableI2Cpins();
+				}
+
+				/*
+				 *	NOTE: do not disable the supply here, because we typically want to build on the effect of this register write command.
+				 */
+
+				break;
+			}
+
+			/*
+			 *	Configure default TPS82740 voltage
+			 */
+			case 'g':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tOverride SSSUPPLY in mV (e.g., '1800')> ");
+				menuSupplyVoltage = read4digits();
+				SEGGER_RTT_printf(0, "\r\n\tOverride SSSUPPLY set to %d mV", menuSupplyVoltage);
+
+				break;
+			}
+
+			/*
+			 *	Activate low-power modes in all sensors.
+			 */
+			case 'h':
+			{
+				activateAllLowPowerSensorModes();
+
+				break;
+			}
+
+			/*
+			 *	Configure default pullup enable value
+			 */
+			case 'i':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tDefault pullup enable value in kiloOhms (e.g., '0000')> ");
+				menuI2cPullupValue = read4digits();
+				SEGGER_RTT_printf(0, "\r\n\tI2cPullupValue set to %d\n", menuI2cPullupValue);
+				
+				break;
+			}
+
+			/*
+			 *	Start repeated read
+			 */
+			case 'j':
+			{
+				bool		autoIncrement, chatty;
+				int		spinDelay, repetitionsPerAddress, chunkReadsPerAddress;
+				int		adaptiveSssupplyMaxMillivolts;
+				uint8_t		referenceByte;
+
+
+				SEGGER_RTT_printf(0, "\r\n\tAuto-increment from base address 0x%02x? ['0' | '1']> ", menuRegisterAddress);
+				autoIncrement = SEGGER_RTT_WaitKey() - '0';
+
+				SEGGER_RTT_WriteString(0, "\r\n\tChunk reads per address (e.g., '1')> ");
+				chunkReadsPerAddress = SEGGER_RTT_WaitKey() - '0';
+
+				SEGGER_RTT_WriteString(0, "\r\n\tChatty? ['0' | '1']> ");
+				chatty = SEGGER_RTT_WaitKey() - '0';
+
+				SEGGER_RTT_WriteString(0, "\r\n\tInter-operation spin delay in milliseconds (e.g., '0000')> ");
+				spinDelay = read4digits();
+
+				SEGGER_RTT_WriteString(0, "\r\n\tRepetitions per address (e.g., '0000')> ");
+				repetitionsPerAddress = read4digits();
+
+				SEGGER_RTT_WriteString(0, "\r\n\tMaximum voltage for adaptive supply (e.g., '0000')> ");
+				adaptiveSssupplyMaxMillivolts = read4digits();
+
+				SEGGER_RTT_WriteString(0, "\r\n\tReference byte for comparisons (e.g., '3e')> ");
+				referenceByte = readHexByte();
+
+				SEGGER_RTT_printf(0, "\r\n\tRepeating dev%d @ 0x%02x, reps=%d, pull=%d, delay=%dms:\n\n",
+					menuTargetSensor, menuRegisterAddress, repetitionsPerAddress, menuI2cPullupValue, spinDelay);
+
+				repeatRegisterReadForDeviceAndAddress(	menuTargetSensor /*warpSensorDevice*/, 
+									menuRegisterAddress /*baseAddress */,
+									menuI2cPullupValue,
+									autoIncrement /*autoIncrement*/,
+									chunkReadsPerAddress,
+									chatty,
+									spinDelay,
+									repetitionsPerAddress,
+									menuSupplyVoltage,
+									adaptiveSssupplyMaxMillivolts,
+									referenceByte
+								);
+
+				break;
+			}
+
+			/*
+			 *	Sleep for 30 seconds.
+			 */
+			case 'k':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tSleeping until system reset...\n");
+				sleepUntilReset();
+
+				break;
+			}
+
+			/*
+			 *	Send repeated byte on I2C or SPI
+			 */
+			case 'l':
+			case 'm':
+			{
+				uint8_t		outBuffer[1];
+				int		repetitions;
+
+				SEGGER_RTT_WriteString(0, "\r\n\tByte to send (e.g., 'F0')> ");
+				outBuffer[0] = readHexByte();
+
+				SEGGER_RTT_WriteString(0, "\r\n\tRepetitions (e.g., '0000')> ");
+				repetitions = read4digits();
+
+				if (key == 'l')
+				{
+					SEGGER_RTT_printf(0, "\r\n\tSending %d repetitions of [0x%02x] on I2C, i2cPullupEnable=%d, SSSUPPLY=%dmV\n\n",
+						repetitions, outBuffer[0], menuI2cPullupValue, menuSupplyVoltage);
+					for (int i = 0; i < repetitions; i++)
+					{
+						writeByteToI2cDeviceRegister(0xFF, true /* sedCommandByte */, outBuffer[0] /* commandByte */, false /* sendPayloadByte */, 0 /* payloadByte */);
+					}
+				}
+				else
+				{
+					SEGGER_RTT_printf(0, "\r\n\tSending %d repetitions of [0x%02x] on SPI, SSSUPPLY=%dmV\n\n",
+						repetitions, outBuffer[0], menuSupplyVoltage);
+					for (int i = 0; i < repetitions; i++)
+					{
+						writeBytesToSpi(outBuffer /* payloadByte */, 1 /* payloadLength */);
+					}
+				}
+
+				break;
+			}
+
+
+			/*
+			 *	enable SSSUPPLY
+			 */
+			case 'n':
+			{
+				enableSssupply(menuSupplyVoltage);
+				break;
+			}
+
+			/*
+			 *	disable SSSUPPLY
+			 */
+			case 'o':
+			{
+				disableSssupply();
+				break;
+			}
+
+			/*
+			 *	Switch to VLPR
+			 */
+			case 'p':
+			{
+				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
+				break;
+			}
+
+			/*
+			 *	Switch to RUN
+			 */
+			case 'r':
+			{
+				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+				break;
+			}
+
+			/*
+			 *	Power up all sensors
+			 */
+			case 's':
+			{
+				powerupAllSensors();
+				break;
+			}
+
+			/*
+			 *	Dump processor state
+			 */
+			case 't':
+			{
+				dumpProcessorState();
+				break;
+			}
+
+			/*
+			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
+			 */
+			case 'x':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tSpinning for 10 seconds...\n");
+				OSA_TimeDelay(10000);
+				SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");
+
+				break;
+			}
+
+			/*
+			 *	Stress test for Freedom KL03 board, including bit-wise toggling and checksum, as well as extensive add and mul, with continous read and write to I2C MMA8451Q
+			 */
+			case 'y':
+			{
+				enum
+				{
+					kRed	= GPIO_MAKE_PIN(HW_GPIOB, 10),
+					kGreen	= GPIO_MAKE_PIN(HW_GPIOB, 11),
+					kBlue	= GPIO_MAKE_PIN(HW_GPIOB, 13),
+				};
+				initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
+
+				writeToMMA8451Q(menuI2cPullupValue);
+
+				/*	Essential writes complete */	
+	
+				int j = 0;
+				bool isMemoryFull = false;
+
+				int NUMBER = 6;
+				uint8_t	memoryPointer[NUMBER];
+
+				GPIO_DRV_ClearPinOutput(kBlue);
+				GPIO_DRV_SetPinOutput(kRed);
+				GPIO_DRV_SetPinOutput(kGreen);
+				OSA_TimeDelay(1000);
+				GPIO_DRV_SetPinOutput(kBlue);
+				OSA_TimeDelay(1000);
+				GPIO_DRV_ClearPinOutput(kBlue);
+				OSA_TimeDelay(1000);
+				SEGGER_RTT_printf(0, "Filling memory");
+
+				for (uint16_t i = 0; i < NUMBER; i++)
+				{
+					if(i % 2 == 0)
+					{
+						memoryPointer[i] = 0b00110011;
+					}
+					if(i % 2 != 0)
+					{
+						memoryPointer[i] = 0b11001100;
+					}
+				}
+
+				uint8_t checkSumValue = checkSum(memoryPointer, NUMBER); // the initial check
+
+
+				while (1)
+				{
+					/*
+					 *	Testing
+					 */
+
+					GPIO_DRV_ClearPinOutput(kGreen);
+					GPIO_DRV_SetPinOutput(kRed);
+					GPIO_DRV_SetPinOutput(kBlue);
+					OSA_TimeDelay(100);
+
+					endlessLoop(65535);
+
+					GPIO_DRV_ClearPinOutput(kBlue);
+					GPIO_DRV_SetPinOutput(kRed);
+					GPIO_DRV_SetPinOutput(kGreen);
+					OSA_TimeDelay(100);
+					GPIO_DRV_ClearPinOutput(kRed);
+					GPIO_DRV_SetPinOutput(kBlue);
+					GPIO_DRV_SetPinOutput(kGreen);
+					OSA_TimeDelay(100);
+					GPIO_DRV_ClearPinOutput(kBlue);
+					GPIO_DRV_SetPinOutput(kRed);
+					GPIO_DRV_SetPinOutput(kGreen);
+					OSA_TimeDelay(100);	
+					for(uint16_t j = 0; j < NUMBER; j++)
+					{
+						memoryPointer[j] = ~memoryPointer[j];
+					}
+					SEGGER_RTT_printf(0, "\nBit-wise flip");
+
+					uint8_t checkSumValueOnline = checkSum(memoryPointer, NUMBER);
+					if(checkSumValue == checkSumValueOnline)
+					{
+						if(!writeToMMA8451Q(menuI2cPullupValue))
+						{
+							for(int errorLED = 0; errorLED < 5; errorLED++)
+							{
+								GPIO_DRV_ClearPinOutput(kRed);
+								GPIO_DRV_ClearPinOutput(kBlue);
+								GPIO_DRV_ClearPinOutput(kGreen);
+								OSA_TimeDelay(100);
+								GPIO_DRV_SetPinOutput(kRed);
+								GPIO_DRV_SetPinOutput(kBlue);
+								GPIO_DRV_SetPinOutput(kGreen);
+								OSA_TimeDelay(100);
+								GPIO_DRV_ClearPinOutput(kRed);
+								OSA_TimeDelay(1000);
+							}
+						}
+
+						if(!readFromMMA8451Q())
+						{
+							for(int errorLED = 0; errorLED < 5; errorLED++)
+							{
+								GPIO_DRV_ClearPinOutput(kRed);
+								GPIO_DRV_ClearPinOutput(kBlue);
+								GPIO_DRV_ClearPinOutput(kGreen);
+								OSA_TimeDelay(100);
+								GPIO_DRV_SetPinOutput(kRed);
+								GPIO_DRV_SetPinOutput(kBlue);
+								GPIO_DRV_SetPinOutput(kGreen);
+								OSA_TimeDelay(100);
+							}
+						}
+					}
+					else
+					{
+						while(1)
+						{
+							GPIO_DRV_ClearPinOutput(kRed);
+							GPIO_DRV_SetPinOutput(kBlue);
+							GPIO_DRV_SetPinOutput(kGreen);
+							OSA_TimeDelay(100);
+							GPIO_DRV_SetPinOutput(kRed);
+							OSA_TimeDelay(100);
+							if(!writeToMMA8451Q(menuI2cPullupValue))
+							{
+								for(int errorLED = 0; errorLED < 5; errorLED++)
+								{
+									GPIO_DRV_ClearPinOutput(kRed);
+									GPIO_DRV_ClearPinOutput(kBlue);
+									GPIO_DRV_ClearPinOutput(kGreen);
+									OSA_TimeDelay(100);
+									GPIO_DRV_SetPinOutput(kRed);
+									GPIO_DRV_SetPinOutput(kBlue);
+									GPIO_DRV_SetPinOutput(kGreen);
+									OSA_TimeDelay(100);
+									GPIO_DRV_ClearPinOutput(kRed);
+									OSA_TimeDelay(1000);
+								}
+							}
+							if(!readFromMMA8451Q())
+							{
+								for(int errorLED = 0; errorLED < 5; errorLED++)
+								{
+									GPIO_DRV_ClearPinOutput(kRed);
+									GPIO_DRV_ClearPinOutput(kBlue);
+									GPIO_DRV_ClearPinOutput(kGreen);
+									OSA_TimeDelay(100);
+									GPIO_DRV_SetPinOutput(kRed);
+									GPIO_DRV_SetPinOutput(kBlue);
+									GPIO_DRV_SetPinOutput(kGreen);
+									OSA_TimeDelay(100);
+								}
+							}
+						}
+					}
+				}
+
+
+				break;
+			}
+
+			/*
+			 *	Ignore naked returns.
+			 */
+			case '\n':
+			{
+				SEGGER_RTT_WriteString(0, "\r\tPayloads make rockets more than just fireworks.");
+				break;
+			}
+
+			default:
+			{
+				SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);
+			}
 		}
-
-		/*
-		 *	Don't work all the time, give the board a brief break
-		 */
-		OSA_TimeDelay(100);
-		
-		cmdBuf[0]	= 0x00;
-
-		returnValue = I2C_DRV_MasterReceiveDataBlocking(
-						0 /* I2C peripheral instance */,
-						&slave,
-						cmdBuf,
-						1,
-						(uint8_t *)deviceHDC1000State.i2cBuffer,
-						2,
-						500 /* timeout in milliseconds */);
-
-		temperature[0] = deviceHDC1000State.i2cBuffer[0]; /* MSB */
-		temperature[1] = deviceHDC1000State.i2cBuffer[1]; /* LSB */
-		//humidity[0] = deviceHDC1000State.i2cBuffer[2]; /* MSB */
-		//humidity[1] = deviceHDC1000State.i2cBuffer[3]; /* LSB */
-
-		temperatureTot = (temperature[0] << 8) + temperature[1];
-		//humidityTot = (humidity[0] << 8) + humidity[1];
-
-		//int tempVal = ((float)temperatureTot / 65536.0) * 165.0 - 40.0;
-		//int humiVal = ((float)humidityTot / 65536.0) * 100;
-
-		SEGGER_RTT_printf(0, "%d\n",temperatureTot);//, humidityTot);
-
-		}
-
 	}
 
 	return 0;
