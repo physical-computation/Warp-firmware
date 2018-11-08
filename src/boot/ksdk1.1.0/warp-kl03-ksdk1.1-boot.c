@@ -1302,60 +1302,16 @@ main(void)
 									500 /* timeout in milliseconds */);	
 			accZ[i] = deviceMMA8451QState.i2cBuffer[0];
 			accValueZ[i] = (double) accZ[i] / 64.0;	/* as a proof of concept, using 8bit resolution */				
-			
-			accValueSqrt[i] = accValueX[i]*accValueX[i]+accValueY[i]*accValueY[i]+accValueZ[i]*accValueZ[i];
-			accValueTotal[i] = sqrt(accValueSqrt[i]);
-			
-			speValueX[i] = m * accValueX[i] * deltaT;
-			speValueY[i] = m * accValueY[i] * deltaT;
-			speValueZ[i] = m * accValueZ[i] * deltaT;
-			
-			speValueSqrt[i] = speValueX[i]*speValueX[i]+speValueY[i]*speValueY[i]+speValueZ[i]*speValueZ[i];
-			speValueTotal[i] = sqrt(speValueSqrt[i]);
-
-			forceValue[i] = accValueTotal[i] * m;
-
-			PIOne[i] = l * speValueTotal[i] * rho * 100000 / mu ;
-			PITwo[i] = l * l * speValueTotal[i] * speValueTotal[i] * rho * 100000 / forceValue[i];
-			PIThree[i] = rho * mu * forceValue[i] * 100000;
-			PIFour[i] = l * speValueTotal[i] * rho * forceValue[i] * 100000;
-			PIFive[i] = l * speValueTotal[i] * mu * forceValue[i] * 100000;
-			PISix[i] = D * speValueTotal[i] * rho * 100000 / mu;
-			PISeven[i] = D * D * speValueTotal[i] * speValueTotal[i] * rho * 100000 / forceValue[i];
-			PIEight[i] = D * 100000 / l;
 
 			SEGGER_RTT_printf(0, "%d,%d,%d,",accX[i],accY[i],accZ[i]);
 
 		i2cAddress = 0x77;
-
-					cmdBuf[0]	= 0x01;
-
-		returnValue = I2C_DRV_MasterReceiveDataBlocking(
-						0 /* I2C peripheral instance */,
-						&slave,
-						cmdBuf,
-						1,
-						(uint8_t *)deviceHDC1000State.i2cBuffer,
-						4,
-						500 /* timeout in milliseconds */);
-		temperature[0] = deviceHDC1000State.i2cBuffer[0]; /* MSB */
-		temperature[1] = deviceHDC1000State.i2cBuffer[1]; /* LSB */
-		humidity[0] = deviceHDC1000State.i2cBuffer[2]; /* MSB */
-		humidity[1] = deviceHDC1000State.i2cBuffer[3]; /* LSB */
-
-		temperatureTot = temperature[0] << 8 + temperature[1];
-		humidityTot = humidity[0] << 8 + humidity[1];
-
-		int tempVal = ((float)temperatureTot / 65536.0) * 165.0 - 40.0;
-		int humiVal = ((float)humidityTot / 65536.0) * 100;
-
-		SEGGER_RTT_printf(0, "%d,%d\n",tempVal,humiVal);
 		/*
 		 *	Trigger next temp+humidity acquisition
 		 */
 		menuRegisterAddress = 0x00; /* Another write to trigger measurement */ 
 		commandByte[0] = menuRegisterAddress;
-		payloadByte[0] = 0x00;  /* Enable fast read 8bit, 800Hz, normal, active mode */
+		payloadByte[0] = 0x00;  /*  */
 		
 		i2cStatus = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -1373,7 +1329,32 @@ main(void)
 		/*
 		 *	Don't work all the time, give the board a brief break
 		 */
-		OSA_TimeDelay(1000);
+		OSA_TimeDelay(100);
+		
+		cmdBuf[0]	= 0x00;
+
+		returnValue = I2C_DRV_MasterReceiveDataBlocking(
+						0 /* I2C peripheral instance */,
+						&slave,
+						cmdBuf,
+						1,
+						(uint8_t *)deviceHDC1000State.i2cBuffer,
+						2,
+						500 /* timeout in milliseconds */);
+
+		temperature[0] = deviceHDC1000State.i2cBuffer[0]; /* MSB */
+		temperature[1] = deviceHDC1000State.i2cBuffer[1]; /* LSB */
+		//humidity[0] = deviceHDC1000State.i2cBuffer[2]; /* MSB */
+		//humidity[1] = deviceHDC1000State.i2cBuffer[3]; /* LSB */
+
+		temperatureTot = (temperature[0] << 8) + temperature[1];
+		//humidityTot = (humidity[0] << 8) + humidity[1];
+
+		//int tempVal = ((float)temperatureTot / 65536.0) * 165.0 - 40.0;
+		//int humiVal = ((float)humidityTot / 65536.0) * 100;
+
+		SEGGER_RTT_printf(0, "%d\n",temperatureTot);//, humidityTot);
+
 		}
 
 	}
