@@ -827,7 +827,7 @@ endlessLoop(long iterations)
 	int value;
 	for (volatile long i = 0; i < iterations; i++)
 	{
-		value = 99 + i * 254;
+		value = 99 + value * 254;
 	}
 }
 
@@ -849,15 +849,12 @@ writeToMMA8451Q(uint16_t	menuI2cPullupValue)
 	 *	writing the control bytes
 	 */
 	
-	uint8_t		i2cAddress, payloadByte[1], commandByte[1];
+	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	i2cStatus;
-	WarpStatus	status;
 
-	i2cAddress = 0x1D; /* acc addr, 7-bit */
-	
 	i2c_device_t slave =
 	{
-		.address = i2cAddress,
+		.address = deviceMMA8451QState.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 	
@@ -1201,7 +1198,7 @@ main(void)
 	initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
 	initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
-	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
+	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 	initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
 	initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
@@ -1304,6 +1301,7 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
 		SEGGER_RTT_WriteString(0, "\r- 't': dump processor state.\n");
+		SEGGER_RTT_WriteString(0, "\r- 'u': set I2C address.\n");
 		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
 		SEGGER_RTT_WriteString(0, "\r- 'y': stress test (need a force quit)\n");
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
@@ -1320,7 +1318,7 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '1' ADXL362			(0x00--0x2D): 1.6V  -- 3.5V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro			(0x00--0x3F): 2.4V  -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
@@ -1801,6 +1799,138 @@ main(void)
 				break;
 			}
 
+			case 'u':
+			{
+				SEGGER_RTT_WriteString(0, "\r\tSelect :\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro			(0x00--0x3F): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '6' LPS25H			(0x08--0x24): 1.7V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '8' HDC1000			(0x00--0x1F): 3.0V  -- 5.0V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '9' SI7021			(0x00--0x0F): 1.9V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'b' BME680			(0xAA--0xF8): 1.6V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V  -- 3.3V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'e' SI4705			(n/a):        2.7V  -- 5.5V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'g' CCS811			(0x00--0xFF): 1.8V  -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'h' AMG8834			(0x00--?): ?V  -- ?V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\tEnter selection> ");
+
+				key = SEGGER_RTT_WaitKey();
+
+				SEGGER_RTT_WriteString(0, "\r\n\tSet I2C address of the selected sensor(e.g., '1C')> ");
+				uint8_t address = readHexByte();
+
+				switch(key)
+				{
+					case '2':
+					{
+						deviceBMX055accelState.i2cAddress = address;
+						break;
+					}
+
+					case '3':
+					{
+						deviceBMX055gyroState.i2cAddress = address;
+						break;
+					}
+
+					case '4':
+					{
+						deviceBMX055magState.i2cAddress = address;
+						break;
+					}
+
+					case '5':
+					{
+						deviceMMA8451QState.i2cAddress = address;
+						break;
+					}
+
+					case '6':
+					{
+						deviceLPS25HState.i2cAddress = address;
+						break;
+					}
+
+					case '7':
+					{
+						deviceMAG3110State.i2cAddress = address;
+						break;
+					}
+
+					case '8':
+					{
+						deviceHDC1000State.i2cAddress = address;
+						break;
+					}
+
+					case '9':
+					{
+						deviceSI7021State.i2cAddress = address;
+						break;
+					}
+
+					case 'a':
+					{
+						deviceL3GD20HState.i2cAddress = address;
+						break;
+					}
+
+					case 'b':
+					{
+						deviceBME680State.i2cAddress = address;
+						break;
+					}
+
+					case 'd':
+					{
+						deviceTCS34725State.i2cAddress = address;
+						break;
+					}
+
+					case 'e':
+					{
+						deviceSI4705State.i2cAddress = address;
+						break;
+					}
+
+					case 'g':
+					{
+						deviceCCS811State.i2cAddress = address;
+						break;
+					}
+
+					case 'h':
+					{
+						deviceAMG8834State.i2cAddress = address;
+						break;
+					}
+
+					case 'j':
+					{
+						deviceAS7262State.i2cAddress = address;
+						break;
+					}
+
+					case 'k':
+					{
+						deviceAS7263State.i2cAddress = address;
+						break;
+					}
+
+					default:
+					{
+						SEGGER_RTT_printf(0, "\r\tInvalid selection '%c' !\n", key);
+					}
+				}
+				break;
+			}
+
 			/*
 			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
 			 */
@@ -1814,7 +1944,7 @@ main(void)
 			}
 
 			/*
-			 *	Stress test for Freedom KL03 board, including bit-wise toggling and checksum, as well as extensive add and mul, with continous read and write to I2C MMA8451Q
+			 *	Stress test, including bit-wise toggling and checksum, as well as extensive add and mul, with continous read and write to I2C MMA8451Q
 			 */
 			case 'y':
 			{
@@ -1824,14 +1954,12 @@ main(void)
 					kGreen	= GPIO_MAKE_PIN(HW_GPIOB, 11),
 					kBlue	= GPIO_MAKE_PIN(HW_GPIOB, 13),
 				};
-				initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
 
 				writeToMMA8451Q(menuI2cPullupValue);
 
-				/*	Essential writes complete */	
-	
-				int j = 0;
-				bool isMemoryFull = false;
+				/*	
+				 *	Essential writes complete
+				 */
 
 				int NUMBER = 184;
 				uint8_t	memoryPointer[NUMBER];
@@ -1858,13 +1986,15 @@ main(void)
 					}
 				}
 
-				uint8_t checkSumValue = checkSum(memoryPointer, NUMBER); // the initial check
+				uint8_t checkSumValue = checkSum(memoryPointer, NUMBER);
 
 
 				while (1)
 				{
 					/*
-					 *	Testing
+					 *	(1) endlessLoop performs basic multiplication and addition
+					 *	(2) bit-wise toggling and checksum operations are performed
+					 *	(3) checking the I2C read and write status
 					 */
 
 					GPIO_DRV_ClearPinOutput(kGreen);
@@ -1874,6 +2004,10 @@ main(void)
 
 					endlessLoop(65535);
 
+					/*
+					 *	Error-less operation
+					 *	LED pattern : Blue -> Red -> Blue
+					 */
 					GPIO_DRV_ClearPinOutput(kBlue);
 					GPIO_DRV_SetPinOutput(kRed);
 					GPIO_DRV_SetPinOutput(kGreen);
@@ -1885,7 +2019,8 @@ main(void)
 					GPIO_DRV_ClearPinOutput(kBlue);
 					GPIO_DRV_SetPinOutput(kRed);
 					GPIO_DRV_SetPinOutput(kGreen);
-					OSA_TimeDelay(100);	
+					OSA_TimeDelay(100);
+
 					for(uint16_t j = 0; j < NUMBER; j++)
 					{
 						memoryPointer[j] = ~memoryPointer[j];
@@ -1899,6 +2034,10 @@ main(void)
 						{
 							for(int errorLED = 0; errorLED < 5; errorLED++)
 							{
+								/*
+								 *	Error when writing to I2C device
+								 *	LED pattern : All On -> All off -> Red
+								 */
 								GPIO_DRV_ClearPinOutput(kRed);
 								GPIO_DRV_ClearPinOutput(kBlue);
 								GPIO_DRV_ClearPinOutput(kGreen);
@@ -1916,6 +2055,10 @@ main(void)
 						{
 							for(int errorLED = 0; errorLED < 5; errorLED++)
 							{
+								/*
+								 *	Error when reading from I2C device
+								 *	LED pattern : Red -> All off
+								 */
 								GPIO_DRV_ClearPinOutput(kRed);
 								GPIO_DRV_ClearPinOutput(kBlue);
 								GPIO_DRV_ClearPinOutput(kGreen);
@@ -1931,6 +2074,10 @@ main(void)
 					{
 						while(1)
 						{
+							/*
+							 *	Error in checksum leading to error in bit wise operation
+							 *	LED pattern : Red -> All off
+							 */
 							GPIO_DRV_ClearPinOutput(kRed);
 							GPIO_DRV_SetPinOutput(kBlue);
 							GPIO_DRV_SetPinOutput(kGreen);
@@ -1941,6 +2088,10 @@ main(void)
 							{
 								for(int errorLED = 0; errorLED < 5; errorLED++)
 								{
+									/*
+									 *	Error when writing to I2C device
+									 *	LED pattern : All On -> All off -> Red
+									 */
 									GPIO_DRV_ClearPinOutput(kRed);
 									GPIO_DRV_ClearPinOutput(kBlue);
 									GPIO_DRV_ClearPinOutput(kGreen);
@@ -1957,6 +2108,10 @@ main(void)
 							{
 								for(int errorLED = 0; errorLED < 5; errorLED++)
 								{
+									/*
+									 *	Error when reading from I2C device
+									 *	LED pattern : All on -> All off
+									 */
 									GPIO_DRV_ClearPinOutput(kRed);
 									GPIO_DRV_ClearPinOutput(kBlue);
 									GPIO_DRV_ClearPinOutput(kGreen);
