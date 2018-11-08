@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang
 
 	All rights reserved.
 
