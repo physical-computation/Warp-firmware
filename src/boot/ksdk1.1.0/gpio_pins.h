@@ -81,6 +81,11 @@ enum _gpio_pins
 	kWarpPinSPI_MISO			= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp KL03_SPI_MISO	--> PTA6									*/
 	kWarpPinSPI_MOSI			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	Warp KL03_SPI_MOSI	--> PTA7									*/
 	kWarpPinTPS82740A_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinTPS82740A_CTLEN --> PTA9		(was kWarpPinSPI_SCK_I2C_PULLUP_EN in Warp v2)		*/	
+
+	kWarpPinLPUART_HCI_TX 		= GPIO_MAKE_PIN(HW_GPIOB, 3), 		/*	Warp KL03_LPUART_TX	--> PTB3									*/
+	kWarpPinLPUART_HCI_RX 		= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	Warp KL03_LPUART_RX	--> PTB4									*/
+	kWarpPinPAN1326_HCI_RTS 	= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp kWarpPinPAN1326_HCI_RTS --> PTA6							*/
+	kWarpPinPAN1326_HCI_CTS 	= GPIO_MAKE_PIN(HW_GPIOA, 7)		/*	Warp kWarpPinPAN1326_HCI_CTS	--> PTA7						*/
 #endif
 };
 
