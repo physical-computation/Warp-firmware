@@ -11,6 +11,6 @@ In `Warp-firmware` the I2C address was configured as `0x1C`.
 
         Line 1655: initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);	
         
-Unfortunately, this is not the case for `FRDMKL03Z platform`, as the OpenSDA pin pulls up the `SA0` address selection pin on `MMA8451Q`. 
+Unfortunately, this is not the case for `FRDMKL03Z platform`, as `SA0` address selection pin on `MMA8451Q` is high. 
 
 The correct I2C address should be `0x1D`.
