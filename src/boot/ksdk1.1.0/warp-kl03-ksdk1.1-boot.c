@@ -1833,7 +1833,7 @@ main(void)
 				int j = 0;
 				bool isMemoryFull = false;
 
-				int NUMBER = 6;
+				int NUMBER = 184;
 				uint8_t	memoryPointer[NUMBER];
 
 				GPIO_DRV_ClearPinOutput(kBlue);
@@ -1844,7 +1844,7 @@ main(void)
 				OSA_TimeDelay(1000);
 				GPIO_DRV_ClearPinOutput(kBlue);
 				OSA_TimeDelay(1000);
-				SEGGER_RTT_printf(0, "Filling memory");
+				SEGGER_RTT_printf(0, "\n\nFilling memory");
 
 				for (uint16_t i = 0; i < NUMBER; i++)
 				{
