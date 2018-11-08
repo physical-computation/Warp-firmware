@@ -82,18 +82,6 @@
 // #include "btstack_main.h"
 
 
-#ifdef FELIX
-void felix_pollSensor(const char *  tagString,
-		WarpStatus  (* readSensorRegisterFunction)(uint8_t deviceRegister),
-		volatile WarpI2CDeviceState *  i2cDeviceState,
-		uint16_t  sssupplyMillivolts,
-		uint16_t  *data,
-		uint16_t  dataSize);
-
-uint16_t felixDataBuffer[12];
-#endif
-
-
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define					kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define					kWarpConstantStringErrorSanity		"\rSanity Check Failed!"
