@@ -1,5 +1,7 @@
 /*
 	Authored 2016-2018. Phillip Stanley-Marbell.
+	
+	Additional contributions, 2018: Jan Heck.
 
 	All rights reserved.
 
@@ -1715,7 +1717,12 @@ loopForSensor(	const char *  tagString,
 	OSA_TimeDelay(100);
 
 	SEGGER_RTT_WriteString(0, tagString);
-	while ((address <= maxAddress) && autoIncrement)
+
+	/*
+	 *	Keep on repeating until we are above the maxAddress, or just once if not autoIncrement-ing
+	 *	This is checked for at the tail end of the loop.
+	 */
+	while (true)
 	{
 		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
 		{
@@ -1784,6 +1791,15 @@ loopForSensor(	const char *  tagString,
 		if (autoIncrement)
 		{
 			address++;
+		}
+
+		if (address > maxAddress || !autoIncrement)
+		{
+			/*
+			 *	We either iterated over all possible addresses, or were asked to do only 
+			 *	one address anyway (i.e. don't increment), so we're done.
+			 */
+			break;
 		}
 	}
 
