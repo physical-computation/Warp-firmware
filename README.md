@@ -37,7 +37,7 @@ The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/
 
 The firmware builds on the Kinetis SDK. You can find more documentation on the Kinetis SDK in the document [doc/Kinetis SDK v.1.1 API Reference Manual.pdf](https://github.com/physical-computation/Warp-firmware/blob/master/doc/Kinetis%20SDK%20v.1.1%20API%20Reference%20Manual.pdf).
 
-The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [/src/boot/ksdk1.1.0/README.md](/src/boot/ksdk1.1.0/).
+The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [/src/boot/ksdk1.1.0/README.md](/src/boot/ksdk1.1.0/README.md).
 
 ## Interacting with the boot menu.
 When the firmware boots, you will be dropped into a menu:
