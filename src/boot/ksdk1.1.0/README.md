@@ -89,10 +89,10 @@ Definition of I/O pin configurations using the KSDK `gpio_output_pin_user_config
 ##### `gpio_pins.h`
 Definition of I/O pin mappings and aliases for different I/O pins to symbolic names relevant to the Warp hardware design, via `GPIO_MAKE_PIN()`.
 
-##### startup_MKL03Z4.S
+##### `startup_MKL03Z4.S`
 Initialization assembler.
 
-##### warp-kl03-ksdk1.1-boot.c
+##### `warp-kl03-ksdk1.1-boot.c`
 The core of the implementation. This puts together the processor initialization with a menu interface that triggers the individual sensor drivers based on commands entered at the menu.
 You can modify `warp-kl03-ksdk1.1-boot.c` to achieve a custom firmware implementation using the following steps:
 
@@ -107,8 +107,8 @@ You can modify `warp-kl03-ksdk1.1-boot.c` to achieve a custom firmware implement
 You can inspect the baseline firmware to see what functions are called when you enter commands at the menu. You can then use the underlying functionality that is already implemented to implement your own custom tasks.
 
 
-##### warp-kl03-ksdk1.1-powermodes.c
+##### `warp-kl03-ksdk1.1-powermodes.c`
 Implements functionality related to enabling the different low-power modes of the KL03.
 
-##### warp.h
+##### `warp.h`
 Constant and data structure definitions.
