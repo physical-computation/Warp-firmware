@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -832,7 +832,7 @@ endlessLoop(long iterations)
 }
 
 uint8_t
-checkSum(uint8_t *  pointer, uint16_t length) //https://stackoverflow.com/questions/31151032/writing-an-8-bit-checksum-in-c
+checkSum(uint8_t *  pointer, uint16_t length) /*	https://stackoverflow.com/questions/31151032/writing-an-8-bit-checksum-in-c	*/
 {
 	unsigned int sum;
 	for ( sum = 0 ; length != 0 ; length-- )
@@ -840,142 +840,6 @@ checkSum(uint8_t *  pointer, uint16_t length) //https://stackoverflow.com/questi
 		sum += *(pointer++);
 	}
 	return (uint8_t)sum;
-}
-
-bool
-writeToMMA8451Q(uint16_t	menuI2cPullupValue)
-{
-	/*
-	 *	writing the control bytes
-	 */
-	
-	uint8_t		payloadByte[1], commandByte[1];
-	i2c_status_t	i2cStatus;
-
-	i2c_device_t slave =
-	{
-		.address = deviceMMA8451QState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-	
-	enableI2Cpins(menuI2cPullupValue);
-
-	/*
-	 *	Wait for supply and pull-ups to settle.
-	 */
-	OSA_TimeDelay(100);
-
-	uint8_t	menuRegisterAddress = 0x09; /*	reigster F_SETUP	*/ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x00; /*	Disable FIFO	*/
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-		return false;
-	}
-	
-	menuRegisterAddress = 0x2A; /* reigster CTRL_REG1 */ 
-	commandByte[0] = menuRegisterAddress;
-	payloadByte[0] = 0x03;  /* Enable fast read 8bit, 800Hz, normal, active mode */
-		
-	i2cStatus = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							1000);
-	if (i2cStatus != kStatus_I2C_Success)
-	{
-		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", i2cStatus);
-		return false;
-	}
-	
-	disableI2Cpins();
-	return true;
-}
-
-bool
-readFromMMA8451Q(void)
-{
-	enableI2Cpins(1);
-
-	uint8_t cmdBuf[1]	= {0xFF};
-	uint8_t	acc[3];
-
-	i2c_status_t		returnValue; /* saved for use later in debugging */
-
-	i2c_device_t slave =
-	{
-		.address = deviceMMA8451QState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-
-	cmdBuf[0] = 0x01;
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceMMA8451QState.i2cBuffer,
-							1,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return false;
-	}
-	acc[0] = deviceMMA8451QState.i2cBuffer[0];
-	SEGGER_RTT_printf(0, "\nReading from sensor X: %d", acc[0]);
-
-	cmdBuf[0] = 0x03;
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceMMA8451QState.i2cBuffer,
-							1,
-							500 /* timeout in milliseconds */);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return false;
-	}
-	acc[1] = deviceMMA8451QState.i2cBuffer[0];
-	SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", acc[1]);
-
-
-	cmdBuf[0] = 0x05;
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceMMA8451QState.i2cBuffer,
-							1,
-							500 /* timeout in milliseconds */);	
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return false;
-	}
-	acc[2] = deviceMMA8451QState.i2cBuffer[0];
-	SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", acc[2]);
-
-	if(acc[0] == acc[1] && acc[1] == acc[2] && (acc[2] == 0 || acc[2] == 255))
-	{
-		return false;
-	}
-	
-	return true;
 }
 
 int
@@ -1948,6 +1812,10 @@ main(void)
 			 */
 			case 'y':
 			{
+				/*	
+				 *	Setup LED pins for FRDZ KL03
+				 */
+
 				enum
 				{
 					kRed	= GPIO_MAKE_PIN(HW_GPIOB, 10),
@@ -1955,13 +1823,34 @@ main(void)
 					kBlue	= GPIO_MAKE_PIN(HW_GPIOB, 13),
 				};
 
-				writeToMMA8451Q(menuI2cPullupValue);
-
 				/*	
-				 *	Essential writes complete
+				 *	I2C MMA8451Q initialization
 				 */
 
-				int NUMBER = 184;
+				WarpStatus i2cWriteStatusA, i2cWriteStatusB;
+				WarpStatus i2cReadStatusX = kWarpStatusDeviceCommunicationFailed;
+				WarpStatus i2cReadStatusY = kWarpStatusDeviceCommunicationFailed;
+				WarpStatus i2cReadStatusZ = kWarpStatusDeviceCommunicationFailed;
+
+				enableSssupply(menuSupplyVoltage);
+				enableI2Cpins(1);
+
+				i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
+										0x00 /* payload: Disable FIFO */,
+										1);
+
+				i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
+										0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
+										1);
+
+				uint8_t accValue[3] = {0,0,0};
+
+				/*	
+				 *	Fill up the remaining memory space using a fixed size array
+				 *	The size of this array is highly dependent on the firmware code size
+				 */
+
+				int NUMBER = 200;
 				uint8_t	memoryPointer[NUMBER];
 
 				GPIO_DRV_ClearPinOutput(kBlue);
@@ -2030,8 +1919,17 @@ main(void)
 					uint8_t checkSumValueOnline = checkSum(memoryPointer, NUMBER);
 					if(checkSumValue == checkSumValueOnline)
 					{
-						if(!writeToMMA8451Q(menuI2cPullupValue))
+						i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
+												0x00 /* payload: Disable FIFO */,
+												1);
+
+						i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
+												0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
+												1);
+						SEGGER_RTT_printf(0, "\nWriting to I2C device");
+						if((i2cWriteStatusA != i2cWriteStatusB) && (i2cWriteStatusB != kWarpStatusOK))
 						{
+							SEGGER_RTT_printf(0, "\nError when writing to I2C device");
 							for(int errorLED = 0; errorLED < 5; errorLED++)
 							{
 								/*
@@ -2051,8 +1949,31 @@ main(void)
 							}
 						}
 
-						if(!readFromMMA8451Q())
+						i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
+						if(i2cReadStatusX == kWarpStatusOK)
 						{
+							accValue[0] = deviceMMA8451QState.i2cBuffer[0];
+							SEGGER_RTT_printf(0, "\nReading from sensor X: %d", accValue[0]);
+
+							i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
+							if(i2cReadStatusY == kWarpStatusOK)
+							{
+								accValue[1] = deviceMMA8451QState.i2cBuffer[0];
+								SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", accValue[1]);
+
+								i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
+								if(i2cReadStatusZ == kWarpStatusOK)
+								{
+									accValue[2] = deviceMMA8451QState.i2cBuffer[0];
+									SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", accValue[2]);
+								}
+							}
+						}
+
+						if((i2cReadStatusX != i2cReadStatusY) && (i2cReadStatusY != i2cReadStatusZ) &&
+								(i2cReadStatusZ != kWarpStatusOK))
+						{
+							SEGGER_RTT_printf(0, "\nError when reading from I2C device");
 							for(int errorLED = 0; errorLED < 5; errorLED++)
 							{
 								/*
@@ -2069,6 +1990,12 @@ main(void)
 								OSA_TimeDelay(100);
 							}
 						}
+						else
+						{
+							accValue[0] = 0;
+							accValue[1] = 0;
+							accValue[2] = 0;
+						}
 					}
 					else
 					{
@@ -2078,14 +2005,26 @@ main(void)
 							 *	Error in checksum leading to error in bit wise operation
 							 *	LED pattern : Red -> All off
 							 */
+							SEGGER_RTT_printf(0, "\nError in checksum");
 							GPIO_DRV_ClearPinOutput(kRed);
 							GPIO_DRV_SetPinOutput(kBlue);
 							GPIO_DRV_SetPinOutput(kGreen);
 							OSA_TimeDelay(100);
 							GPIO_DRV_SetPinOutput(kRed);
 							OSA_TimeDelay(100);
-							if(!writeToMMA8451Q(menuI2cPullupValue))
+
+							SEGGER_RTT_printf(0, "\nWriting to I2C device");
+							i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
+												0x00 /* payload: Disable FIFO */,
+												1);
+
+							i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
+												0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
+												1);
+
+							if(i2cWriteStatusA != i2cWriteStatusB && i2cWriteStatusB != kWarpStatusOK)
 							{
+								SEGGER_RTT_printf(0, "\nError when writing to I2C device");
 								for(int errorLED = 0; errorLED < 5; errorLED++)
 								{
 									/*
@@ -2104,8 +2043,32 @@ main(void)
 									OSA_TimeDelay(1000);
 								}
 							}
-							if(!readFromMMA8451Q())
+							
+							i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
+							if(i2cReadStatusX == kWarpStatusOK)
 							{
+								accValue[0] = deviceMMA8451QState.i2cBuffer[0];
+								SEGGER_RTT_printf(0, "\nReading from sensor X: %d", accValue[0]);
+
+								i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
+								if(i2cReadStatusY == kWarpStatusOK)
+								{
+									accValue[1] = deviceMMA8451QState.i2cBuffer[0];
+									SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", accValue[1]);
+
+									i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
+									if(i2cReadStatusZ == kWarpStatusOK)
+									{
+										accValue[2] = deviceMMA8451QState.i2cBuffer[0];
+										SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", accValue[2]);
+									}
+								}
+							}
+
+							if((i2cReadStatusX != i2cReadStatusY) && (i2cReadStatusY != i2cReadStatusZ) &&
+								(i2cReadStatusZ != kWarpStatusOK))
+							{
+								SEGGER_RTT_printf(0, "\nError when reading from I2C device");
 								for(int errorLED = 0; errorLED < 5; errorLED++)
 								{
 									/*
@@ -2125,7 +2088,6 @@ main(void)
 						}
 					}
 				}
-
 
 				break;
 			}
