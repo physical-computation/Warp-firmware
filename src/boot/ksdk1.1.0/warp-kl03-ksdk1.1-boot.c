@@ -47,6 +47,7 @@
 #include "fsl_power_manager.h"
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
+#include "fsl_lpuart_driver.h"
 
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
