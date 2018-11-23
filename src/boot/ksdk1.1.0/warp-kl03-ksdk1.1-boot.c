@@ -53,6 +53,9 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
+/*
+*	Comment out the header file to disable devices
+*/
 #include "devBMX055.h"
 #include "devADXL362.h"
 #include "devMMA8451Q.h"
@@ -70,31 +73,86 @@
 #include "devAS7262.h"
 #include "devAS7263.h"
 
+#define SEGGER_RTT_printf_ENABLE
+/* #define SEGGER_RTT_WriteString_ENABLE /* parital impliemtnt */
+
+/*
+*	BTstack includes WIP
+*/
+// #include "btstack_main.h"
+
 
 #define					kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define					kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define					kWarpConstantStringErrorSanity		"\rSanity Check Failed!"
 
 
-volatile WarpSPIDeviceState		deviceADXL362State;
-volatile WarpI2CDeviceState		deviceBMX055accelState;
-volatile WarpI2CDeviceState		deviceBMX055gyroState;
-volatile WarpI2CDeviceState		deviceBMX055magState;
-volatile WarpI2CDeviceState		deviceMMA8451QState;
-volatile WarpI2CDeviceState		deviceLPS25HState;
-volatile WarpI2CDeviceState		deviceHDC1000State;
-volatile WarpI2CDeviceState		deviceMAG3110State;
-volatile WarpI2CDeviceState		deviceSI7021State;
-volatile WarpI2CDeviceState		deviceL3GD20HState;
-volatile WarpI2CDeviceState		deviceBME680State;
-volatile WarpI2CDeviceState		deviceTCS34725State;
-volatile WarpI2CDeviceState		deviceSI4705State;
-volatile WarpI2CDeviceState		deviceCCS811State;
-volatile WarpI2CDeviceState		deviceAMG8834State;
+#ifdef WARP_BUILD_ENABLE_DEVADXL362
+volatile WarpSPIDeviceState			deviceADXL362State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVBMX055
+volatile WarpI2CDeviceState			deviceBMX055accelState;
+volatile WarpI2CDeviceState			deviceBMX055gyroState;
+volatile WarpI2CDeviceState			deviceBMX055magState;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+volatile WarpI2CDeviceState			deviceMMA8451QState;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVLPS25H
+volatile WarpI2CDeviceState			deviceLPS25HState;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVHDC1000
+volatile WarpI2CDeviceState			deviceHDC1000State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVMAG3110
+volatile WarpI2CDeviceState			deviceMAG3110State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVSI7021
+volatile WarpI2CDeviceState			deviceSI7021State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
+volatile WarpI2CDeviceState			deviceL3GD20HState;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVBME680
+volatile WarpI2CDeviceState			deviceBME680State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVTCS34725
+volatile WarpI2CDeviceState			deviceTCS34725State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVSI4705
+volatile WarpI2CDeviceState			deviceSI4705State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVCCS811
+volatile WarpI2CDeviceState			deviceCCS811State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVAMG8834
+volatile WarpI2CDeviceState			deviceAMG8834State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVPAN1326
 volatile WarpUARTDeviceState		devicePAN1326BState;
 volatile WarpUARTDeviceState		devicePAN1323ETUState;
-volatile WarpI2CDeviceState		deviceAS7262State;
-volatile WarpI2CDeviceState		deviceAS7263State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVAS7262
+volatile WarpI2CDeviceState			deviceAS7262State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVAS7263
+volatile WarpI2CDeviceState			deviceAS7263State;
+#endif
 
 /*
  *	TODO: move this and possibly others into a global structure
