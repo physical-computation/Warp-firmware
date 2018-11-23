@@ -160,7 +160,8 @@ volatile WarpI2CDeviceState			deviceAS7263State;
 volatile i2c_master_state_t		i2cMasterState;
 volatile spi_master_state_t		spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
-
+volatile lpuart_user_config_t 		lpuartUserConfig;
+volatile lpuart_state_t 			lpuartState;
 
 /*
  *	TODO: move magic default numbers into constant definitions.
@@ -305,14 +306,77 @@ sleepUntilReset(void)
 {
 	while (1)
 	{
+		#ifdef WARP_BUILD_ENABLE_DEVSI4705
 		GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
+		#endif
 		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
+		#ifdef WARP_BUILD_ENABLE_DEVSI4705
 		GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
+		#endif
 		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */);
 	}
 }
 
 
+void
+enableLPUARTpins(void)
+{
+	/*	Enable UART CLOCK */
+	CLOCK_SYS_EnableLpuartClock(0);
+
+	/*
+	*	set UART pin association
+	*	see page 99 in https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
+	*/
+
+	#ifdef WARP_BUILD_ENABLE_DEVPAN1326
+	/*	Warp KL03_UART_HCI_TX	--> PTB3 (ALT3)	--> PAN1326 HCI_RX */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
+	/*	Warp KL03_UART_HCI_RX	--> PTB4 (ALT3)	--> PAN1326 HCI_RX */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
+
+	/* TODO: Partial Implementation */
+	/*	Warp PTA6 --> PAN1326 HCI_RTS */
+	/*	Warp PTA7 --> PAN1326 HCI_CTS */
+	#endif
+
+	/*
+	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
+	 *
+	 */
+	lpuartUserConfig.baudRate = 115;
+	lpuartUserConfig.parityMode = kLpuartParityDisabled;
+	lpuartUserConfig.stopBitCount = kLpuartOneStopBit;
+	lpuartUserConfig.bitCountPerChar = kLpuart8BitsPerChar;
+
+	LPUART_DRV_Init(0,(lpuart_state_t *)&lpuartState,(lpuart_user_config_t *)&lpuartUserConfig);
+
+}
+
+
+void
+disableLPUARTpins(void)
+{
+	/* LPUART dinini */
+	LPUART_DRV_Deinit(0);
+
+	/*	Warp KL03_UART_HCI_RX	--> PTB4 (GPIO)	*/
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAsGpio);
+	/*	Warp KL03_UART_HCI_TX	--> PTB3 (GPIO) */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAsGpio);
+
+	#ifdef WARP_BUILD_ENABLE_DEVPAN1326
+	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
+	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_HCI_CTS);
+	#endif
+
+	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_TX);
+	GPIO_DRV_ClearPinOutput(kWarpPinLPUART_HCI_RX);
+
+	/* Disable LPUART CLOCK */
+	CLOCK_SYS_DisableLpuartClock(0);
+
+}
 
 void
 enableSPIpins(void)
@@ -421,6 +485,7 @@ disableI2Cpins(void)
 }
 
 
+// TODO: add pin states for pan1326 lp states
 void
 lowPowerPinStates(void)
 {
@@ -530,7 +595,9 @@ lowPowerPinStates(void)
 #ifdef WARP_FRDMKL03
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
 #else
+	#ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
+	#endif
 #endif
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740A_CTLEN);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740B_CTLEN);
@@ -545,7 +612,9 @@ lowPowerPinStates(void)
 	 *	Drive these chip selects high since they are active low:
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+	#ifdef WARP_BUILD_ENABLE_DEVADXL362
 	GPIO_DRV_SetPinOutput(kWarpPinADXL362_CS);
+	#endif
 
 	/*
 	 *	When the PAN1326 is installed, note that it has the
@@ -747,7 +816,9 @@ setTPS82740CommonControlLines(uint16_t voltageMillivolts)
 		 */
 		default:
 		{
+			#ifdef SEGGER_RTT_printf_ENABLE
 			SEGGER_RTT_printf(0, RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_YELLOW RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorSanity RTT_CTRL_RESET "\n");
+			#endif
 		}
 	}
 
@@ -773,7 +844,9 @@ enableSssupply(uint16_t voltageMillivolts)
 	}
 	else
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE
 		SEGGER_RTT_printf(0, RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_RED RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorInvalidVoltage RTT_CTRL_RESET "\n", voltageMillivolts);
+		#endif
 	}
 }
 
@@ -821,6 +894,7 @@ void
 printPinDirections(void)
 {
 	/*
+	#ifdef SEGGER_RTT_printf_ENABLE 
 	SEGGER_RTT_printf(0, "KL03_VDD_ADC:%d\n", GPIO_DRV_GetPinDir(kWarpPinKL03_VDD_ADC));
 	OSA_TimeDelay(100);
 	SEGGER_RTT_printf(0, "I2C0_SDA:%d\n", GPIO_DRV_GetPinDir(kWarpPinI2C0_SDA));
@@ -853,6 +927,7 @@ printPinDirections(void)
 	OSA_TimeDelay(100);
 	SEGGER_RTT_printf(0, "SI4705_nRST:%d\n", GPIO_DRV_GetPinDir(kWarpPinSI4705_nRST));
 	OSA_TimeDelay(100);
+	#endif
 	*/
 }
 
@@ -864,6 +939,7 @@ dumpProcessorState(void)
 	uint32_t	cpuClockFrequency;
 
 	CLOCK_SYS_GetFreq(kCoreClock, &cpuClockFrequency);
+	#ifdef SEGGER_RTT_printf_ENABLE
 	SEGGER_RTT_printf(0, "\r\n\n\tCPU @ %u KHz\n", (cpuClockFrequency / 1000));
 	SEGGER_RTT_printf(0, "\r\tCPU power mode: %u\n", POWER_SYS_GetCurrentMode());
 	SEGGER_RTT_printf(0, "\r\tCPU clock manager configuration: %u\n", CLOCK_SYS_GetCurrentConfiguration());
@@ -878,6 +954,7 @@ dumpProcessorState(void)
 	SEGGER_RTT_printf(0, "\r\tCMP clock: %d\n", CLOCK_SYS_GetCmpGateCmd(0));
 	SEGGER_RTT_printf(0, "\r\tVREF clock: %d\n", CLOCK_SYS_GetVrefGateCmd(0));
 	SEGGER_RTT_printf(0, "\r\tTPM clock: %d\n", CLOCK_SYS_GetTpmGateCmd(0));
+	#endif
 }
 
 
