@@ -2178,6 +2178,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	ADXL362: VDD 1.6--3.5
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVADXL362
 			loopForSensor(	"\r\nADXL362:\n\r",		/*	tagString			*/
 					&readSensorRegisterADXL362,	/*	readSensorRegisterFunction	*/
 					NULL,				/*	i2cDeviceState			*/
@@ -2194,6 +2195,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tADXL362 Read Aborted. Device Disabled :(");
+			#endif
 			break;
 		}
 
@@ -2202,6 +2206,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MMA8451Q: VDD 1.95--3.6
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 			loopForSensor(	"\r\nMMA8451Q:\n\r",		/*	tagString			*/
 					&readSensorRegisterMMA8451Q,	/*	readSensorRegisterFunction	*/
 					&deviceMMA8451QState,		/*	i2cDeviceState			*/
@@ -2218,6 +2223,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tMMA8451Q Read Aborted. Device Disabled :(");
+			#endif
 			break;
 		}
 
@@ -2226,6 +2234,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BME680: VDD 1.7--3.6
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVBME680
 			loopForSensor(	"\r\nBME680:\n\r",		/*	tagString			*/
 					&readSensorRegisterBME680,	/*	readSensorRegisterFunction	*/
 					&deviceBME680State,		/*	i2cDeviceState			*/
@@ -2242,6 +2251,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\nBME680 Read Aborted. Device Disabled :(");
+			#endif
 			break;
 		}
 
@@ -2250,6 +2262,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055accel: VDD 2.4V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVBMX055
 			loopForSensor(	"\r\nBMX055accel:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055accel,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055accelState,	/*	i2cDeviceState			*/
@@ -2266,6 +2279,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tBMX055accel Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2274,6 +2290,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055gyro: VDD 2.4V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVBMX055
 			loopForSensor(	"\r\nBMX055gyro:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055gyro,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055gyroState,		/*	i2cDeviceState			*/
@@ -2290,6 +2307,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tBMX055gyro Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2298,6 +2318,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	BMX055mag: VDD 2.4V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVBMX055
 			loopForSensor(	"\r\nBMX055mag:\n\r",		/*	tagString			*/
 					&readSensorRegisterBMX055mag,	/*	readSensorRegisterFunction	*/
 					&deviceBMX055magState,		/*	i2cDeviceState			*/
@@ -2314,6 +2335,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\t BMX055mag Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2322,6 +2346,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	MAG3110: VDD 1.95 -- 3.6
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 			loopForSensor(	"\r\nMAG3110:\n\r",		/*	tagString			*/
 					&readSensorRegisterMAG3110,	/*	readSensorRegisterFunction	*/
 					&deviceMAG3110State,		/*	i2cDeviceState			*/
@@ -2338,6 +2363,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tMAG3110 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2346,6 +2374,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	L3GD20H: VDD 2.2V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 			loopForSensor(	"\r\nL3GD20H:\n\r",		/*	tagString			*/
 					&readSensorRegisterL3GD20H,	/*	readSensorRegisterFunction	*/
 					&deviceL3GD20HState,		/*	i2cDeviceState			*/
@@ -2362,6 +2391,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tL3GD20H Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2370,6 +2402,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	LPS25H: VDD 1.7V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVLPS25H
 			loopForSensor(	"\r\nLPS25H:\n\r",		/*	tagString			*/
 					&readSensorRegisterLPS25H,	/*	readSensorRegisterFunction	*/
 					&deviceLPS25HState,		/*	i2cDeviceState			*/
@@ -2386,6 +2419,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tLPS25H Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2394,6 +2430,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	TCS34725: VDD 2.7V -- 3.3V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVTCS34725
 			loopForSensor(	"\r\nTCS34725:\n\r",		/*	tagString			*/
 					&readSensorRegisterTCS34725,	/*	readSensorRegisterFunction	*/
 					&deviceTCS34725State,		/*	i2cDeviceState			*/
@@ -2410,6 +2447,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tTCS34725 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2418,6 +2458,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI4705: VDD 2.7V -- 5.5V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVSI4705
 			loopForSensor(	"\r\nSI4705:\n\r",		/*	tagString			*/
 					&readSensorRegisterSI4705,	/*	readSensorRegisterFunction	*/
 					&deviceSI4705State,		/*	i2cDeviceState			*/
@@ -2434,6 +2475,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tSI4705 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2442,6 +2486,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	HDC1000: VDD 3V--5V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 			loopForSensor(	"\r\nHDC1000:\n\r",		/*	tagString			*/
 					&readSensorRegisterHDC1000,	/*	readSensorRegisterFunction	*/
 					&deviceHDC1000State,		/*	i2cDeviceState			*/
@@ -2458,6 +2503,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tHDC1000 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2466,6 +2514,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	SI7021: VDD 1.9V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVSI7021
 			loopForSensor(	"\r\nSI7021:\n\r",		/*	tagString			*/
 					&readSensorRegisterSI7021,	/*	readSensorRegisterFunction	*/
 					&deviceSI7021State,		/*	i2cDeviceState			*/
@@ -2482,6 +2531,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tSI7021 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2490,6 +2542,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	CCS811: VDD 1.8V -- 3.6V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVCCS811
 			loopForSensor(	"\r\nCCS811:\n\r",		/*	tagString			*/
 					&readSensorRegisterCCS811,	/*	readSensorRegisterFunction	*/
 					&deviceCCS811State,		/*	i2cDeviceState			*/
@@ -2506,6 +2559,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tCCS811 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2514,6 +2570,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AMG8834: VDD ?V -- ?V
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVAMG8834
 			loopForSensor(	"\r\nAMG8834:\n\r",		/*	tagString			*/
 					&readSensorRegisterAMG8834,	/*	readSensorRegisterFunction	*/
 					&deviceAMG8834State,		/*	i2cDeviceState			*/
@@ -2530,6 +2587,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tAMG8834 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2538,6 +2598,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AS7262: VDD 2.7--3.6
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVAS7262
 			loopForSensor(	"\r\nAS7262:\n\r",		/*	tagString			*/
 					&readSensorRegisterAS7262,	/*	readSensorRegisterFunction	*/
 					&deviceAS7262State,		/*	i2cDeviceState			*/
@@ -2554,6 +2615,9 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tAS7262 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
@@ -2562,6 +2626,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	AS7263: VDD 2.7--3.6
 			 */
+			#ifdef WARP_BUILD_ENABLE_DEVAS7263
 			loopForSensor(	"\r\nAS7263:\n\r",		/*	tagString			*/
 					&readSensorRegisterAS7263,	/*	readSensorRegisterFunction	*/
 					&deviceAS7263State,		/*	i2cDeviceState			*/
@@ -2578,12 +2643,17 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
 					chatty				/*	chatty				*/
 					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tAS7263 Read Aborted. Device Disabled :( ");
+			#endif
 			break;
 		}
 
 		default:
 		{
+			#ifdef SEGGER_RTT_printf_ENABLE 
 			SEGGER_RTT_printf(0, "\r\tInvalid warpSensorDevice [%d] passed to repeatRegisterReadForDeviceAndAddress.\n", warpSensorDevice);
+			#endif
 		}
 	}
 
@@ -2711,6 +2781,7 @@ powerupAllSensors(void)
 	 *
 	 *	Write '1' to power control bit of register 0x4B. See page 134.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVBMX055
 	status = writeByteToI2cDeviceRegister(	deviceBMX055magState.i2cAddress		/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x4B					/*	commandByte		*/,
@@ -2718,8 +2789,13 @@ powerupAllSensors(void)
 						(1 << 0)				/*	payloadByte		*/);
 	if (status != kWarpStatusOK)
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE
 		SEGGER_RTT_printf(0, "\r\tPowerup command failed, code=%d, for BMX055mag @ 0x%02x.\n", status, deviceBMX055magState.i2cAddress);
+		#endif
 	}
+	#else
+	SEGGER_RTT_WriteString(0, "\r\tPowerup command failed. BMX055 disabled \n");
+	#endif
 }
 
 
@@ -2744,6 +2820,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVBMX055
 	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x11					/*	commandByte		*/,
@@ -2751,15 +2828,20 @@ activateAllLowPowerSensorModes(void)
 						(1 << 5)				/*	payloadByte		*/);
 	if (status != kWarpStatusOK)
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE
 		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for BMX055accel @ 0x%02x.\n", status, deviceBMX055accelState.i2cAddress);
+		#endif
 	}
-
+	#else
+	SEGGER_RTT_WriteString(0, "\r\tPowerdown command abandoned. BMX055 disabled\n");
+	#endif
 
 	/*
 	 *	BMX055gyro: At POR, device is in Normal mode. Move it to Deep Suspend mode.
 	 *
 	 *	Write '1' to deep suspend bit of register 0x11. See page 81.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVBMX055
 	status = writeByteToI2cDeviceRegister(	deviceBMX055gyroState.i2cAddress	/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x11					/*	commandByte		*/,
@@ -2767,9 +2849,13 @@ activateAllLowPowerSensorModes(void)
 						(1 << 5)				/*	payloadByte		*/);
 	if (status != kWarpStatusOK)
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE 
 		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for BMX055gyro @ 0x%02x.\n", status, deviceBMX055gyroState.i2cAddress);
+		#endif
 	}
-
+	#else
+	SEGGER_RTT_WriteString(0, "\r\tPowerdown command abandoned. BMX055 disabled\n");
+	#endif
 
 
 
@@ -2822,6 +2908,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	POR state seems to be powered down.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 	status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 						true				/*	sendCommandByte		*/,
 						0x20				/*	commandByte		*/,
@@ -2829,9 +2916,13 @@ activateAllLowPowerSensorModes(void)
 						0x00				/*	payloadByte		*/);
 	if (status != kWarpStatusOK)
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE
 		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x%02x.\n", status, deviceL3GD20HState.i2cAddress);
+		#endif
 	}
-
+	#else
+	SEGGER_RTT_WriteString(0, "\r\tPowerdown command abandoned. L3GD20H disabled\n");
+	#endif
 
 
 
@@ -2846,6 +2937,7 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	Make it go to sleep state. See page 17, 18, and 19.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVTCS34725
 	status = writeByteToI2cDeviceRegister(	deviceTCS34725State.i2cAddress	/*	i2cAddress		*/,
 						true				/*	sendCommandByte		*/,
 						0x00				/*	commandByte		*/,
@@ -2853,8 +2945,13 @@ activateAllLowPowerSensorModes(void)
 						0x00				/*	payloadByte		*/);
 	if (status != kWarpStatusOK)
 	{
+		#ifdef SEGGER_RTT_printf_ENABLE 
 		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for TCS34725 @ 0x%02x.\n", status, deviceTCS34725State.i2cAddress);
+		#endif
 	}
+	#else
+	SEGGER_RTT_WriteString(0, "\r\tPowerdown command abandoned. TCS34725 disabled\n");
+	#endif
 
 
 
@@ -2864,7 +2961,9 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVSI4705
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
+	#endif
 
 
 
@@ -2881,6 +2980,8 @@ activateAllLowPowerSensorModes(void)
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
+	#ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
+	#endif
 #endif
 }
