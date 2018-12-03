@@ -201,6 +201,22 @@ typedef struct
 	uint8_t	errorCount;
 } WarpPowerManagerCallbackStructure;
 
+typedef struct
+{
+	/*
+	 *	Fill up the remaining memory space using an array
+	 *	The size of the array is highly dependent on
+	 *	the firmware code size
+	 */
+	uint8_t			memoryFillingBuffer[200];
+} WarpKL03MemoryFill;
+
+typedef enum
+{
+	kWarpKL03MemoryFillEven	= 0b00110011,
+	kWarpKL03MemoryFillOdd	= 0b11001100,
+	kWarpKL03EndlessLoop	= 65535,
+} WarpThermalChamber;
 
 
 WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
