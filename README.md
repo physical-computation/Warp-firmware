@@ -35,6 +35,10 @@ In the second shell window, launch the JLink RTT client. On MacOS, this will be:
 ## Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
 
+The firmware builds on the Kinetis SDK. You can find more documentation on the Kinetis SDK in the document [doc/Kinetis SDK v.1.1 API Reference Manual.pdf](https://github.com/physical-computation/Warp-firmware/blob/master/doc/Kinetis%20SDK%20v.1.1%20API%20Reference%20Manual.pdf).
+
+The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [/src/boot/ksdk1.1.0/README.md](/src/boot/ksdk1.1.0/README.md).
+
 ## Interacting with the boot menu.
 When the firmware boots, you will be dropped into a menu:
 ````
@@ -98,7 +102,7 @@ From your local clone:
 Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
 
 **BibTeX:**
-````
+```
 @ARTICLE{1804.09241,
   author = {Stanley-Marbell, Phillip and Rinard, Martin},
   title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
@@ -107,7 +111,7 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
   eprint = {1804.09241},
   year = 2018,
 }
-
+```
 
 ### Acknowledgements
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.

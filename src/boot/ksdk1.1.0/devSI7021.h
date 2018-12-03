@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef WARP_BUILD_ENABLE_DEVSI7021
+#define WARP_BUILD_ENABLE_DEVSI7021
+#endif
 
 void		initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterSI7021(uint8_t deviceRegister);
