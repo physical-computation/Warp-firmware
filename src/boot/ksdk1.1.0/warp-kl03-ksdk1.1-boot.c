@@ -1,7 +1,7 @@
 /*
 	Authored 2016-2018. Phillip Stanley-Marbell.
 	
-	Additional contributions, 2018: Jan Heck, Chatura Samarakoon.
+	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang.
 
 	All rights reserved.
 
