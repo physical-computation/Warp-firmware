@@ -609,9 +609,11 @@ lowPowerPinStates(void)
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL1);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL2);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL3);
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+
+#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	GPIO_DRV_ClearPinOutput(kWarpPinCLKOUT32K);
-	#endif
+#endif
+
 	GPIO_DRV_ClearPinOutput(kWarpPinTS5A3154_IN);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 
