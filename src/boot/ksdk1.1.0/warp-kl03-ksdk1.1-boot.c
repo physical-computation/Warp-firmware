@@ -969,13 +969,14 @@ dumpProcessorState(void)
 	#endif
 }
 
+#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 void
-endlessLoop(long iterations)
+addAndMultiplicationLoop(long iterations)
 {
 	int value;
 	for (volatile long i = 0; i < iterations; i++)
 	{
-		value = 99 + value * 254;
+		value = kWarpKL03LoopAddNumber + value * kWarpKL03LoopMutiplyNumber;
 	}
 }
 
@@ -989,6 +990,7 @@ checkSum(uint8_t *  pointer, uint16_t length) /*	Adapted from https://stackoverf
 	}
 	return (uint8_t)sum;
 }
+#endif
 
 int
 main(void)
@@ -2150,13 +2152,14 @@ main(void)
 										0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
 										1);
 
-				uint8_t outputBuffer[3] = {0,0,0};
-
 				/*	
 				 *	Fill up the remaining memory space using a fixed size array
 				 *	The size of this array is highly dependent on the firmware code size
 				 */
 				WarpKL03MemoryFill	KL03MemoryFill;
+				KL03MemoryFill.outputBuffer[0] = 0;
+				KL03MemoryFill.outputBuffer[1] = 0;
+				KL03MemoryFill.outputBuffer[2] = 0;
 
 				GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
 				GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
@@ -2172,11 +2175,11 @@ main(void)
 				{
 					if(i % 2 == 0)
 					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillEven;
+						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillEvenComponent;
 					}
 					if(i % 2 != 0)
 					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillOdd;
+						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillOddComponent;
 					}
 				}
 
@@ -2187,7 +2190,7 @@ main(void)
 				while (1)
 				{
 					/*
-					 *	(1) endlessLoop performs basic multiplication and addition
+					 *	(1) addAndMultiplicationLoop performs basic multiplication and addition
 					 *	(2) bit-wise toggling and checksum operations are performed
 					 *	(3) checking the I2C read and write status
 					 */
@@ -2197,7 +2200,7 @@ main(void)
 					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
 					OSA_TimeDelay(100);
 
-					endlessLoop(kWarpKL03EndlessLoop);
+					addAndMultiplicationLoop(kWarpKL03LoopIterationsCount);
 
 					/*
 					 *	Error-less operation
@@ -2259,20 +2262,20 @@ main(void)
 						i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
 						if(i2cReadStatusX == kWarpStatusOK)
 						{
-							outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
-							SEGGER_RTT_printf(0, "\nReading from sensor X: %d", outputBuffer[0]);
+							KL03MemoryFill.outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
+							SEGGER_RTT_printf(0, "\nReading from sensor X: %d", KL03MemoryFill.outputBuffer[0]);
 
 							i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
 							if(i2cReadStatusY == kWarpStatusOK)
 							{
-								outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
-								SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", outputBuffer[1]);
+								KL03MemoryFill.outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
+								SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", KL03MemoryFill.outputBuffer[1]);
 
 								i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
 								if(i2cReadStatusZ == kWarpStatusOK)
 								{
-									outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
-									SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", outputBuffer[2]);
+									KL03MemoryFill.outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
+									SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", KL03MemoryFill.outputBuffer[2]);
 								}
 							}
 						}
@@ -2299,9 +2302,9 @@ main(void)
 						}
 						else
 						{
-							outputBuffer[0] = 0;
-							outputBuffer[1] = 0;
-							outputBuffer[2] = 0;
+							KL03MemoryFill.outputBuffer[0] = 0;
+							KL03MemoryFill.outputBuffer[1] = 0;
+							KL03MemoryFill.outputBuffer[2] = 0;
 						}
 					}
 					else
@@ -2354,20 +2357,20 @@ main(void)
 							i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
 							if(i2cReadStatusX == kWarpStatusOK)
 							{
-								outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
-								SEGGER_RTT_printf(0, "\nReading from sensor X: %d", outputBuffer[0]);
+								KL03MemoryFill.outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
+								SEGGER_RTT_printf(0, "\nReading from sensor X: %d", KL03MemoryFill.outputBuffer[0]);
 
 								i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
 								if(i2cReadStatusY == kWarpStatusOK)
 								{
-									outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
-									SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", outputBuffer[1]);
+									KL03MemoryFill.outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
+									SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", KL03MemoryFill.outputBuffer[1]);
 
 									i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
 									if(i2cReadStatusZ == kWarpStatusOK)
 									{
-										outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
-										SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", outputBuffer[2]);
+										KL03MemoryFill.outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
+										SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", KL03MemoryFill.outputBuffer[2]);
 									}
 								}
 							}

@@ -209,13 +209,16 @@ typedef struct
 	 *	the firmware code size
 	 */
 	uint8_t			memoryFillingBuffer[200];
+	uint8_t			outputBuffer[3];
 } WarpKL03MemoryFill;
 
 typedef enum
 {
-	kWarpKL03MemoryFillEven	= 0b00110011,
-	kWarpKL03MemoryFillOdd	= 0b11001100,
-	kWarpKL03EndlessLoop	= 65535,
+	kWarpKL03MemoryFillEvenComponent	= 0b00110011,
+	kWarpKL03MemoryFillOddComponent		= 0b11001100,
+	kWarpKL03LoopIterationsCount		= 65535,
+	kWarpKL03LoopAddNumber			= 99,
+	kWarpKL03LoopMutiplyNumber		= 254,
 } WarpThermalChamber;
 
 
