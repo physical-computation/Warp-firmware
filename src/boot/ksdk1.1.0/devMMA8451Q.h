@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -41,6 +41,9 @@
 
 void		initMMA8451Q(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterMMA8451Q(uint8_t deviceRegister);
+WarpStatus	writeSensorRegisterMMA8451Q(uint8_t deviceRegister,
+					uint8_t payloadBtye,
+					uint16_t menuI2cPullupValue);
 WarpStatus	readSensorSignalMMA8451Q(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,
