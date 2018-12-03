@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef WARP_BUILD_ENABLE_DEVL3GD20H
+#define WARP_BUILD_ENABLE_DEVL3GD20H
+#endif
 
 void		initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterL3GD20H(uint8_t deviceRegister);

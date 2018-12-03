@@ -8,8 +8,8 @@
 #include "warp.h"
 #include "devSSD1331.h"
 
-volatile uint8_t	inBuffer[32];
-volatile uint8_t	payloadBytes[32];
+volatile uint8_t	inBuffer[1];
+volatile uint8_t	payloadBytes[1];
 
 
 /*
@@ -20,8 +20,8 @@ enum
 	kSSD1331PinMOSI		= GPIO_MAKE_PIN(HW_GPIOA, 8),
 	kSSD1331PinSCK		= GPIO_MAKE_PIN(HW_GPIOA, 9),
 	kSSD1331PinCSn		= GPIO_MAKE_PIN(HW_GPIOB, 13),
-	kSSD1331PinDC		= GPIO_MAKE_PIN(HW_GPIOA, 12),
-	kSSD1331PinRST		= GPIO_MAKE_PIN(HW_GPIOA, 2),
+	kSSD1331PinDC		  = GPIO_MAKE_PIN(HW_GPIOA, 12),
+	kSSD1331PinRST		= GPIO_MAKE_PIN(HW_GPIOB, 0),
 };
 
 static int
@@ -72,6 +72,8 @@ devSSD1331init(void)
 	PORT_HAL_SetMuxMode(PORTA_BASE, 8u, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 9u, kPortMuxAlt3);
 
+	enableSPIpins();
+
 	/*
 	 *	Override Warp firmware's use of these pins.
 	 *
@@ -79,9 +81,8 @@ devSSD1331init(void)
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 13u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 12u, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 2u, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0u, kPortMuxAsGpio);
 
-	enableSPIpins();
 
 	/*
 	 *	RST high->low->high.
@@ -98,7 +99,7 @@ devSSD1331init(void)
 	 */
 	writeCommand(kSSD1331CommandDISPLAYOFF);	// 0xAE
 	writeCommand(kSSD1331CommandSETREMAP);		// 0xA0
-	writeCommand(0x32);				// RGB Color 0b01110010 -> 0b00110010 (changed)
+	writeCommand(0x72);				// RGB Color
 	writeCommand(kSSD1331CommandSTARTLINE);		// 0xA1
 	writeCommand(0x0);
 	writeCommand(kSSD1331CommandDISPLAYOFFSET);	// 0xA2
@@ -117,11 +118,11 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8A
 	writeCommand(0x64);
 	writeCommand(kSSD1331CommandPRECHARGEB);	// 0x8B
-	writeCommand(0x00);				// lowest second pre-charge speed
+	writeCommand(0x78);
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8C
 	writeCommand(0x64);
 	writeCommand(kSSD1331CommandPRECHARGELEVEL);	// 0xBB
-	writeCommand(0x3E); //pre-charge voltage 3E
+	writeCommand(0x3A);
 	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
 	writeCommand(0x3E);
 	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
@@ -129,18 +130,16 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
 	writeCommand(0x91);
 	writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
-	writeCommand(0xFF);				// set contrast to maximum
+	writeCommand(0x50);
 	writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
 	writeCommand(0x7D);
 	writeCommand(kSSD1331CommandDISPLAYON);		// Turn on oled panel
-//	SEGGER_RTT_WriteString(0, "\r\n\tDone with initialization sequence...\n");
 
 	/*
 	 *	To use fill commands, you will have to issue a command to the display to enable them. See the manual.
 	 */
 	writeCommand(kSSD1331CommandFILL);
 	writeCommand(0x01);
-//	SEGGER_RTT_WriteString(0, "\r\n\tDone with enabling fill...\n");
 
 	/*
 	 *	Clear Screen
@@ -150,39 +149,13 @@ devSSD1331init(void)
 	writeCommand(0x00);
 	writeCommand(0x5F);
 	writeCommand(0x3F);
-//	SEGGER_RTT_WriteString(0, "\r\n\tDone with screen clear...\n");
 
-  //  9.2.6 Fill Enable/Disable (26h)//
- //   This command has two functions.
- //   • Enable/Disable fill (A[0])/
-  //  0 = Disable filling of color into rectangle in draw rectangle command. (RESET)
-  //  1 = Enable filling of color into rectangle in draw rectangle command.
+
 
 	/*
-	 *	Read the manual for the SSD1331 (SSD1331_1.2.pdf) to figure
-	 *	out how to fill the entire screen with the brightest shade
-	 *	of green.
+	 *	Any post-initialization drawing commands go here.
 	 */
-/*	writeCommand(kSSD1331CommandDISPLAYON);	//0xAF
-	writeCommand(kSSD1331CommandDISPLAYALLON);	//0xA5
-
-	writeCommand(kSSD1331CommandDRAWRECT);	//0x22 Enter the “draw rectangle mode” by execute the command 22h
-	writeCommand(0x00);	//Set the starting column coordinates, Column 1. e.g., 03h.
-	writeCommand(0x00);	//Set the starting row coordinates, Row 1. e.g., 02h.
-	writeCommand(0x5F);	//Set the finishing column coordinates, Column 2. e.g., 12h
-	writeCommand(0x3F);	//Set the finishing row coordinates, Row 2. e.g., 15h
-	writeCommand(0x00);	//Set the outline color C (Blue)
-	writeCommand(0xFF);	//Set the outline color B (Green)
-	writeCommand(0x00);	//Set the outline color A (Red)
-	writeCommand(0x00);	//Set the filled color C (Blue)
-	writeCommand(0xFF);	//Set the filled color B (Green)
-	writeCommand(0x00);	//Set the filled color A (Red)
-*/
-//The longer the length of the pulse width, the brighter is the OLED pixel when it’s turned ON.	
-
-//	SEGGER_RTT_WriteString(0, "\r\n\tDone with draw rectangle...\n");
-
-	disableSPIpins();
+	//...
 
 
 

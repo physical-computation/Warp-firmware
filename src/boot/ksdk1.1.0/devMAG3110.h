@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef WARP_BUILD_ENABLE_DEVMAG3110
+#define WARP_BUILD_ENABLE_DEVMAG3110
+#endif
 
 void		initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterMAG3110(uint8_t deviceRegister);

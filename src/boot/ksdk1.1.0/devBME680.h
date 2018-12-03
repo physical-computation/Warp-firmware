@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef WARP_BUILD_ENABLE_DEVBME680
+#define WARP_BUILD_ENABLE_DEVBME680
+#endif
 
 void		initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterBME680(uint8_t deviceRegister);

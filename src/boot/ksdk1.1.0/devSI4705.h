@@ -35,7 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef WARP_BUILD_ENABLE_DEVSI4705
+#define WARP_BUILD_ENABLE_DEVSI4705
+#endif
 
 void		initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readSensorRegisterSI4705(uint8_t deviceRegister);
