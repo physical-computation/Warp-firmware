@@ -201,6 +201,17 @@ typedef struct
 	uint8_t	errorCount;
 } WarpPowerManagerCallbackStructure;
 
+typedef enum
+{
+	kWarpThermalChamberMemoryFillEvenComponent	= 0b00110011,
+	kWarpThermalChamberMemoryFillOddComponent	= 0b11001100,
+	kWarpThermalChamberMMA8451QOutputBufferSize	= 3,
+	kWarpThermalChamberKL03MemoryFillBufferSize	= 200,
+	kWarpThermalChamberBusyLoopCountOffset		= 65535,
+	kWarpThermalChamberBusyLoopAdder		= 99,
+	kWarpThermalChamberBusyLoopMutiplier		= 254,
+} WarpThermalChamber;
+
 typedef struct
 {
 	/*
@@ -208,19 +219,9 @@ typedef struct
 	 *	The size of the array is highly dependent on
 	 *	the firmware code size
 	 */
-	uint8_t			memoryFillingBuffer[200];
-	uint8_t			outputBuffer[3];
-} WarpKL03MemoryFill;
-
-typedef enum
-{
-	kWarpKL03MemoryFillEvenComponent	= 0b00110011,
-	kWarpKL03MemoryFillOddComponent		= 0b11001100,
-	kWarpKL03LoopIterationsCount		= 65535,
-	kWarpKL03LoopAddNumber			= 99,
-	kWarpKL03LoopMutiplyNumber		= 254,
-} WarpThermalChamber;
-
+	uint8_t		memoryFillingBuffer[kWarpThermalChamberKL03MemoryFillBufferSize];
+	uint8_t		outputBuffer[kWarpThermalChamberMMA8451QOutputBufferSize];
+} WarpThermalChamberKL03MemoryFill;
 
 WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
 void		enableI2Cpins(uint16_t pullupValue);

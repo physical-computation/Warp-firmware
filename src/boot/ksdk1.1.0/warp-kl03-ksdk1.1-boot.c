@@ -971,12 +971,12 @@ dumpProcessorState(void)
 
 #ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 void
-addAndMultiplicationLoop(long iterations)
+addAndMultiplicationBusyLoop(long iterations)
 {
 	int value;
 	for (volatile long i = 0; i < iterations; i++)
 	{
-		value = kWarpKL03LoopAddNumber + value * kWarpKL03LoopMutiplyNumber;
+		value = kWarpThermalChamberBusyLoopAdder + value * kWarpThermalChamberBusyLoopMutiplier;
 	}
 }
 
@@ -2152,11 +2152,32 @@ main(void)
 										0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
 										1);
 
+				if((i2cWriteStatusA != kWarpStatusOK) && (i2cWriteStatusB != kWarpStatusOK))
+				{
+					SEGGER_RTT_printf(0, "\nError when writing to I2C device");
+					for(int errorLED = 0; errorLED < 5; errorLED++)
+					{
+						/*
+						 *	Error when writing to I2C device
+						 *	LED pattern : All On -> All off -> Red
+						 */
+						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
+						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
+						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
+						OSA_TimeDelay(100);
+						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
+						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
+						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
+						OSA_TimeDelay(100);
+						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
+						OSA_TimeDelay(1000);
+					}
+				}
 				/*	
 				 *	Fill up the remaining memory space using a fixed size array
 				 *	The size of this array is highly dependent on the firmware code size
 				 */
-				WarpKL03MemoryFill	KL03MemoryFill;
+				WarpThermalChamberKL03MemoryFill	KL03MemoryFill;
 				KL03MemoryFill.outputBuffer[0] = 0;
 				KL03MemoryFill.outputBuffer[1] = 0;
 				KL03MemoryFill.outputBuffer[2] = 0;
@@ -2175,11 +2196,11 @@ main(void)
 				{
 					if(i % 2 == 0)
 					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillEvenComponent;
+						KL03MemoryFill.memoryFillingBuffer[i] = kWarpThermalChamberMemoryFillEvenComponent;
 					}
 					if(i % 2 != 0)
 					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpKL03MemoryFillOddComponent;
+						KL03MemoryFill.memoryFillingBuffer[i] = kWarpThermalChamberMemoryFillOddComponent;
 					}
 				}
 
@@ -2200,7 +2221,7 @@ main(void)
 					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
 					OSA_TimeDelay(100);
 
-					addAndMultiplicationLoop(kWarpKL03LoopIterationsCount);
+					addAndMultiplicationBusyLoop(kWarpThermalChamberBusyLoopCountOffset);
 
 					/*
 					 *	Error-less operation
