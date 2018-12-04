@@ -1517,7 +1517,7 @@ main(void)
 						break;
 					}
 					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVBMX055gyro
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055mag
 					case '4':
 					{
 						menuTargetSensor = kWarpSensorBMX055mag;
@@ -1533,7 +1533,7 @@ main(void)
 						break;
 					}
 					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+					#ifdef WARP_BUILD_ENABLE_DEVLPS25H
 					case '6':
 					{
 						menuTargetSensor = kWarpSensorLPS25H;
@@ -1541,7 +1541,7 @@ main(void)
 						break;
 					}
 					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 					case '7':
 					{
 						menuTargetSensor = kWarpSensorMAG3110;
