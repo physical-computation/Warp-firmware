@@ -996,7 +996,7 @@ main(void)
 {
 	uint8_t					key;
 	WarpSensorDevice		menuTargetSensor = kWarpSensorADXL362;
-	WarpI2CDeviceState		*menuI2cDevice = &deviceBMX055accelState;
+	WarpI2CDeviceState		*menuI2cDevice;
 	uint16_t				menuI2cPullupValue = 32768;
 	uint8_t					menuRegisterAddress = 0x00;
 	uint16_t				menuSupplyVoltage = 0;
