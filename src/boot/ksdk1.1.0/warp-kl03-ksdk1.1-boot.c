@@ -160,8 +160,8 @@ volatile WarpI2CDeviceState			deviceAS7263State;
 /*
  *	TODO: move this and possibly others into a global structure
  */
-volatile i2c_master_state_t		i2cMasterState;
-volatile spi_master_state_t		spiMasterState;
+volatile i2c_master_state_t			i2cMasterState;
+volatile spi_master_state_t			spiMasterState;
 volatile spi_master_user_config_t	spiUserConfig;
 volatile lpuart_user_config_t 		lpuartUserConfig;
 volatile lpuart_state_t 			lpuartState;
@@ -173,7 +173,7 @@ volatile uint32_t			gWarpI2cBaudRateKbps	= 1;
 volatile uint32_t			gWarpUartBaudRateKbps	= 1;
 volatile uint32_t			gWarpSpiBaudRateKbps	= 1;
 volatile uint32_t			gWarpSleeptimeSeconds	= 0;
-volatile WarpModeMask			gWarpMode		= kWarpModeDisableAdcOnSleep;
+volatile WarpModeMask		gWarpMode				= kWarpModeDisableAdcOnSleep;
 
 
 
@@ -190,13 +190,13 @@ void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice
 								uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
-int					char2int(int character);
+int						char2int(int character);
 void					enableSssupply(uint16_t voltageMillivolts);
 void					disableSssupply(void);
 void					activateAllLowPowerSensorModes(void);
 void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
-int					read4digits(void);
+int						read4digits(void);
 
 
 /*
@@ -995,7 +995,8 @@ int
 main(void)
 {
 	uint8_t					key;
-	WarpSensorDevice			menuTargetSensor = kWarpSensorADXL362;
+	WarpSensorDevice		menuTargetSensor = kWarpSensorADXL362;
+	WarpI2CDeviceState		*menuI2cDevice;
 	uint16_t				menuI2cPullupValue = 32768;
 	uint8_t					menuRegisterAddress = 0x00;
 	uint16_t				menuSupplyVoltage = 0;
@@ -1492,132 +1493,150 @@ main(void)
 
 				switch(key)
 				{
+					#ifdef WARP_BUILD_ENABLE_DEVADXL362
 					case '1':
 					{
 						menuTargetSensor = kWarpSensorADXL362;
 
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055accel
 					case '2':
 					{
 						menuTargetSensor = kWarpSensorBMX055accel;
-
+						menuI2cDevice = &deviceBMX055accelState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055gyro
 					case '3':
 					{
 						menuTargetSensor = kWarpSensorBMX055gyro;
-
+						menuI2cDevice = &deviceBMX055gyroState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055mag
 					case '4':
 					{
 						menuTargetSensor = kWarpSensorBMX055mag;
-
+						menuI2cDevice = &deviceBMX055magState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 					case '5':
 					{
 						menuTargetSensor = kWarpSensorMMA8451Q;
-
+						menuI2cDevice = &deviceMMA8451QState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVLPS25H
 					case '6':
 					{
 						menuTargetSensor = kWarpSensorLPS25H;
-
+						menuI2cDevice = &deviceLPS25HState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 					case '7':
 					{
 						menuTargetSensor = kWarpSensorMAG3110;
-
+						menuI2cDevice = &deviceMAG3110State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 					case '8':
 					{
 						menuTargetSensor = kWarpSensorHDC1000;
-
+						menuI2cDevice = &deviceHDC1000State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVSI7021
 					case '9':
 					{
 						menuTargetSensor = kWarpSensorSI7021;
-
+						menuI2cDevice = &deviceSI7021State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 					case 'a':
 					{
 						menuTargetSensor = kWarpSensorL3GD20H;
-
+						menuI2cDevice = &deviceL3GD20HState;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBME680
 					case 'b':
 					{
 						menuTargetSensor = kWarpSensorBME680;
-
+						menuI2cDevice = &deviceBME680State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVTCS34725
 					case 'd':
 					{
 						menuTargetSensor = kWarpSensorTCS34725;
-
+						menuI2cDevice = &deviceTCS34725State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVSI4705
 					case 'e':
 					{
 						menuTargetSensor = kWarpSensorSI4705;
-
+						menuI2cDevice = &deviceSI4705State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVPAN1326
 					case 'f':
 					{
 						menuTargetSensor = kWarpSensorPAN1326;
 
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVCCS811
 					case 'g':
 					{
 						menuTargetSensor = kWarpSensorCCS811;
-
+						menuI2cDevice = &deviceCCS811State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVAMG8834
 					case 'h':
 					{
 						menuTargetSensor = kWarpSensorAMG8834;
-
+						menuI2cDevice = &deviceAMG8834State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVAS7262
 					case 'j':
 					{
 						menuTargetSensor = kWarpSensorAS7262;
-
+						menuI2cDevice = &deviceAS7262State;
 						break;
 					}
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVAS7263
 					case 'k':
 					{
 						menuTargetSensor = kWarpSensorAS7263;
-
+						menuI2cDevice = &deviceAS7263State;
 						break;
 					}
-
+					#endif
 					default:
 					{
 						#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
@@ -1993,124 +2012,8 @@ main(void)
 			{
 				SEGGER_RTT_WriteString(0, "\r\n\tSet I2C address of the selected sensor(e.g., '1C')> ");
 				uint8_t address = readHexByte();
-				
-				switch(menuTargetSensor)
-				{
-					#ifdef WARP_BUILD_ENABLE_DEVBMX055
-					case kWarpSensorBMX055accel:
-					{
-						deviceBMX055accelState.i2cAddress = address;
-						break;
-					}
 
-					 case kWarpSensorBMX055gyro:
-					{
-						deviceBMX055gyroState.i2cAddress = address;
-						break;
-					}
-
-					case kWarpSensorBMX055mag:
-					{
-						deviceBMX055magState.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-					case kWarpSensorMMA8451Q:
-					{
-						deviceMMA8451QState.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVLPS25H
-					case kWarpSensorLPS25H:
-					{
-						deviceLPS25HState.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-					case kWarpSensorMAG3110:
-					{
-						deviceMAG3110State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-					case kWarpSensorHDC1000:
-					{
-						deviceHDC1000State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVSI7021
-					case kWarpSensorSI7021:
-					{
-						deviceSI7021State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-					case kWarpSensorL3GD20H:
-					{
-						deviceL3GD20HState.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVBME680
-					case kWarpSensorBME680:
-					{
-						deviceBME680State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVTCS34725
-					case kWarpSensorTCS34725:
-					{
-						deviceTCS34725State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVSI4705
-					case kWarpSensorSI4705:
-					{
-						deviceSI4705State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVCCS811
-					case kWarpSensorCCS811:
-					{
-						deviceCCS811State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-					case kWarpSensorAMG8834:
-					{
-						deviceAMG8834State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-					case kWarpSensorAS7262:
-					{
-						deviceAS7262State.i2cAddress = address;
-						break;
-					}
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVAS7263
-					case kWarpSensorAS7263:
-					{
-						deviceAS7263State.i2cAddress = address;
-						break;
-					}
-					#endif
-					default:
-					{
-						SEGGER_RTT_printf(0, "\r\tInvalid target sensor !\n");
-					}
-				}
+				menuI2cDevice->i2cAddress = address;
 				break;
 			}
 
