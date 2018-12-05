@@ -1215,7 +1215,7 @@ main(void)
 	initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
 	#endif
 
-	#ifdef WARP_BUILD_ENABLE_DEVADXL362
+	#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
 	#endif	
 
