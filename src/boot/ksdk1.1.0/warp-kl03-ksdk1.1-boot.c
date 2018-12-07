@@ -2325,6 +2325,15 @@ main(void)
 				break;
 			}
 			#endif
+			/*
+			 *	Dump all the sensor data in one go
+			 */
+			case 'z':
+			{
+				
+				break;
+			}
+
 
 			/*
 			 *	Ignore naked returns.
