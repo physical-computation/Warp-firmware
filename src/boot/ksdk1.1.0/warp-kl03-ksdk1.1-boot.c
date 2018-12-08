@@ -1256,7 +1256,7 @@ main(void)
 	#endif
 	
 	#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-	initAMG8834(	0x3A	/* i2cAddress */,	&deviceAMG8834State	);
+	initAMG8834(	0x68	/* i2cAddress */,	&deviceAMG8834State	);
 	#endif
 
 	#ifdef WARP_BUILD_ENABLE_DEVAS7262
@@ -1374,6 +1374,8 @@ main(void)
 		#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 		SEGGER_RTT_WriteString(0, "\r- 'y': stress test (need a force quit)\n");
 		#endif
+
+		SEGGER_RTT_WriteString(0, "\r- 'z': dump all sensors data.\n");
 
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
 
@@ -2330,7 +2332,56 @@ main(void)
 			 */
 			case 'z':
 			{
-				
+				enableI2Cpins(menuI2cPullupValue);
+				enableSssupply(3200);OSA_TimeDelay(100);
+				configureSensorAMG8834(0x3F,/* Initial reset */
+										0x01,/* Frame rate 1 FPS */
+										menuI2cPullupValue
+										);
+
+				configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
+										0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+										menuI2cPullupValue
+										);
+				configureSensorMAG3110(0x01,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, turn on ACTIVE mode */
+										0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+										menuI2cPullupValue
+										);
+
+				enableSssupply(2800); /* NAK when set to 3200 */OSA_TimeDelay(100);
+				writeSensorRegisterHDC1000(0x02,/*	Configuration register	*/
+											(0b1010000<<8) + 0,
+											menuI2cPullupValue
+											);
+
+				uint8_t payloadCCS811[1];
+				payloadCCS811[0] = 0b01000000;/*	Constant power, measurement every 250ms */
+				configureSensorCCS811(payloadCCS811,
+										menuI2cPullupValue
+										);
+
+				for(uint8_t i = 0;i < 64; i++)
+				{
+					SEGGER_RTT_printf(0, " AMG8834 %d,", i);
+				}
+				SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
+				SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
+				SEGGER_RTT_WriteString(0, " CCS811 Air quality, HDC1000 Temperature, HDC1000 Humidity\n");
+
+				while(1)
+				{
+					enableSssupply(3200);OSA_TimeDelay(100);
+					printSensorDataAMG8834();
+
+					printSensorDataMMA8451Q();
+
+					enableSssupply(2800); /* NAK when set to 3200 */OSA_TimeDelay(100);
+					printSensorDataCCS811();
+
+					printSensorDataHDC1000();
+
+					SEGGER_RTT_printf(0, " \n ");
+				}
 				break;
 			}
 

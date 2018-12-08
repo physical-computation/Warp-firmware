@@ -58,7 +58,7 @@ extern volatile uint32_t		gWarpI2cBaudRateKbps;
 
 
 /*
- *	Bosch Sensortec BMX055.
+ *	CCS811.
  */
 void
 initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
@@ -70,6 +70,142 @@ initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 						kWarpTypeMaskTemperature
 					);
 	return;
+}
+
+WarpStatus
+writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t			commandByte[1];
+	uint8_t			payloadSize;
+	i2c_status_t	returnValue;
+
+	switch (deviceRegister)
+	{
+		case 0x01:
+		{
+			payloadSize = 1;
+			/* OK */
+			break;
+		}
+		case 0x11:
+		{
+			payloadSize = 2;
+			/* OK */
+			break;
+		}
+		case 0x05: case 0xF1: case 0xFF:
+		{
+			payloadSize = 4;
+			/* OK */
+			break;
+		}
+		case 0x10:
+		{
+			payloadSize = 5;
+			/* OK */
+			break;
+		}
+		case 0xF2:
+		{
+			payloadSize = 9;
+			/* OK */
+			break;
+		}
+		case 0xF3: case 0xF4:
+		{
+			payloadSize = 0;
+			/* OK */
+			break;
+		}
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceCCS811State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+
+	if(payloadSize)
+	{
+		returnValue = I2C_DRV_MasterSendDataBlocking(
+								0 /* I2C instance */,
+								&slave,
+								commandByte,
+								1,
+								payload,
+								payloadSize,
+								500);
+	}
+	else
+	{
+		returnValue = I2C_DRV_MasterSendDataBlocking(
+						0 /* I2C instance */,
+						&slave,
+						commandByte,
+						1,
+						NULL,
+						0,
+						500);
+	}
+
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
+configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue)
+{
+	i2c_status_t	returnValue;
+
+	/*
+	 *	See https://narcisaam.github.io/Init_Device/ for more information 
+	 *	on how to initialize and configure CCS811
+	 */
+	returnValue = writeSensorRegisterCCS811(0xF4 /* register address APP_START */,
+							payloadMEAS_MODE /* Dummy value */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	/*
+	 *	Wait for the sensor to change to application mode
+	 */
+	OSA_TimeDelay(500);
+
+	returnValue = writeSensorRegisterCCS811(0x01 /* register address MEAS_MODE */,
+							payloadMEAS_MODE /* payload: 3F initial reset */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	/*
+	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4, 
+	 *	run CCS811 for 20 minutes, before accurate readings are generated.
+	 */
+
+	return kWarpStatusOK;
 }
 
 WarpStatus
@@ -100,7 +236,7 @@ readSensorRegisterCCS811(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceCCS811State.i2cBuffer,
-							1,
+							2,
 							500 /* timeout in milliseconds */);
 
 	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d]\n", returnValue);
@@ -117,4 +253,19 @@ readSensorRegisterCCS811(uint8_t deviceRegister)
 	}	
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataCCS811(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+
+	readSensorRegisterCCS811(0x02);
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[1];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueCombined =
+					((readSensorRegisterValueMSB & 0x03)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 }

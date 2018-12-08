@@ -47,3 +47,4 @@ WarpStatus	readSensorSignalHDC1000(WarpTypeMask signal,
 					WarpSignalAccuracy accuracy,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
+void		printSensorDataHDC1000(void);

@@ -174,25 +174,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		*/
 
 		/*
-		 *	Step 1: Configure. Configuration data (0x00 0x00) in txBuf
-		 */
-		txBuf[0] = 0x00;
-		txBuf[1] = 0x00;
-		cmdBuf[0] = 0x02;
-
-		returnValue = I2C_DRV_MasterSendDataBlocking(
-								0 /* I2C peripheral instance */,
-								&slave,
-								cmdBuf,
-								1,
-								txBuf,
-								2,
-								100 /* timeout in milliseconds */);
-
-		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendData returned [%d] (ptr+config)\n", returnValue);
-
-		/*
-		 *	Step 2: Trigger temperature/humidity measurement
+		 *	Step 1: Trigger temperature/humidity measurement
 		 */
 		cmdBuf[0] = deviceRegister;
 
@@ -210,13 +192,13 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendData returned [%d] (ptr write)\n", returnValue);
 
 		/*
-		 * Step 3: Wait for conversion
+		 * Step 2: Wait for conversion
 		 */
-		OSA_TimeDelay(100);
+		OSA_TimeDelay(500);
 
 
 		/*
-		 *	Step 4: Read temp/humidity
+		 *	Step 3: Read temp/humidity
 		 */
 		returnValue = I2C_DRV_MasterReceiveDataBlocking(
 								0 /* I2C peripheral instance */,
@@ -268,4 +250,24 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataHDC1000(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+
+	readSensorRegisterHDC1000(0x00);
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	readSensorRegisterHDC1000(0x01);
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d, ",readSensorRegisterValueCombined);
 }
