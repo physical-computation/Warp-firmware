@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -128,7 +128,7 @@ WarpStatus
 configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint8_t menuI2cPullupValue)
 {
 	i2c_status_t	returnValue;
-	returnValue = writeSensorRegisterAMG8834(0x01 /* register address configuration register */,
+	returnValue = writeSensorRegisterAMG8834(kWarpSensorAMG8834Configuration /* register address configuration register */,
 							payloadConfigReg /* payload: 3F initial reset */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -136,7 +136,7 @@ configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, ui
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-	returnValue = writeSensorRegisterAMG8834(0x02 /* register address frame rate register */,
+	returnValue = writeSensorRegisterAMG8834(kWarpSensorAMG8834FrameRate /* register address frame rate register */,
 							payloadFrameRateReg /* payload: 1 FPS */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -205,7 +205,7 @@ printSensorDataAMG8834(void)
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
 
-	for (uint16_t bufAddress = 0x80; bufAddress <= 0xFF; bufAddress = bufAddress + 2)
+	for (uint16_t bufAddress = kWarpSensorAMG8834T01L; bufAddress <= kWarpSensorAMG8834T64H; bufAddress = bufAddress + 2)
 	{
 		readSensorRegisterAMG8834(bufAddress);
 		readSensorRegisterValueLSB = deviceAMG8834State.i2cBuffer[0];
@@ -215,9 +215,9 @@ printSensorDataAMG8834(void)
 		SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 	}
 
-	readSensorRegisterAMG8834(0x0E);
+	readSensorRegisterAMG8834(kWarpSensorAMG8834TTHL);
 	readSensorRegisterValueLSB = deviceAMG8834State.i2cBuffer[0];
-	readSensorRegisterAMG8834(0x0F);
+	readSensorRegisterAMG8834(kWarpSensorAMG8834TTHH);
 	readSensorRegisterValueMSB = deviceAMG8834State.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);

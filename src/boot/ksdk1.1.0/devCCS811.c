@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -179,7 +179,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue)
 	 *	See https://narcisaam.github.io/Init_Device/ for more information 
 	 *	on how to initialize and configure CCS811
 	 */
-	returnValue = writeSensorRegisterCCS811(0xF4 /* register address APP_START */,
+	returnValue = writeSensorRegisterCCS811(kWarpSensorCCS811APP_START /* register address APP_START */,
 							payloadMEAS_MODE /* Dummy value */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -192,7 +192,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue)
 	 */
 	OSA_TimeDelay(500);
 
-	returnValue = writeSensorRegisterCCS811(0x01 /* register address MEAS_MODE */,
+	returnValue = writeSensorRegisterCCS811(kWarpSensorCCS811MEAS_MODE /* register address MEAS_MODE */,
 							payloadMEAS_MODE /* payload: 3F initial reset */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -262,10 +262,10 @@ printSensorDataCCS811(void)
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
 
-	readSensorRegisterCCS811(0x02);
+	readSensorRegisterCCS811(0x03);
 	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[1];
 	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[0];
 	readSensorRegisterValueCombined =
-					((readSensorRegisterValueMSB & 0x03)<<8) + (readSensorRegisterValueLSB & 0xFF);
+					((readSensorRegisterValueMSB & 0x03)<<8) + (readSensorRegisterValueLSB & 0xFF);/* Raw ADC value */
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 }

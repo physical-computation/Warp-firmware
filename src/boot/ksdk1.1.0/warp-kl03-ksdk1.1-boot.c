@@ -2333,7 +2333,8 @@ main(void)
 			case 'z':
 			{
 				enableI2Cpins(menuI2cPullupValue);
-				enableSssupply(3200);OSA_TimeDelay(100);
+				enableSssupply(3300);
+				OSA_TimeDelay(100);
 				configureSensorAMG8834(0x3F,/* Initial reset */
 										0x01,/* Frame rate 1 FPS */
 										menuI2cPullupValue
@@ -2343,13 +2344,14 @@ main(void)
 										0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 										menuI2cPullupValue
 										);
-				configureSensorMAG3110(0x01,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, turn on ACTIVE mode */
+				configureSensorMAG3110(0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
 										0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
 										menuI2cPullupValue
 										);
 
-				enableSssupply(2800); /* NAK when set to 3200 */OSA_TimeDelay(100);
-				writeSensorRegisterHDC1000(0x02,/*	Configuration register	*/
+				enableSssupply(2800); /* NAK when set to 3200 */
+				OSA_TimeDelay(100);
+				writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/*	Configuration register	*/
 											(0b1010000<<8) + 0,
 											menuI2cPullupValue
 											);
@@ -2366,21 +2368,28 @@ main(void)
 				}
 				SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
 				SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
+				SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
 				SEGGER_RTT_WriteString(0, " CCS811 Air quality, HDC1000 Temperature, HDC1000 Humidity\n");
 
 				while(1)
 				{
-					enableSssupply(3200);OSA_TimeDelay(100);
-					printSensorDataAMG8834();
-
+					enableSssupply(3300);
+					OSA_TimeDelay(100);
+					/* 
+					 * Note: AMG8834 ADC output values not normal when SSsupply is set to 2800
+					 */
+					printSensorDataAMG8834(); 
 					printSensorDataMMA8451Q();
+					printSensorDataMAG3110();
 
-					enableSssupply(2800); /* NAK when set to 3200 */OSA_TimeDelay(100);
+					enableSssupply(2800); /* Note: CCS811 NAK when set to 3200 */
+					OSA_TimeDelay(100);
+
 					printSensorDataCCS811();
-
 					printSensorDataHDC1000();
 
 					SEGGER_RTT_printf(0, " \n ");
+					OSA_TimeDelay(100);
 				}
 				break;
 			}

@@ -173,6 +173,43 @@ typedef struct
 	WarpStatus		deviceStatus;
 } WarpI2CDeviceState;
 
+typedef enum
+{
+	kWarpSensorMMA8451QF_SETUP		= 0x09,
+	kWarpSensorMMA8451QCTRL_REG1	= 0x2A,
+	kWarpSensorMAG3110CTRL_REG1		= 0x10,
+	kWarpSensorMAG3110CTRL_REG2		= 0x11,
+	kWarpSensorHDC1000Configuration	= 0x02,
+	kWarpSensorAMG8834Configuration	= 0x01,
+	kWarpSensorAMG8834FrameRate		= 0x02,
+	kWarpSensorCCS811MEAS_MODE		= 0x01,
+	kWarpSensorCCS811APP_START		= 0xF4,
+} WarpI2CDeviceConfigurationRegister;
+
+typedef enum
+{
+	kWarpSensorMMA8451QOUT_X_MSB	= 0x01,
+	kWarpSensorMMA8451QOUT_X_LSB	= 0x02,
+	kWarpSensorMMA8451QOUT_Y_MSB	= 0x03,
+	kWarpSensorMMA8451QOUT_Y_LSB	= 0x04,
+	kWarpSensorMMA8451QOUT_Z_MSB	= 0x05,
+	kWarpSensorMMA8451QOUT_Z_LSB	= 0x06,
+	kWarpSensorMAG3110OUT_X_MSB		= 0x01,
+	kWarpSensorMAG3110OUT_X_LSB		= 0x02,
+	kWarpSensorMAG3110OUT_Y_MSB		= 0x03,
+	kWarpSensorMAG3110OUT_Y_LSB		= 0x04,
+	kWarpSensorMAG3110OUT_Z_MSB		= 0x05,
+	kWarpSensorMAG3110OUT_Z_LSB		= 0x06,
+	kWarpSensorMAG3110DIE_TEMP		= 0x0F,
+	kWarpSensorHDC1000Temperature	= 0x00,
+	kWarpSensorHDC1000Humidity		= 0x01,
+	kWarpSensorAMG8834TTHL			= 0x0E,
+	kWarpSensorAMG8834TTHH			= 0x0F,
+	kWarpSensorAMG8834T01L			= 0x80,
+	kWarpSensorAMG8834T64H			= 0xFF,
+	kWarpSensorCCS811RAW_DATA		= 0x03,
+} WarpI2CDeviceDataOutputRegister;
+
 typedef struct
 {
 	/*

@@ -131,7 +131,7 @@ WarpStatus
 configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint8_t menuI2cPullupValue)
 {
 	i2c_status_t	returnValue;
-	returnValue = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
+	returnValue = writeSensorRegisterMMA8451Q(kWarpSensorMMA8451QF_SETUP /* register address F_SETUP */,
 							payloadF_SETUP /* payload: Disable FIFO */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -139,7 +139,7 @@ configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint8_
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-	returnValue = writeSensorRegisterMMA8451Q(0x2A /* register address CTRL_REG1 */,
+	returnValue = writeSensorRegisterMMA8451Q(kWarpSensorMMA8451QCTRL_REG1 /* register address CTRL_REG1 */,
 							payloadCTRL_REG1 /* payload */,
 							menuI2cPullupValue);
 	if (returnValue != kStatus_I2C_Success)
@@ -224,23 +224,23 @@ printSensorDataMMA8451Q(void)
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
 
-	readSensorRegisterMMA8451Q(0x01);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_X_MSB);
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterMMA8451Q(0x02);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_X_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 	
-	readSensorRegisterMMA8451Q(0x03);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Y_MSB);
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterMMA8451Q(0x04);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Y_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 	
-	readSensorRegisterMMA8451Q(0x05);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Z_MSB);
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterMMA8451Q(0x06);
+	readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Z_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
