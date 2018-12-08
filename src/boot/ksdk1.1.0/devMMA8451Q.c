@@ -128,6 +128,31 @@ writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload, uint16_t me
 }
 
 WarpStatus
+configureSensorRegisterMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint8_t menuI2cPullupValue)
+{
+	i2c_status_t	returnValue;
+	returnValue = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
+							payloadF_SETUP /* payload: Disable FIFO */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	returnValue = writeSensorRegisterMMA8451Q(0x2A /* register address CTRL_REG1 */,
+							payloadCTRL_REG1 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
 readSensorRegisterMMA8451Q(uint8_t deviceRegister)
 {
 	uint8_t cmdBuf[1]	= {0xFF};

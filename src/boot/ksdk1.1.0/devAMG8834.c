@@ -71,6 +71,85 @@ initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceState
 }
 
 WarpStatus
+writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	switch (deviceRegister)
+	{
+		case 0x00: case 0x01: case 0x02: case 0x03:
+		case 0x05: case 0x07: case 0x08: case 0x09:
+		case 0x0A: case 0x0B: case 0x0C: case 0x0D:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceAMG8834State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							200);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
+configureSensorRegisterAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint8_t menuI2cPullupValue)
+{
+	i2c_status_t	returnValue;
+	returnValue = writeSensorRegisterAMG8834(0x01 /* register address configuration register */,
+							payloadConfigReg /* payload: 3F initial reset */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	returnValue = writeSensorRegisterAMG8834(0x02 /* register address frame rate register */,
+							payloadFrameRateReg /* payload: 1 FPS */,
+							menuI2cPullupValue);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
 readSensorRegisterAMG8834(uint8_t deviceRegister)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
