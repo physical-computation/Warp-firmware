@@ -123,35 +123,33 @@ writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t men
 	return kWarpStatusOK;
 }
 
-WarpStatus
+void
 configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint8_t menuI2cPullupValue)
 {
-	i2c_status_t	returnValue;
-	returnValue = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+	WarpStatus	i2cWriteStatus;
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
 							payloadCTRL_REG1 /* payload */,
 							menuI2cPullupValue);
-	if (returnValue != kStatus_I2C_Success)
+	if (i2cWriteStatus != kWarpStatusOK)
 	{
-		return kWarpStatusDeviceCommunicationFailed;
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
 	}
 
-	returnValue = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG2 /* register address CTRL_REG2 */,
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG2 /* register address CTRL_REG2 */,
 							payloadCTRL_REG2 /* payload */,
 							menuI2cPullupValue);
-	if (returnValue != kStatus_I2C_Success)
+	if (i2cWriteStatus != kWarpStatusOK)
 	{
-		return kWarpStatusDeviceCommunicationFailed;
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
 	}
 
-	returnValue = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
 							0x01 /* payload: ACTIVE mode */,
 							menuI2cPullupValue);
-	if (returnValue != kStatus_I2C_Success)
+	if (i2cWriteStatus != kWarpStatusOK)
 	{
-		return kWarpStatusDeviceCommunicationFailed;
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
 	}
-
-	return kWarpStatusOK;
 }
 
 WarpStatus
@@ -220,26 +218,43 @@ printSensorDataMAG3110(void)
 	uint8_t readSensorRegisterValueLSB;
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
 
-	readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_X_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_X_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 	
-	readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Y_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Y_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 	
-	readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Z_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Z_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 
-	readSensorRegisterMAG3110(kWarpSensorMAG3110DIE_TEMP);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110DIE_TEMP);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueMSB);
 }

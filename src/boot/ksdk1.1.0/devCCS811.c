@@ -170,21 +170,21 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 	return kWarpStatusOK;
 }
 
-WarpStatus
+void
 configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue)
 {
-	i2c_status_t	returnValue;
+	WarpStatus	i2cWriteStatus;
 
 	/*
 	 *	See https://narcisaam.github.io/Init_Device/ for more information 
 	 *	on how to initialize and configure CCS811
 	 */
-	returnValue = writeSensorRegisterCCS811(kWarpSensorCCS811APP_START /* register address APP_START */,
+	i2cWriteStatus = writeSensorRegisterCCS811(kWarpSensorCCS811APP_START /* register address APP_START */,
 							payloadMEAS_MODE /* Dummy value */,
 							menuI2cPullupValue);
-	if (returnValue != kStatus_I2C_Success)
+	if (i2cWriteStatus != kWarpStatusOK)
 	{
-		return kWarpStatusDeviceCommunicationFailed;
+		SEGGER_RTT_printf(0, "CCS811 Write Error, error %d", i2cWriteStatus);
 	}
 
 	/*
@@ -192,20 +192,18 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue)
 	 */
 	OSA_TimeDelay(500);
 
-	returnValue = writeSensorRegisterCCS811(kWarpSensorCCS811MEAS_MODE /* register address MEAS_MODE */,
+	i2cWriteStatus = writeSensorRegisterCCS811(kWarpSensorCCS811MEAS_MODE /* register address MEAS_MODE */,
 							payloadMEAS_MODE /* payload: 3F initial reset */,
 							menuI2cPullupValue);
-	if (returnValue != kStatus_I2C_Success)
+	if (i2cWriteStatus != kWarpStatusOK)
 	{
-		return kWarpStatusDeviceCommunicationFailed;
+		SEGGER_RTT_printf(0, "CCS811 Write Error, error %d", i2cWriteStatus);
 	}
 
 	/*
 	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4, 
 	 *	run CCS811 for 20 minutes, before accurate readings are generated.
 	 */
-
-	return kWarpStatusOK;
 }
 
 WarpStatus
@@ -261,8 +259,13 @@ printSensorDataCCS811(void)
 	uint8_t readSensorRegisterValueLSB;
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatus;
 
-	readSensorRegisterCCS811(0x03);
+	i2cReadStatus = readSensorRegisterCCS811(0x03);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "CCS811 Read Error, error %d", i2cReadStatus);
+	}
 	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[1];
 	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[0];
 	readSensorRegisterValueCombined =

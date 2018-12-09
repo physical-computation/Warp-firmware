@@ -258,14 +258,23 @@ printSensorDataHDC1000(void)
 	uint8_t readSensorRegisterValueLSB;
 	uint8_t readSensorRegisterValueMSB;
 	uint16_t readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatus;
 
-	readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "HDC1000 Read Error, error %d", i2cReadStatus);
+	}
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 
-	readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "CCS811 Read Error, error %d", i2cReadStatus);
+	}
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
