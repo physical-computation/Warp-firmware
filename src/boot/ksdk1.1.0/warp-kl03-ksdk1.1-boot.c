@@ -2332,35 +2332,8 @@ main(void)
 			 */
 			case 'z':
 			{
-				enableI2Cpins(menuI2cPullupValue);
-				enableSssupply(3300);
-				OSA_TimeDelay(100);
-				configureSensorAMG8834(0x3F,/* Initial reset */
-										0x01,/* Frame rate 1 FPS */
-										menuI2cPullupValue
-										);
-
-				configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-										0x01,/* Normal read 8bit, 800Hz, normal, active mode */
-										menuI2cPullupValue
-										);
-				configureSensorMAG3110(0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
-										0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
-										menuI2cPullupValue
-										);
-
-				enableSssupply(2800); /* NAK when set to 3200 */
-				OSA_TimeDelay(100);
-				writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/*	Configuration register	*/
-											(0b1010000<<8) + 0,
-											menuI2cPullupValue
-											);
-
-				uint8_t payloadCCS811[1];
-				payloadCCS811[0] = 0b01000000;/*	Constant power, measurement every 250ms */
-				configureSensorCCS811(payloadCCS811,
-										menuI2cPullupValue
-										);
+				SEGGER_RTT_WriteString(0, "\r\n\tSet the time delay between each run in ms(e.g., '1234')> ");
+				uint16_t menuDelayBetweenEachRun = read4digits();
 
 				for(uint8_t i = 0;i < 64; i++)
 				{
@@ -2369,27 +2342,99 @@ main(void)
 				SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
 				SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
 				SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
-				SEGGER_RTT_WriteString(0, " CCS811 Air quality, HDC1000 Temperature, HDC1000 Humidity\n");
+				SEGGER_RTT_WriteString(0, " L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
+				SEGGER_RTT_WriteString(0, " BME680 Press, BME680 Temp, BME680 Hum,");
+				SEGGER_RTT_WriteString(0, " BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
+				SEGGER_RTT_WriteString(0, " BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
+				SEGGER_RTT_WriteString(0, " BMX055gyro x, BMX055gyro y, BMX055gyro z,");
+				SEGGER_RTT_WriteString(0, " CCS811 Air quality,");
+				SEGGER_RTT_WriteString(0, " HDC1000 Temp, HDC1000 Hum,");
+				SEGGER_RTT_WriteString(0, "\n");
 
 				while(1)
 				{
+					enableI2Cpins(menuI2cPullupValue);
 					enableSssupply(3300);
-					OSA_TimeDelay(100);
+					OSA_TimeDelay(10);
+
+					configureSensorAMG8834(0x3F,/* Initial reset */
+										0x01,/* Frame rate 1 FPS */
+										menuI2cPullupValue
+										);
+					configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
+										0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+										menuI2cPullupValue
+										);
+					configureSensorMAG3110(0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
+										0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+										menuI2cPullupValue
+										);
+					configureSensorL3GD20H(0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
+										0b00100000,
+										0b00000000,/* normal mode, disable FIFO, disable high pass filter */
+										menuI2cPullupValue
+										);
+					configureSensorBME680(0b00100100,/*	oversamplingx1 temp, oversamplingx1 pressure, don't turn on forced mode yet*/
+										0b00000001,/*	oversamplingx1 humidity */
+										0b00000100,/*	filter 001 */
+										menuI2cPullupValue
+										);
 					/* 
 					 * Note: AMG8834 ADC output values not normal when SSsupply is set to 2800
 					 */
+					OSA_TimeDelay(10);
+
 					printSensorDataAMG8834(); 
 					printSensorDataMMA8451Q();
 					printSensorDataMAG3110();
+					printSensorDataL3GD20H();
+					printSensorDataBME680();
 
-					enableSssupply(2800); /* Note: CCS811 NAK when set to 3200 */
-					OSA_TimeDelay(100);
+					/*
+					 * Note: BMX055 and CCS811 NAK when set to 3300
+					 */
+					enableSssupply(2800); 
+					OSA_TimeDelay(10);
+
+					writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/*	Configuration register	*/
+											(0b1010000<<8) + 0,
+											menuI2cPullupValue
+											);
+
+					uint8_t payloadCCS811[1];
+					payloadCCS811[0] = 0b01000000;/*	Constant power, measurement every 250ms */
+					configureSensorCCS811(payloadCCS811,
+											menuI2cPullupValue
+											);
+
+					configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
+											0b10000000,/* Payload:unfiltered data, shadowing enabled */
+											menuI2cPullupValue
+											);
+					configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
+											0b00000001,/* Default 10Hz data rate, forced mode*/
+											menuI2cPullupValue
+											);
+					configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
+											0b00000000,/* ODR 2000 Hz, unfiltered */
+											0b00000000,/* normal mode */
+											0b10000000,/* unfiltered data, shadowing enabled */
+											menuI2cPullupValue
+											);
+
+					OSA_TimeDelay(10);
 
 					printSensorDataCCS811();
 					printSensorDataHDC1000();
+					printSensorDataBMX055accel();
+					printSensorDataBMX055mag();
+					printSensorDataBMX055gyro();
 
 					SEGGER_RTT_printf(0, " \n ");
-					OSA_TimeDelay(100);
+					disableI2Cpins();
+					disableSssupply();
+
+					OSA_TimeDelay(menuDelayBetweenEachRun);
 				}
 				break;
 			}

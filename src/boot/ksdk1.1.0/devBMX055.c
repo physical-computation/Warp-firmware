@@ -74,6 +74,71 @@ initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceS
 }
 
 WarpStatus
+writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	if (deviceRegister > 0x3F)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceBMX055accelState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							200);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+void
+configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus;
+
+	i2cWriteStatus = writeSensorRegisterBMX055accel(kWarpSensorBMX055accelPMU_RANGE /* register address PMU_RANGE */,
+							payloadPMU_RANGE /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_HBW /* register address ACCD_HBW */,
+							payloadACCD_HBW /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Write Error, error %d", i2cWriteStatus);
+	}
+}
+
+WarpStatus
 readSensorRegisterBMX055accel(uint8_t deviceRegister)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
@@ -140,6 +205,73 @@ initBMX055mag(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceSta
 }
 
 WarpStatus
+writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	if (deviceRegister > 0x52 || deviceRegister < 0x40)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceBMX055magState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							200);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+void
+configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus;
+
+	i2cWriteStatus = writeSensorRegisterBMX055mag(
+							kWarpSensorBMX055magPowerCtrl /* Power and operation modes, self-test, data output rate control registers */,
+							payloadPowerCtrl /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterBMX055mag(
+							kWarpSensorBMX055magOpMode /* Operation mode, output data rate and self-test control register */,
+							payloadOpMode /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Write Error, error %d", i2cWriteStatus);
+	}
+}
+
+WarpStatus
 readSensorRegisterBMX055mag(uint8_t deviceRegister)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
@@ -200,6 +332,86 @@ initBMX055gyro(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceSt
 }
 
 WarpStatus
+writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	if (deviceRegister > 0x3F)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceBMX055magState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							200);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+void
+configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t payloadLPM1, uint8_t payloadRATE_HBW, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus;
+	i2cWriteStatus = writeSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRANGE /* register address RANGE */,
+							payloadRANGE /* payload */, 
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterBMX055gyro(kWarpSensorBMX055gyroBW/* register address filter bandwidth */,
+							payloadBW /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterBMX055gyro(kWarpSensorBMX055gyroLPM1/* register address LPM1 */,
+							payloadLPM1 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_HBW/* register address RATE_HBW */,
+							payloadLPM1 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Write Error, error %d", i2cWriteStatus);
+	}
+}
+
+WarpStatus
 readSensorRegisterBMX055gyro(uint8_t deviceRegister)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
@@ -243,4 +455,189 @@ readSensorRegisterBMX055gyro(uint8_t deviceRegister)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataBMX055accel(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_X_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_X_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Y_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Y_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Z_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Z_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_TEMP);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055accel Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueMSB);
+}
+
+void
+printSensorDataBMX055gyro(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_X_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_X_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Y_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Y_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Z_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Z_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055gyro Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+}
+
+void
+printSensorDataBMX055mag(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magX_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magX_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magY_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magY_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magZ_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magZ_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magRHALL_LSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorBMX055magRHALL_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "BMX055mag Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
 }
