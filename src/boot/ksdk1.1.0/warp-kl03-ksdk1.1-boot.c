@@ -2359,27 +2359,27 @@ main(void)
 					OSA_TimeDelay(10);
 
 					configureSensorAMG8834(0x3F,/* Initial reset */
-										0x01,/* Frame rate 1 FPS */
-										menuI2cPullupValue
-										);
+								0x01,/* Frame rate 1 FPS */
+								menuI2cPullupValue
+								);
 					configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-										0x01,/* Normal read 8bit, 800Hz, normal, active mode */
-										menuI2cPullupValue
-										);
+								0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+								menuI2cPullupValue
+								);
 					configureSensorMAG3110(0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
-										0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
-										menuI2cPullupValue
-										);
+								0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+								menuI2cPullupValue
+								);
 					configureSensorL3GD20H(0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
-										0b00100000,
-										0b00000000,/* normal mode, disable FIFO, disable high pass filter */
-										menuI2cPullupValue
-										);
+								0b00100000,
+								0b00000000,/* normal mode, disable FIFO, disable high pass filter */
+								menuI2cPullupValue
+								);
 					configureSensorBME680(0b00100100,/*	oversamplingx1 temp, oversamplingx1 pressure, don't turn on forced mode yet*/
-										0b00000001,/*	oversamplingx1 humidity */
-										0b00000100,/*	filter 001 */
-										menuI2cPullupValue
-										);
+								0b00000001,/*	oversamplingx1 humidity */
+								0b00000100,/*	filter 001 */
+								menuI2cPullupValue
+								);
 					/* 
 					 * Note: AMG8834 ADC output values not normal when SSsupply is set to 2800
 					 */
@@ -2397,31 +2397,31 @@ main(void)
 					enableSssupply(2800); 
 					OSA_TimeDelay(10);
 
-					writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/*	Configuration register	*/
-											(0b1010000<<8) + 0,
-											menuI2cPullupValue
-											);
+					writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/* Configuration register	*/
+								(0b1010000<<8) + 0,
+								menuI2cPullupValue
+								);
 
 					uint8_t payloadCCS811[1];
-					payloadCCS811[0] = 0b01000000;/*	Constant power, measurement every 250ms */
+					payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
 					configureSensorCCS811(payloadCCS811,
-											menuI2cPullupValue
-											);
+								menuI2cPullupValue
+								);
 
 					configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
-											0b10000000,/* Payload:unfiltered data, shadowing enabled */
-											menuI2cPullupValue
-											);
+								0b10000000,/* Payload:unfiltered data, shadowing enabled */
+								menuI2cPullupValue
+								);
 					configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
-											0b00000001,/* Default 10Hz data rate, forced mode*/
-											menuI2cPullupValue
-											);
+								0b00000001,/* Default 10Hz data rate, forced mode*/
+								menuI2cPullupValue
+								);
 					configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
-											0b00000000,/* ODR 2000 Hz, unfiltered */
-											0b00000000,/* normal mode */
-											0b10000000,/* unfiltered data, shadowing enabled */
-											menuI2cPullupValue
-											);
+								0b00000000,/* ODR 2000 Hz, unfiltered */
+								0b00000000,/* normal mode */
+								0b10000000,/* unfiltered data, shadowing enabled */
+								menuI2cPullupValue
+								);
 
 					OSA_TimeDelay(10);
 
