@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -71,6 +71,88 @@ initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceState
 }
 
 WarpStatus
+writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	switch (deviceRegister)
+	{
+		case 0x09: case 0x0A: case 0x0B: case 0x0C:
+		case 0x0D: case 0x0E: case 0x10: case 0x11:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceMAG3110State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+void
+configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus;
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+							payloadCTRL_REG1 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG2 /* register address CTRL_REG2 */,
+							payloadCTRL_REG2 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+							0x01 /* payload: ACTIVE mode */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Write Error, error %d", i2cWriteStatus);
+	}
+}
+
+WarpStatus
 readSensorRegisterMAG3110(uint8_t deviceRegister)
 {
 	uint8_t		cmdBuf[1]	= {0xFF};
@@ -111,7 +193,7 @@ readSensorRegisterMAG3110(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceMAG3110State.i2cBuffer,
-							1,
+							2,
 							500 /* timeout in milliseconds */);
 
 	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
@@ -128,4 +210,51 @@ readSensorRegisterMAG3110(uint8_t deviceRegister)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataMAG3110(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_X_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
+	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+	
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Y_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
+	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+	
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Z_MSB);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
+	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110DIE_TEMP);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "MAG3110 Read Error, error %d", i2cReadStatus);
+	}	
+	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueMSB);
 }

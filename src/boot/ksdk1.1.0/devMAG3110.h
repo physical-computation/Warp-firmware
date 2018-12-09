@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -40,6 +40,8 @@
 #endif
 
 void		initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+WarpStatus	writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
+void		configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint8_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterMAG3110(uint8_t deviceRegister);
 WarpStatus	readSensorSignalMAG3110(WarpTypeMask signal,
 					WarpSignalPrecision precision,

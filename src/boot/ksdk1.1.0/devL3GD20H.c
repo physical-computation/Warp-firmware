@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -69,6 +69,90 @@ initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceState
 }
 
 WarpStatus
+writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
+	switch (deviceRegister)
+	{
+		case 0x20: case 0x21: case 0x22: case 0x23:
+		case 0x24: case 0x25: case 0x2E: case 0x30:
+		case 0x32: case 0x33: case 0x34: case 0x35:
+		case 0x36: case 0x37: case 0x38: case 0x39:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceL3GD20HState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							1000);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+void
+configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus;
+	i2cWriteStatus = writeSensorRegisterL3GD20H(kWarpSensorL3GD20HCTRL1 /* register address CTRL1 */,
+							payloadCTRL1 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterL3GD20H(kWarpSensorL3GD20HCTRL2 /* register address CTRL2 */,
+							payloadCTRL2 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Write Error, error %d", i2cWriteStatus);
+	}
+
+	i2cWriteStatus = writeSensorRegisterL3GD20H(kWarpSensorL3GD20HCTRL5 /* register address CTRL5 */,
+							payloadCTRL5 /* payload */,
+							menuI2cPullupValue);
+	if (i2cWriteStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Write Error, error %d", i2cWriteStatus);
+	}
+}
+
+WarpStatus
 readSensorRegisterL3GD20H(uint8_t deviceRegister)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
@@ -133,4 +217,66 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataL3GD20H(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_X_L);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_X_H);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Y_L);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Y_H);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+	
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Z_L);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Z_H);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_TEMP);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "L3GD20H Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueMSB);
 }

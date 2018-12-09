@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -66,6 +66,59 @@ initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceState
 }
 
 WarpStatus
+writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[2], commandByte[1];
+	i2c_status_t	returnValue;
+
+	switch (deviceRegister)
+	{
+		case 0x02:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceHDC1000State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	enableI2Cpins(menuI2cPullupValue);
+
+	/*
+	 *	Wait for supply and pull-ups to settle.
+	 */
+	OSA_TimeDelay(100);
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = (payload>>8) & 0xFF; /* MSB first */
+	payloadByte[1] = payload & 0xFF; /* LSB */
+	returnValue = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							2,
+							1000);
+	if (returnValue != kStatus_I2C_Success)
+	{
+		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
 readSensorRegisterHDC1000(uint8_t deviceRegister)
 {
 	uint8_t cmdBuf[1]	= {0xFF};
@@ -121,25 +174,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		*/
 
 		/*
-		 *	Step 1: Configure. Configuration data (0x00 0x00) in txBuf
-		 */
-		txBuf[0] = 0x00;
-		txBuf[1] = 0x00;
-		cmdBuf[0] = 0x02;
-
-		returnValue = I2C_DRV_MasterSendDataBlocking(
-								0 /* I2C peripheral instance */,
-								&slave,
-								cmdBuf,
-								1,
-								txBuf,
-								2,
-								100 /* timeout in milliseconds */);
-
-		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendData returned [%d] (ptr+config)\n", returnValue);
-
-		/*
-		 *	Step 2: Trigger temperature/humidity measurement
+		 *	Step 1: Trigger temperature/humidity measurement
 		 */
 		cmdBuf[0] = deviceRegister;
 
@@ -157,13 +192,13 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendData returned [%d] (ptr write)\n", returnValue);
 
 		/*
-		 * Step 3: Wait for conversion
+		 * Step 2: Wait for conversion
 		 */
-		OSA_TimeDelay(100);
+		OSA_TimeDelay(500);
 
 
 		/*
-		 *	Step 4: Read temp/humidity
+		 *	Step 3: Read temp/humidity
 		 */
 		returnValue = I2C_DRV_MasterReceiveDataBlocking(
 								0 /* I2C peripheral instance */,
@@ -215,4 +250,33 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataHDC1000(void)
+{
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	uint16_t readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatus;
+
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "HDC1000 Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
+	if(i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_printf(0, "CCS811 Read Error, error %d", i2cReadStatus);
+	}
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	SEGGER_RTT_printf(0, " %d, ",readSensorRegisterValueCombined);
 }

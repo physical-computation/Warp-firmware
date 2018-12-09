@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -40,9 +40,11 @@
 #endif
 
 void		initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+WarpStatus	writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterHDC1000(uint8_t deviceRegister);
 WarpStatus	readSensorSignalHDC1000(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
+void		printSensorDataHDC1000(void);
