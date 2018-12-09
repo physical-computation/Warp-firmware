@@ -2335,6 +2335,7 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\n\tSet the time delay between each run in ms(e.g., '1234')> ");
 				uint16_t menuDelayBetweenEachRun = read4digits();
 
+				SEGGER_RTT_WriteString(0, "\n");
 				for(uint8_t i = 0;i < 64; i++)
 				{
 					SEGGER_RTT_printf(0, " AMG8834 %d,", i);
