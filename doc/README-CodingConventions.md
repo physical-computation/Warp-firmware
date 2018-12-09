@@ -1,4 +1,4 @@
-1.	Code indented with tabs, not spaces.
+1.	Code indented with tabs, not spaces. For visual alignment, assume the code will be viewed in an editor where tabs are rendered to be as wide as eight spaces.
 
 2.	Variable names in `camelCase`.
 
