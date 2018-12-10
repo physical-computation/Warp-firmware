@@ -87,10 +87,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
 
-	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
-	uint8_t		cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
-	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
-
 
 	if (deviceRegister > 0x2B)
 	{
@@ -217,10 +213,7 @@ LedOnAS7262(void) {
 WarpStatus
 LedOffAS7262(void) {
 
-	uint8_t		cmdBuf_write[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0xFF};	
-	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
-
 	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
 	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
 

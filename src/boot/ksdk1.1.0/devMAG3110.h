@@ -48,3 +48,4 @@ WarpStatus	readSensorSignalMAG3110(WarpTypeMask signal,
 					WarpSignalAccuracy accuracy,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
+void		printSensorDataMAG3110(void);
