@@ -121,9 +121,8 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 WarpStatus
 readSensorRegisterHDC1000(uint8_t deviceRegister)
 {
-	uint8_t cmdBuf[1]	= {0xFF};
-	uint8_t txBuf[2]	= {0xFF, 0xFF};
-	i2c_status_t		returnValue;
+	uint8_t		cmdBuf[1]	= {0xFF};
+	i2c_status_t	returnValue;
 
 
 	i2c_device_t slave =
