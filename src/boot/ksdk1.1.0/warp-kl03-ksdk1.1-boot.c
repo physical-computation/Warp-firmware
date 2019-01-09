@@ -2342,20 +2342,37 @@ main(void)
 				uint16_t menuDelayBetweenEachRun = read4digits();
 
 				SEGGER_RTT_WriteString(0, "\n");
+
+				#ifdef WARP_BUILD_ENABLE_DEVAMG8834
 				for(uint8_t i = 0;i < 64; i++)
 				{
 					SEGGER_RTT_printf(0, " AMG8834 %d,", i);
 				}
 				SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 				SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 				SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 				SEGGER_RTT_WriteString(0, " L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVBME680
 				SEGGER_RTT_WriteString(0, " BME680 Press, BME680 Temp, BME680 Hum,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVBMX055
 				SEGGER_RTT_WriteString(0, " BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
 				SEGGER_RTT_WriteString(0, " BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
 				SEGGER_RTT_WriteString(0, " BMX055gyro x, BMX055gyro y, BMX055gyro z,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVCCS811
 				SEGGER_RTT_WriteString(0, " CCS811 Air quality,");
+				#endif
+				#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 				SEGGER_RTT_WriteString(0, " HDC1000 Temp, HDC1000 Hum,");
+				#endif
 				SEGGER_RTT_WriteString(0, "\n");
 
 				while(1)
@@ -2363,39 +2380,58 @@ main(void)
 					enableI2Cpins(menuI2cPullupValue);
 					enableSssupply(3300);
 					OSA_TimeDelay(10);
-
+					#ifdef WARP_BUILD_ENABLE_DEVAMG8834
 					configureSensorAMG8834(0x3F,/* Initial reset */
 								0x01,/* Frame rate 1 FPS */
 								menuI2cPullupValue
 								);
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 					configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
 								0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 								menuI2cPullupValue
 								);
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 					configureSensorMAG3110(0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
 								0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
 								menuI2cPullupValue
 								);
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 					configureSensorL3GD20H(0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
 								0b00100000,
 								0b00000000,/* normal mode, disable FIFO, disable high pass filter */
 								menuI2cPullupValue
 								);
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBME680
 					configureSensorBME680(0b00100100,/*	oversamplingx1 temp, oversamplingx1 pressure, don't turn on forced mode yet*/
 								0b00000001,/*	oversamplingx1 humidity */
 								0b00000100,/*	filter 001 */
 								menuI2cPullupValue
 								);
+					#endif
 					/* 
 					 * Note: AMG8834 ADC output values not normal when SSsupply is set to 2800
 					 */
 					OSA_TimeDelay(10);
 
-					printSensorDataAMG8834(); 
+					#ifdef WARP_BUILD_ENABLE_DEVAMG8834
+					printSensorDataAMG8834();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 					printSensorDataMMA8451Q();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
 					printSensorDataMAG3110();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
 					printSensorDataL3GD20H();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBME680
 					printSensorDataBME680();
+					#endif
 
 					/*
 					 * Note: BMX055 and CCS811 NAK when set to 3300
@@ -2403,17 +2439,21 @@ main(void)
 					enableSssupply(2800); 
 					OSA_TimeDelay(10);
 
+					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 					writeSensorRegisterHDC1000(kWarpSensorHDC1000Configuration,/* Configuration register	*/
 								(0b1010000<<8) + 0,
 								menuI2cPullupValue
 								);
+					#endif
 
+					#ifdef WARP_BUILD_ENABLE_DEVCCS811
 					uint8_t payloadCCS811[1];
 					payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
 					configureSensorCCS811(payloadCCS811,
 								menuI2cPullupValue
 								);
-
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055
 					configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
 								0b10000000,/* Payload:unfiltered data, shadowing enabled */
 								menuI2cPullupValue
@@ -2428,14 +2468,21 @@ main(void)
 								0b10000000,/* unfiltered data, shadowing enabled */
 								menuI2cPullupValue
 								);
+					#endif
 
 					OSA_TimeDelay(10);
 
+					#ifdef WARP_BUILD_ENABLE_DEVCCS811
 					printSensorDataCCS811();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 					printSensorDataHDC1000();
+					#endif
+					#ifdef WARP_BUILD_ENABLE_DEVBMX055
 					printSensorDataBMX055accel();
 					printSensorDataBMX055mag();
 					printSensorDataBMX055gyro();
+					#endif
 
 					SEGGER_RTT_printf(0, " \n ");
 					disableI2Cpins();
