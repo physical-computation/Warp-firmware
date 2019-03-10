@@ -31,6 +31,7 @@ In the second shell window, launch the JLink RTT client. On MacOS, this will be:
 
 	/Applications/SEGGER/JLink/JLinkRTTClient
 
+**Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the "double echo" problem described below on Unix platforms.**
 
 ## Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
@@ -76,7 +77,7 @@ You can probe around the menus to figure out what to do. In brief, you will like
 
 4. Menu item `j` to do a series of repeated reads from the specified default register (optionally auto-incrementing, etc.).
 
-**NOTE: The menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)**.
+**NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine). If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return. **.
 
 Example:
 ````
