@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceTCS34725State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -68,8 +70,8 @@ initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStat
 WarpStatus
 readSensorRegisterTCS34725(uint8_t deviceRegister)
 {
-	uint8_t 	cmdBuf[1]	= {0xFF};
-	i2c_status_t	returnValue;
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	status1, status2;
 
 
 	if (deviceRegister > 0x1D)
@@ -96,35 +98,28 @@ readSensorRegisterTCS34725(uint8_t deviceRegister)
 	 */
 	cmdBuf[0] = 0x80;
 
-	returnValue = I2C_DRV_MasterSendDataBlocking(
+	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							NULL,
 							0,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
 	cmdBuf[0] = deviceRegister;
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status2 = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							(uint8_t *)deviceTCS34725State.i2cBuffer,
 							1,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d]\n", returnValue);
 
-	if (returnValue == kStatus_I2C_Success)
+	if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
 	{
-		//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x\n", cmdBuf[0], deviceTCS34725State.i2cBuffer[0]);
-	}
-	else
-	{
-		//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 

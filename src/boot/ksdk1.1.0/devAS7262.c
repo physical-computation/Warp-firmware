@@ -48,17 +48,16 @@
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
 
-#include "devAS726x.h"
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
+#include "devAS726x.h"
 
 extern volatile WarpI2CDeviceState	deviceAS7262State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 
-/*Public functions for toggling LED */
-WarpStatus LedOnAS7262(void);
-WarpStatus LedOffAS7262(void);
+
 
 
 void
@@ -115,7 +114,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							2 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -135,7 +134,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							1 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -149,7 +148,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							1 /* The length in bytes of the commands to be transferred */,
 							(uint8_t *)deviceAS7262State.i2cBuffer /* The pointer to the data to be transferred */,
 							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -182,7 +181,7 @@ LedOnAS7262(void) {
 							2 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -200,7 +199,7 @@ LedOnAS7262(void) {
 							2 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
 	if (returnValue != kStatus_I2C_Success)
 	{
@@ -230,7 +229,7 @@ LedOffAS7262(void) {
 					2 /* The length in bytes of the commands to be transferred */,
 					NULL /* The pointer to the data to be transferred */,
 					0 /* The length in bytes of the data to be transferred */,
-					500 /* timeout in milliseconds */);
+					gWarpI2cTimeoutMilliseconds);
 
 	/*
 	 *	This turns off the LED after finish reading the data
@@ -243,7 +242,7 @@ LedOffAS7262(void) {
 							2 /* The length in bytes of the commands to be transferred */,
 							NULL /* The pointer to the data to be transferred */,
 							0 /* The length in bytes of the data to be transferred */,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
 	if (returnValue != kStatus_I2C_Success)
 	{
