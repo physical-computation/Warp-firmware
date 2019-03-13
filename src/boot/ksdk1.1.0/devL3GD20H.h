@@ -47,5 +47,5 @@ WarpStatus	readSensorSignalL3GD20H(WarpTypeMask signal,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
 WarpStatus	writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
-void		configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint8_t menuI2cPullupValue);
-void		printSensorDataL3GD20H(void);
+WarpStatus	configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint8_t menuI2cPullupValue);
+void		printSensorDataL3GD20H(bool hexModeFlag);

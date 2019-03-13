@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceHDC1000State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -91,13 +93,6 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-	enableI2Cpins(menuI2cPullupValue);
-
-	/*
-	 *	Wait for supply and pull-ups to settle.
-	 */
-	OSA_TimeDelay(100);
-
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = (payload>>8) & 0xFF; /* MSB first */
 	payloadByte[1] = payload & 0xFF; /* LSB */
@@ -111,7 +106,6 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 							1000);
 	if (returnValue != kStatus_I2C_Success)
 	{
-		//SEGGER_RTT_printf(0, "\r\n\tI2C write failed, error %d.\n\n", returnValue);
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
@@ -121,8 +115,8 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 WarpStatus
 readSensorRegisterHDC1000(uint8_t deviceRegister)
 {
-	uint8_t		cmdBuf[1]	= {0xFF};
-	i2c_status_t	returnValue;
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	status1, status2;
 
 
 	i2c_device_t slave =
@@ -130,8 +124,6 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		.address = deviceHDC1000State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
-
-	//SEGGER_RTT_printf(0, "\rreadSensorRegisterHDC1000() got deviceRegister [0x%02x]\n", deviceRegister);
 
 	if (deviceRegister == 0 || deviceRegister == 1)
 	{
@@ -177,47 +169,35 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		 */
 		cmdBuf[0] = deviceRegister;
 
-		//SEGGER_RTT_printf(0, "\rBefore I2C_DRV_MasterSendData...\n");
-
-		returnValue = I2C_DRV_MasterSendDataBlocking(
+		status1 = I2C_DRV_MasterSendDataBlocking(
 								0 /* I2C peripheral instance */,
 								&slave,
 								cmdBuf,
 								1,
 								NULL,
 								0,
-								100 /* timeout in milliseconds */);
-		
-		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendData returned [%d] (ptr write)\n", returnValue);
+								gWarpI2cTimeoutMilliseconds);
 
 		/*
-		 * Step 2: Wait for conversion
+		 *	Step 2: Wait for conversion
 		 */
-		OSA_TimeDelay(500);
+		OSA_TimeDelay(10);
 
 
 		/*
 		 *	Step 3: Read temp/humidity
 		 */
-		returnValue = I2C_DRV_MasterReceiveDataBlocking(
+		status2 = I2C_DRV_MasterReceiveDataBlocking(
 								0 /* I2C peripheral instance */,
 								&slave,
 								NULL,
 								0,
 								(uint8_t *)deviceHDC1000State.i2cBuffer,
 								2,
-								500 /* timeout in milliseconds */);
+								gWarpI2cTimeoutMilliseconds);
 
-		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (retrieve measurement)\n", returnValue);
-
-		if (returnValue == kStatus_I2C_Success)
+		if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
 		{
-			//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x 0x%02x\n", cmdBuf[0], deviceHDC1000State.i2cBuffer[0], deviceHDC1000State.i2cBuffer[1]);
-		}
-		else
-		{
-			//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 			return kWarpStatusDeviceCommunicationFailed;
 		}
 	}
@@ -225,25 +205,17 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 	{
 		cmdBuf[0] = deviceRegister;
 
-		returnValue = I2C_DRV_MasterReceiveDataBlocking(
+		status1 = I2C_DRV_MasterReceiveDataBlocking(
 								0 /* I2C peripheral instance */,
 								&slave,
 								cmdBuf,
 								1,
 								(uint8_t *)deviceHDC1000State.i2cBuffer,
 								2,
-								500 /* timeout in milliseconds */);
+								gWarpI2cTimeoutMilliseconds);
 
-		//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (retrieve measurement)\n", returnValue);
-
-		if (returnValue == kStatus_I2C_Success)
+		if (status1 != kStatus_I2C_Success)
 		{
-			//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x 0x%02x\n", cmdBuf[0], deviceHDC1000State.i2cBuffer[0], deviceHDC1000State.i2cBuffer[1]);
-		}
-		else
-		{
-			//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 			return kWarpStatusDeviceCommunicationFailed;
 		}
 	}
@@ -252,30 +224,51 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 }
 
 void
-printSensorDataHDC1000(void)
+printSensorDataHDC1000(bool hexModeFlag)
 {
-	uint8_t readSensorRegisterValueLSB;
-	uint8_t readSensorRegisterValueMSB;
-	uint16_t readSensorRegisterValueCombined;
+	uint8_t		readSensorRegisterValueLSB;
+	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
+
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
-	if(i2cReadStatus != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "HDC1000 Read Error, error %d", i2cReadStatus);
-	}
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
-	SEGGER_RTT_printf(0, " %d,",readSensorRegisterValueCombined);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
 
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
-	if(i2cReadStatus != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "CCS811 Read Error, error %d", i2cReadStatus);
-	}
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
-	SEGGER_RTT_printf(0, " %d, ",readSensorRegisterValueCombined);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
 }

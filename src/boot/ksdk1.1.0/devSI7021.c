@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceSI7021State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -68,17 +70,17 @@ initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 WarpStatus
 readSensorRegisterSI7021(uint8_t deviceRegister)
 {
-	uint8_t 	cmdBuf[2]	= {0xFF, 0xFF};
-	i2c_status_t	returnValue;
+	uint8_t 	cmdBuf[2] = {0xFF, 0xFF};
+	i2c_status_t	status1, status2, status3, status4;
 
 
-	//
-	//TODO: See SI7021 manual.
-	//	1.	We should be passing in a 'command code' such as those in table 11
-	//	2.	We first write command code, then read results
-	//
-	//	for now, just fix command code as 'read firmware version'
-	//
+	/*
+	 *	TODO: See SI7021 manual.
+	 *	1.	We should be passing in a 'command code' such as those in table 11
+	 *	2.	We first write command code, then read results
+	 *
+	 *	for now, just fix command code as 'read firmware version'
+	 */
 	
 	i2c_device_t slave =
 	{
@@ -86,20 +88,20 @@ readSensorRegisterSI7021(uint8_t deviceRegister)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-	//TODO: for now, we fix command code as read first byte of serial number
+	/*
+	 *	TODO: for now, we fix command code as read first byte of serial number
+	 */
 	cmdBuf[0] = 0xFA;
 	cmdBuf[1] = 0x0F;
 
-	returnValue = I2C_DRV_MasterSendDataBlocking(
+	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							NULL,
 							0,
 							cmdBuf,
 							2,//TODO: for now, we fix command code as two byte 'read firmware version' command
-							500 /* timeout in milliseconds */);
-
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendDataBlocking returned [%d] (set pointer)\n", returnValue);
+							gWarpI2cTimeoutMilliseconds);
 
 
 	/*
@@ -107,50 +109,42 @@ readSensorRegisterSI7021(uint8_t deviceRegister)
 	 *	See similar thing in HDC1000 driver where we also send a NULL cmdBuf in
 	 *	I2C_DRV_MasterReceiveDataBlocking.
 	 */
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status2 = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
 							2,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
-
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status3 = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
 							2,
-							500 /* timeout in milliseconds */);
-
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
+							gWarpI2cTimeoutMilliseconds);
 
 	/*
 	 *	Now, this two-byte read should succed according to page 20 of SI7021 manual:
 	 */
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status4 = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
 							2,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
-
-	if (returnValue == kStatus_I2C_Success)
+	if (	(status1 != kStatus_I2C_Success) ||
+		(status2 != kStatus_I2C_Success) ||
+		(status3 != kStatus_I2C_Success) ||
+		(status4 != kStatus_I2C_Success)
+		)
 	{
-		//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x\n", cmdBuf[0], deviceMAG3110State.i2cBuffer[0]);
-	}
-	else
-	{
-		//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 

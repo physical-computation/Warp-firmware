@@ -53,7 +53,7 @@
 
 extern volatile WarpSPIDeviceState	deviceADXL362State;
 extern volatile uint32_t		gWarpSPIBaudRateKbps;
-
+extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 
 
 /*
@@ -123,7 +123,7 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 					(const uint8_t * restrict)deviceADXL362State.spiSourceBuffer,
 					(uint8_t * restrict)deviceADXL362State.spiSinkBuffer,
 					3 /* transfer size */,
-					1000 /* timeout in microseconds (unlike I2C which is ms) */);
+					gWarpSpiTimeoutMicroseconds);
 	disableSPIpins();
 
 	/*

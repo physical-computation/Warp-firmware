@@ -48,15 +48,15 @@ WarpStatus	writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payloa
 WarpStatus	writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 
-void		configureSensorBMX055accel(uint8_t payloadPMU_RANGE,
+WarpStatus	configureSensorBMX055accel(uint8_t payloadPMU_RANGE,
 					uint8_t payloadACCD_HBW,
 					uint8_t menuI2cPullupValue);
-void		configureSensorBMX055gyro(uint8_t payloadRANGE,
+WarpStatus	configureSensorBMX055gyro(uint8_t payloadRANGE,
 					uint8_t payloadBW,
 					uint8_t payloadLPM1,
 					uint8_t payloadRATE_HBW,
 					uint8_t menuI2cPullupValue);
-void		configureSensorBMX055mag(uint8_t payloadPowerCtrl,
+WarpStatus	configureSensorBMX055mag(uint8_t payloadPowerCtrl,
 					uint8_t payloadOpMode,
 					uint8_t menuI2cPullupValue);
 
@@ -82,6 +82,6 @@ WarpStatus	readSensorSignalBMX055mag(WarpTypeMask signal,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
 
-void		printSensorDataBMX055accel(void);
-void		printSensorDataBMX055gyro(void);
-void		printSensorDataBMX055mag(void);
+void		printSensorDataBMX055accel(bool hexModeFlag);
+void		printSensorDataBMX055gyro(bool hexModeFlag);
+void		printSensorDataBMX055mag(bool hexModeFlag);
