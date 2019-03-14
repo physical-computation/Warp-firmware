@@ -2553,18 +2553,18 @@ main(void)
 					#ifdef WARP_BUILD_ENABLE_DEVBME680
 					printSensorDataBME680(hexModeFlag);
 					#endif
-
-					#ifdef WARP_BUILD_ENABLE_DEVCCS811
+                    #ifdef WARP_BUILD_ENABLE_DEVBMX055
+                    printSensorDataBMX055accel(hexModeFlag);
+                    printSensorDataBMX055mag(hexModeFlag);
+                    printSensorDataBMX055gyro(hexModeFlag);
+                    #endif
+                    #ifdef WARP_BUILD_ENABLE_DEVCCS811
 					printSensorDataCCS811(hexModeFlag);
 					#endif
 					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 					printSensorDataHDC1000(hexModeFlag);
 					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVBMX055
-					printSensorDataBMX055accel(hexModeFlag);
-					printSensorDataBMX055mag(hexModeFlag);
-					printSensorDataBMX055gyro(hexModeFlag);
-					#endif
+				
 
 					#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 					SEGGER_RTT_printf(0, " %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
