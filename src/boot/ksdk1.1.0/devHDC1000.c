@@ -179,10 +179,9 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 								gWarpI2cTimeoutMilliseconds);
 
 		/*
-		 *	Step 2: Wait for conversion
+		 *	Step 2: Wait for max 6.5ms for conversion completion (see Table 7.5 of HDC1000 datasheet)
 		 */
-		OSA_TimeDelay(10);
-
+		OSA_TimeDelay(7);
 
 		/*
 		 *	Step 3: Read temp/humidity

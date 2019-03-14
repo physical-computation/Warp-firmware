@@ -406,7 +406,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_X_MSB);
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<4) + (readSensorRegisterValueLSB & 0x0F);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -427,7 +427,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Y_MSB);
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<4) + (readSensorRegisterValueLSB & 0x0F);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -448,7 +448,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_Z_MSB);
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<4) + (readSensorRegisterValueLSB & 0x0F);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -466,7 +466,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	}
 
 	i2cReadStatusLow = readSensorRegisterBMX055accel(kWarpSensorBMX055accelACCD_TEMP);
-	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueCombined = deviceBMX055accelState.i2cBuffer[0];
 	if (i2cReadStatusLow != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -475,7 +475,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x,", readSensorRegisterValueMSB);
+			SEGGER_RTT_printf(0, " 0x%02x,", readSensorRegisterValueCombined);
 		}
 		else
 		{
@@ -497,7 +497,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_X_MSB);
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -518,7 +518,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Y_MSB);
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -539,7 +539,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055gyro(kWarpSensorBMX055gyroRATE_Z_MSB);
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -570,7 +570,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055mag(kWarpSensorBMX055magX_MSB);
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -591,7 +591,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055mag(kWarpSensorBMX055magY_MSB);
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -612,7 +612,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055mag(kWarpSensorBMX055magZ_MSB);
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 7) | (readSensorRegisterValueLSB >> 1);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -633,7 +633,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterBMX055mag(kWarpSensorBMX055magRHALL_MSB);
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
