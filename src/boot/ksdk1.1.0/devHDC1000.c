@@ -234,7 +234,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -247,14 +247,17 @@ printSensorDataHDC1000(bool hexModeFlag)
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			/*
+			 *	See Section 8.6.1 of the HDC1000 manual for the conversion to temperature.
+			 */
+			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined / (1u << 16))*165 - 40);
 		}
 	}
 
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -267,7 +270,10 @@ printSensorDataHDC1000(bool hexModeFlag)
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			/*
+			 *	See Section 8.6.2 of the HDC1000 manual for the conversion to temperature.
+			 */
+			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined / (1u << 16))*100);
 		}
 	}
 }
