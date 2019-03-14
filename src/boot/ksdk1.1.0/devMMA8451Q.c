@@ -208,7 +208,7 @@ printSensorDataMMA8451Q(bool hexModeFlag)
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
 	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_X_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -230,7 +230,7 @@ printSensorDataMMA8451Q(bool hexModeFlag)
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
 	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Y_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -252,7 +252,7 @@ printSensorDataMMA8451Q(bool hexModeFlag)
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
 	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Z_LSB);
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
