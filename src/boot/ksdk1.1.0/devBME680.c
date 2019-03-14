@@ -187,7 +187,7 @@ printSensorDataBME680(bool hexModeFlag)
 	uint8_t		readSensorRegisterValueLSB;
 	uint8_t		readSensorRegisterValueMSB;
 	uint8_t		readSensorRegisterValueXLSB;
-	uint32_t	readSensorRegisterValueCombined;
+	int32_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatusMSB, i2cReadStatusLSB, i2cReadStatusXLSB;
 
 

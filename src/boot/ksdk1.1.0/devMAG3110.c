@@ -260,7 +260,7 @@ printSensorDataMAG3110(bool hexModeFlag)
 
 
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110DIE_TEMP);
-	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
+	readSensorRegisterValueCombined = deviceMAG3110State.i2cBuffer[0];
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -269,11 +269,11 @@ printSensorDataMAG3110(bool hexModeFlag)
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x,", readSensorRegisterValueMSB);
+			SEGGER_RTT_printf(0, " 0x%02x,", readSensorRegisterValueCombined);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", (int16_t)readSensorRegisterValueMSB);
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
 		}
 	}
 }
