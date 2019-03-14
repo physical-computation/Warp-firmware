@@ -88,31 +88,40 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 			payloadSize = 1;
 			break;
 		}
+
 		case 0x11:
 		{
 			payloadSize = 2;
 			break;
 		}
-		case 0x05: case 0xF1: case 0xFF:
+
+		case 0x05:
+		case 0xF1:
+		case 0xFF:
 		{
 			payloadSize = 4;
 			break;
 		}
+
 		case 0x10:
 		{
 			payloadSize = 5;
 			break;
 		}
+
 		case 0xF2:
 		{
 			payloadSize = 9;
 			break;
 		}
-		case 0xF3: case 0xF4:
+
+		case 0xF3:
+		case 0xF4:
 		{
 			payloadSize = 0;
 			break;
 		}
+
 		default:
 		{
 			return kWarpStatusBadDeviceCommand;
@@ -236,11 +245,15 @@ printSensorDataCCS811(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 	i2cReadStatus = readSensorRegisterCCS811(0x03);
-	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[1];
-	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
+
+	/*
+	 *	See CCS811 manual, Figure 15:
+	 */
 	readSensorRegisterValueCombined =
-						((readSensorRegisterValueMSB & 0x03)<<8) +
-						(readSensorRegisterValueLSB & 0xFF);		/* Raw ADC value */
+						((readSensorRegisterValueLSB & 0x03) << 8) |
+						(readSensorRegisterValueMSB & 0xFF);		/* Raw ADC value */
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");

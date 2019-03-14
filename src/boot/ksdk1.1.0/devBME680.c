@@ -198,9 +198,9 @@ printSensorDataBME680(bool hexModeFlag)
 	i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorBME680press_xlsb);
 	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 	readSensorRegisterValueCombined =
-			((readSensorRegisterValueMSB & 0xFF)<<12) +
-			((readSensorRegisterValueLSB & 0xFF)<<4) +
-			((readSensorRegisterValueXLSB & 0xF0)>>4);
+			((readSensorRegisterValueMSB & 0xFF)  << 12) |
+			((readSensorRegisterValueLSB & 0xFF)  << 4)  |
+			((readSensorRegisterValueXLSB & 0xF0) >> 4);
 
 	if ((i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK) || (i2cReadStatusXLSB != kWarpStatusOK))
 	{
@@ -226,9 +226,9 @@ printSensorDataBME680(bool hexModeFlag)
 	i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorBME680temp_xlsb);
 	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 	readSensorRegisterValueCombined =
-			((readSensorRegisterValueMSB & 0xFF)<<12) +
-			((readSensorRegisterValueLSB & 0xFF)<<4) +
-			((readSensorRegisterValueXLSB & 0xF0)>>4);
+			((readSensorRegisterValueMSB & 0xFF)  << 12) |
+			((readSensorRegisterValueLSB & 0xFF)  << 4)  |
+			((readSensorRegisterValueXLSB & 0xF0) >> 4);
 	if ((i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK) || (i2cReadStatusXLSB != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -250,7 +250,7 @@ printSensorDataBME680(bool hexModeFlag)
 	readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
 	i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorBME680hum_lsb);
 	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
