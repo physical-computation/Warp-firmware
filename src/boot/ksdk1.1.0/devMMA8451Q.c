@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceMMA8451QState;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -69,10 +71,77 @@ initMMA8451Q(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStat
 }
 
 WarpStatus
+writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+{
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	status;
+
+	switch (deviceRegister)
+	{
+		case 0x09: case 0x0a: case 0x0e: case 0x0f:
+		case 0x11: case 0x12: case 0x13: case 0x14:
+		case 0x15: case 0x17: case 0x18: case 0x1d:
+		case 0x1f: case 0x20: case 0x21: case 0x23:
+		case 0x24: case 0x25: case 0x26: case 0x27:
+		case 0x28: case 0x29: case 0x2a: case 0x2b:
+		case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+		case 0x30: case 0x31:
+		{
+			/* OK */
+			break;
+		}
+		
+		default:
+		{
+			return kWarpStatusBadDeviceCommand;
+		}
+	}
+
+	i2c_device_t slave =
+	{
+		.address = deviceMMA8451QState.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
+
+	commandByte[0] = deviceRegister;
+	payloadByte[0] = payload;
+	status = I2C_DRV_MasterSendDataBlocking(
+							0 /* I2C instance */,
+							&slave,
+							commandByte,
+							1,
+							payloadByte,
+							1,
+							gWarpI2cTimeoutMilliseconds);
+	if (status != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
+configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint8_t menuI2cPullupValue)
+{
+	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
+
+	i2cWriteStatus1 = writeSensorRegisterMMA8451Q(kWarpSensorMMA8451QF_SETUP /* register address F_SETUP */,
+							payloadF_SETUP /* payload: Disable FIFO */,
+							menuI2cPullupValue);
+
+	i2cWriteStatus2 = writeSensorRegisterMMA8451Q(kWarpSensorMMA8451QCTRL_REG1 /* register address CTRL_REG1 */,
+							payloadCTRL_REG1 /* payload */,
+							menuI2cPullupValue);
+
+	return (i2cWriteStatus1 | i2cWriteStatus2);
+}
+
+WarpStatus
 readSensorRegisterMMA8451Q(uint8_t deviceRegister)
 {
-	uint8_t cmdBuf[1]	= {0xFF};
-	i2c_status_t		returnValue;
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	status;
 
 
 	switch (deviceRegister)
@@ -95,11 +164,10 @@ readSensorRegisterMMA8451Q(uint8_t deviceRegister)
 		
 		default:
 		{
-			//SEGGER_RTT_printf(0, "\rreadSensorRegisterMMA8451Q() received bad deviceRegister\n");
-	
 			return kWarpStatusBadDeviceCommand;
 		}
 	}
+
 
 	i2c_device_t slave =
 	{
@@ -110,27 +178,94 @@ readSensorRegisterMMA8451Q(uint8_t deviceRegister)
 
 	cmdBuf[0] = deviceRegister;
 
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							(uint8_t *)deviceMMA8451QState.i2cBuffer,
 							1,
-							500 /* timeout in milliseconds */);
-	
-	//SEGGER_RTT_printf(0, "\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
+							gWarpI2cTimeoutMilliseconds);
 
-	if (returnValue == kStatus_I2C_Success)
+	if (status != kStatus_I2C_Success)
 	{
-		//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x\n", cmdBuf[0], deviceMMA8451QState.i2cBuffer[0]);
-	}
-	else
-	{
-		//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+printSensorDataMMA8451Q(bool hexModeFlag)
+{
+	uint8_t		readSensorRegisterValueLSB;
+	uint8_t		readSensorRegisterValueMSB;
+	int16_t		readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
+
+
+	i2cReadStatusHigh = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_X_MSB);
+	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
+	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_X_LSB);
+	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+
+
+	i2cReadStatusHigh = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Y_MSB);
+	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
+	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Y_LSB);
+	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+
+
+	i2cReadStatusHigh = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Z_MSB);
+	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
+	i2cReadStatusLow = readSensorRegisterMMA8451Q(kWarpSensorMMA8451QOUT_Z_LSB);
+	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
 }

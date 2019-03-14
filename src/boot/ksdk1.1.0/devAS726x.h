@@ -39,3 +39,6 @@ enum {
 	kWarpI2C_AS726x_SLAVE_WRITE_REG	= 0x01,
 	kWarpI2C_AS726x_SLAVE_READ_REG	= 0x02
 };
+
+WarpStatus	LedOnAS7262(void);
+WarpStatus	LedOffAS7262(void);

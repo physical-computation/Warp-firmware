@@ -30,11 +30,13 @@
 	cp ../../src/boot/ksdk1.1.0/devAS726x.*				work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devPAN1326.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/CMakeLists.txt			work/demos/Warp/armgcc/Warp/
-	cp ../../src/boot/ksdk1.1.0/startup_MKL03Z4.S		work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
+	cp ../../src/boot/ksdk1.1.0/startup_MKL03Z4.S			work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
 	cp ../../src/boot/ksdk1.1.0/gpio_pins.c				work/boards/Warp
 	cp ../../src/boot/ksdk1.1.0/gpio_pins.h				work/boards/Warp
 
+	#	The linker script file for the KL05 defines the `__StackTop` appropriately, which is different for the KL05 and is defined in the MKL05Z32xxx4_flash.ld which we got from the Nxp "KL05-SC.zip" barmetal sample code package (https://community.nxp.com/thread/450377)  */
+	cp ../../src/boot/ksdk1.1.0/MKL05Z32xxx4_flash.ld		work/platform/linker/MKL03Z4/gcc/MKL03Z32xxx4_flash.ld
+
 	cd work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
 	cd ../../../../demos/Warp/armgcc/Warp && ./clean.sh; ./build_release.sh
-	echo "\n\nNow, run\n\n\t/Applications/SEGGER/JLink/JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands\n\n"
-
+	echo "\n\nNow, run\n\n\t/Applications/SEGGER/JLink/JLinkExe -device MKL05Z32xxx4 -if SWD -speed 4000 -CommanderScript ../../tools/scripts/jlink.commands\n\n"

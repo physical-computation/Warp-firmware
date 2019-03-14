@@ -3,8 +3,6 @@
 
 #include "fsl_gpio_driver.h"
 
-
-
 /*
  *	On Warp, these are the alternative functions we have chosen:
  *
@@ -63,9 +61,17 @@ enum _gpio_pins
 	kWarpPinTPS82740_VSEL3			= GPIO_MAKE_PIN(HW_GPIOB, 5),		/*	Warp TPS82740_VSEL3	--> PTB5									*/
 	kWarpPinTS5A3154_IN			= GPIO_MAKE_PIN(HW_GPIOB, 6),		/*	Warp TS5A3154_IN	--> PTB6		(was unused in Warp v2)					*/
 	kWarpPinSI4705_nRST			= GPIO_MAKE_PIN(HW_GPIOB, 7),		/*	Warp SI4705_nRST	--> PTB7		(was unused in Warp v2)					*/
+
+#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+	kWarpPinFRDMKL03LED_Red			= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	PTB10: LED_Red												*/
+	kWarpPinFRDMKL03LED_Green		= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	PTB11: LED_Green											*/
+	kWarpPinFRDMKL03LED_Blue		= GPIO_MAKE_PIN(HW_GPIOB, 13),		/*	PTB13: LED_Blue												*/
+#else
 	kWarpPinPAN1326_nSHUTD			= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	Warp PAN1326_nSHUTD	--> PTB10		(was unused in Warp v2)					*/
 	kWarpPinISL23415_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	Warp ISL23415_nCS	--> PTB11		(was TPS82675_MODE in Warp v2)				*/
 	kWarpPinCLKOUT32K			= GPIO_MAKE_PIN(HW_GPIOB, 13),		/*	Warp KL03_CLKOUT32K	--> PTB13									*/
+#endif
+
 
 #ifdef WARP_FRDMKL03
 	kWarpPinUnusedPTB2			= GPIO_MAKE_PIN(HW_GPIOB, 2),		/*	PTB2: unused												*/
@@ -81,6 +87,11 @@ enum _gpio_pins
 	kWarpPinSPI_MISO			= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp KL03_SPI_MISO	--> PTA6									*/
 	kWarpPinSPI_MOSI			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	Warp KL03_SPI_MOSI	--> PTA7									*/
 	kWarpPinTPS82740A_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinTPS82740A_CTLEN --> PTA9		(was kWarpPinSPI_SCK_I2C_PULLUP_EN in Warp v2)		*/	
+
+	kWarpPinLPUART_HCI_TX 		= GPIO_MAKE_PIN(HW_GPIOB, 3), 		/*	Warp KL03_LPUART_TX	--> PTB3									*/
+	kWarpPinLPUART_HCI_RX 		= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	Warp KL03_LPUART_RX	--> PTB4									*/
+	kWarpPinPAN1326_HCI_RTS 	= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp kWarpPinPAN1326_HCI_RTS --> PTA6							*/
+	kWarpPinPAN1326_HCI_CTS 	= GPIO_MAKE_PIN(HW_GPIOA, 7)		/*	Warp kWarpPinPAN1326_HCI_CTS	--> PTA7						*/
 #endif
 };
 

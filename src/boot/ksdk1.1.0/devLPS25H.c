@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceLPS25HState;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -68,14 +70,15 @@ initLPS25H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 WarpStatus
 readSensorRegisterLPS25H(uint8_t deviceRegister)
 {
-	uint8_t 	cmdBuf[1]	= {0xFF};
-	i2c_status_t	returnValue;
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	status1, status2;
 
 
 	if ((deviceRegister < 0x0F) || (deviceRegister > 0x39))
 	{
 		return kWarpStatusBadDeviceCommand;
 	}
+
 
 	i2c_device_t slave =
 	{
@@ -96,37 +99,26 @@ readSensorRegisterLPS25H(uint8_t deviceRegister)
 	 */
 
 
-	returnValue = I2C_DRV_MasterSendDataBlocking(
+	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							NULL,
 							0,
-							100 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterSendDataBlocking returned [%d] (set pointer)\n", returnValue);
-		
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status2 = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							(uint8_t *)deviceLPS25HState.i2cBuffer,
 							1,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (read register)\n", returnValue);
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d] (retrieve measurement)\n", returnValue);
-
-	if (returnValue == kStatus_I2C_Success)
+	if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
 	{
-		//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x\n", cmdBuf[0], deviceLPS25HState.i2cBuffer[0]);
-	}
-	else
-	{
-		//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 

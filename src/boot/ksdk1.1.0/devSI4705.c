@@ -53,6 +53,8 @@
 
 extern volatile WarpI2CDeviceState	deviceSI4705State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -68,9 +70,8 @@ initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 WarpStatus
 readSensorRegisterSI4705(uint8_t deviceRegister)
 {
-	uint8_t 	cmdBuf[1]	= {0xFF};
-	i2c_status_t	returnValue;
-
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	status;
 
 
 	i2c_device_t slave =
@@ -95,30 +96,22 @@ readSensorRegisterSI4705(uint8_t deviceRegister)
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
 
 
-	returnValue = I2C_DRV_MasterReceiveDataBlocking(
+	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
 							cmdBuf,
 							1,
 							(uint8_t *)deviceSI4705State.i2cBuffer,
 							1,
-							500 /* timeout in milliseconds */);
+							gWarpI2cTimeoutMilliseconds);
 
 	/*
 	 *	Disable the SI4705: drive nRST high
 	 */
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 
-	//SEGGER_RTT_printf(0, "\r\nI2C_DRV_MasterReceiveData returned [%d]\n", returnValue);
-
-	if (returnValue == kStatus_I2C_Success)
+	if (status != kStatus_I2C_Success)
 	{
-		//SEGGER_RTT_printf(0, "\r[0x%02x]	0x%02x\n", cmdBuf[0], deviceSI4705State.i2cBuffer[0]);
-	}
-	else
-	{
-		//SEGGER_RTT_printf(0, kWarpConstantStringI2cFailure, cmdBuf[0], returnValue);
-
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 

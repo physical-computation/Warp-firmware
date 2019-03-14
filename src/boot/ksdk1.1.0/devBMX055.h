@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
 
 	All rights reserved.
 
@@ -35,11 +35,30 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef WARP_BUILD_ENABLE_DEVBMX055
+#define WARP_BUILD_ENABLE_DEVBMX055
+#endif
 
 
 void		initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 void		initBMX055gyro(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 void		initBMX055mag(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+
+WarpStatus	writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
+WarpStatus	writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
+WarpStatus	writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
+
+WarpStatus	configureSensorBMX055accel(uint8_t payloadPMU_RANGE,
+					uint8_t payloadACCD_HBW,
+					uint8_t menuI2cPullupValue);
+WarpStatus	configureSensorBMX055gyro(uint8_t payloadRANGE,
+					uint8_t payloadBW,
+					uint8_t payloadLPM1,
+					uint8_t payloadRATE_HBW,
+					uint8_t menuI2cPullupValue);
+WarpStatus	configureSensorBMX055mag(uint8_t payloadPowerCtrl,
+					uint8_t payloadOpMode,
+					uint8_t menuI2cPullupValue);
 
 WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister);
 WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister);
@@ -62,3 +81,7 @@ WarpStatus	readSensorSignalBMX055mag(WarpTypeMask signal,
 					WarpSignalAccuracy accuracy,
 					WarpSignalReliability reliability,
 					WarpSignalNoise noise);
+
+void		printSensorDataBMX055accel(bool hexModeFlag);
+void		printSensorDataBMX055gyro(bool hexModeFlag);
+void		printSensorDataBMX055mag(bool hexModeFlag);
