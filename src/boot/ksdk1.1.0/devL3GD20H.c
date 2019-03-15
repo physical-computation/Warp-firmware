@@ -200,6 +200,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	uint8_t		readSensorRegisterValueLSB;
 	uint8_t		readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
+	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
 
 
@@ -207,7 +208,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_X_H);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -228,7 +229,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Y_H);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -249,7 +250,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_Z_H);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -267,7 +268,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	}
 
 	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorL3GD20HOUT_TEMP);
-	readSensorRegisterValueCombined = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterSignedByte = deviceL3GD20HState.i2cBuffer[0];
 	if (i2cReadStatusLow != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -276,11 +277,11 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x,", readSensorRegisterValueCombined);
+			SEGGER_RTT_printf(0, " 0x%02x,", deviceL3GD20HState.i2cBuffer[0]);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterSignedByte);
 		}
 	}
 }
