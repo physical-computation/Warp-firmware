@@ -250,7 +250,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 			/*
 			 *	See Section 8.6.1 of the HDC1000 manual for the conversion to temperature.
 			 */
-			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined / (1u << 16))*165 - 40);
+			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined*165 / (1u << 16)) - 40);
 		}
 	}
 
@@ -273,7 +273,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 			/*
 			 *	See Section 8.6.2 of the HDC1000 manual for the conversion to temperature.
 			 */
-			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined / (1u << 16))*100);
+			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined*100 / (1u << 16)));
 		}
 	}
 }
