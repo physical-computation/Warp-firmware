@@ -77,7 +77,7 @@ initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 }
 
 WarpStatus
-readSensorRegisterAS7262(uint8_t deviceRegister)
+readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 {
 	/*
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
@@ -87,6 +87,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 	i2c_status_t	returnValue;
 
 
+	USED(numberOfBytes);
 	if (deviceRegister > 0x2B)
 	{
 		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Bad Command");
@@ -147,7 +148,7 @@ readSensorRegisterAS7262(uint8_t deviceRegister)
 							cmdBuf_read /* The pointer to the commands to be transferred */,
 							1 /* The length in bytes of the commands to be transferred */,
 							(uint8_t *)deviceAS7262State.i2cBuffer /* The pointer to the data to be transferred */,
-							1 /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
+							numberOfBytes /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
 							gWarpI2cTimeoutMilliseconds);
 	if (returnValue != kStatus_I2C_Success)
 	{

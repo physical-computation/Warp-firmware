@@ -83,7 +83,7 @@ initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer)
 }
 
 WarpStatus
-writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue)
+writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes)
 {	
 	/*
 	 *	Populate the shift-out register with the read-register command,
@@ -122,7 +122,7 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 					NULL /* spi_master_user_config_t */,
 					(const uint8_t * restrict)deviceADXL362State.spiSourceBuffer,
 					(uint8_t * restrict)deviceADXL362State.spiSinkBuffer,
-					3 /* transfer size */,
+					numberOfBytes /* transfer size */,
 					gWarpSpiTimeoutMicroseconds);
 	disableSPIpins();
 
@@ -135,9 +135,9 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 }
 
 WarpStatus
-readSensorRegisterADXL362(uint8_t deviceRegister)
+readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes)
 {	
-	return writeSensorRegisterADXL362(0x0B /* command == read register */, deviceRegister, 0x00 /* writeValue */);
+	return writeSensorRegisterADXL362(0x0B /* command == read register */, deviceRegister, 0x00 /* writeValue */, numberOfBytes);
 }
 
 WarpStatus

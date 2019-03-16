@@ -40,7 +40,7 @@
 #endif
 
 void		initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterAS7262(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalAS7262(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

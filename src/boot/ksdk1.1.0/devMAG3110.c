@@ -122,15 +122,15 @@ configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint8
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2, i2cWriteStatus3;
 
-	i2cWriteStatus1 = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+	i2cWriteStatus1 = writeSensorRegisterMAG3110(kWarpSensorConfigurationRegisterMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
 							payloadCTRL_REG1 /* payload */,
 							menuI2cPullupValue);
 
-	i2cWriteStatus2 = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG2 /* register address CTRL_REG2 */,
+	i2cWriteStatus2 = writeSensorRegisterMAG3110(kWarpSensorConfigurationRegisterMAG3110CTRL_REG2 /* register address CTRL_REG2 */,
 							payloadCTRL_REG2 /* payload */,
 							menuI2cPullupValue);
 
-	i2cWriteStatus3 = writeSensorRegisterMAG3110(kWarpSensorMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
+	i2cWriteStatus3 = writeSensorRegisterMAG3110(kWarpSensorConfigurationRegisterMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
 							0x01 /* payload: ACTIVE mode */,
 							menuI2cPullupValue);
 
@@ -138,12 +138,13 @@ configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint8
 }
 
 WarpStatus
-readSensorRegisterMAG3110(uint8_t deviceRegister)
+readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t		cmdBuf[1]	= {0xFF};
 	i2c_status_t	status1, status2;
 
 
+	USED(numberOfBytes);
 	i2c_device_t slave =
 	{
 		.address = deviceMAG3110State.i2cAddress,
@@ -176,7 +177,7 @@ readSensorRegisterMAG3110(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceMAG3110State.i2cBuffer,
-							2,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
@@ -197,10 +198,15 @@ printSensorDataMAG3110(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
-	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_X_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_X_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -218,10 +224,15 @@ printSensorDataMAG3110(bool hexModeFlag)
 	}
 
 
-	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Y_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_Y_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -239,10 +250,15 @@ printSensorDataMAG3110(bool hexModeFlag)
 	}
 
 
-	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110OUT_Z_MSB);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_Z_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -260,8 +276,13 @@ printSensorDataMAG3110(bool hexModeFlag)
 	}
 
 
-	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorMAG3110DIE_TEMP);
+	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110DIE_TEMP, 1 /* numberOfBytes */);
 	readSensorRegisterSignedByte = deviceMAG3110State.i2cBuffer[0];
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int8_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");

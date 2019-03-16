@@ -99,13 +99,6 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t men
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-	enableI2Cpins(menuI2cPullupValue);
-
-	/*
-	 *	Wait for supply and pull-ups to settle.
-	 */
-	OSA_TimeDelay(gWarpSupplySettlingDelayMilliseconds);
-
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 	returnValue = I2C_DRV_MasterSendDataBlocking(
@@ -128,11 +121,11 @@ WarpStatus
 configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint8_t menuI2cPullupValue)
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
-	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorAMG8834Configuration /* register address configuration register */,
+	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834Configuration /* register address configuration register */,
 							payloadConfigReg /* payload: 3F initial reset */,
 							menuI2cPullupValue);
 
-	i2cWriteStatus2 = writeSensorRegisterAMG8834(kWarpSensorAMG8834FrameRate /* register address frame rate register */,
+	i2cWriteStatus2 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834FrameRate /* register address frame rate register */,
 							payloadFrameRateReg /* payload: 1 FPS */,
 							menuI2cPullupValue);
 
@@ -140,12 +133,13 @@ configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, ui
 }
 
 WarpStatus
-readSensorRegisterAMG8834(uint8_t deviceRegister)
+readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t 	cmdBuf[1]	= {0xFF};
 	i2c_status_t	status;
 
 
+	USED(numberOfBytes);
 	if (deviceRegister > 0xFF)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -165,7 +159,7 @@ readSensorRegisterAMG8834(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceAMG8834State.i2cBuffer,
-							1,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	if (status != kStatus_I2C_Success)
@@ -181,18 +175,17 @@ printSensorDataAMG8834(bool hexModeFlag)
 {
 	uint8_t		readSensorRegisterValueLSB;
 	uint8_t		readSensorRegisterValueMSB;
-	uint16_t	readSensorRegisterValueCombined;
-	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
+	int16_t		readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatus;
 
-	for (uint16_t bufAddress = kWarpSensorAMG8834T01L; bufAddress <= kWarpSensorAMG8834T64H; bufAddress = bufAddress + 2)
+	for (uint16_t bufAddress = kWarpSensorOutputRegisterAMG8834T01L; bufAddress <= kWarpSensorOutputRegisterAMG8834T64H; bufAddress = bufAddress + 2)
 	{
-		i2cReadStatusLow		= readSensorRegisterAMG8834(bufAddress);
+		i2cReadStatus			= readSensorRegisterAMG8834(bufAddress, 2 /* numberOfBytes */);
 		readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
-		i2cReadStatusHigh		= readSensorRegisterAMG8834(bufAddress + 1);
-		readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[0];
+		readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
 		readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 
-		if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+		if (i2cReadStatus != kWarpStatusOK)
 		{
 			SEGGER_RTT_WriteString(0, " ----,");
 		}
@@ -209,13 +202,12 @@ printSensorDataAMG8834(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatusLow		= readSensorRegisterAMG8834(kWarpSensorAMG8834TTHL);
+	i2cReadStatus			= readSensorRegisterAMG8834(kWarpSensorOutputRegisterAMG8834TTHL, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
-	i2cReadStatusHigh		= readSensorRegisterAMG8834(kWarpSensorAMG8834TTHH);
-	readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[0];
+	readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
 	readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
 
-	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
 	}

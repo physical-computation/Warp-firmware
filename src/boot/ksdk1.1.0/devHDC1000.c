@@ -113,7 +113,7 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 }
 
 WarpStatus
-readSensorRegisterHDC1000(uint8_t deviceRegister)
+readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	status1, status2;
@@ -125,6 +125,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	USED(numberOfBytes);
 	if (deviceRegister == 0 || deviceRegister == 1)
 	{
 		/*
@@ -192,7 +193,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 								NULL,
 								0,
 								(uint8_t *)deviceHDC1000State.i2cBuffer,
-								2,
+								numberOfBytes,
 								gWarpI2cTimeoutMilliseconds);
 
 		if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
@@ -210,7 +211,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister)
 								cmdBuf,
 								1,
 								(uint8_t *)deviceHDC1000State.i2cBuffer,
-								2,
+								numberOfBytes,
 								gWarpI2cTimeoutMilliseconds);
 
 		if (status1 != kStatus_I2C_Success)
@@ -227,14 +228,19 @@ printSensorDataHDC1000(bool hexModeFlag)
 {
 	uint8_t		readSensorRegisterValueLSB;
 	uint8_t		readSensorRegisterValueMSB;
-	uint16_t	readSensorRegisterValueCombined;
+	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
 
-	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Temperature);
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -254,10 +260,15 @@ printSensorDataHDC1000(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorHDC1000Humidity);
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Humidity, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");

@@ -68,12 +68,13 @@ initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 }
 
 WarpStatus
-readSensorRegisterSI4705(uint8_t deviceRegister)
+readSensorRegisterSI4705(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 
+	USED(numberOfBytes);
 	i2c_device_t slave =
 	{
 		.address = deviceSI4705State.i2cAddress,
@@ -102,7 +103,7 @@ readSensorRegisterSI4705(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceSI4705State.i2cBuffer,
-							1,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	/*

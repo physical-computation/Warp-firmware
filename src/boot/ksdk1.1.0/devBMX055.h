@@ -60,9 +60,9 @@ WarpStatus	configureSensorBMX055mag(uint8_t payloadPowerCtrl,
 					uint8_t payloadOpMode,
 					uint8_t menuI2cPullupValue);
 
-WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister);
-WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister);
-WarpStatus	readSensorRegisterBMX055mag(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes);
+WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes);
+WarpStatus	readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes);
 
 WarpStatus	readSensorSignalBMX055accel(WarpTypeMask signal,
 					WarpSignalPrecision precision,
