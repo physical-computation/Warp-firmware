@@ -19,13 +19,13 @@ Third, you should be able to build the Warp firmware by
 
 This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more.
 
-Fourth, you will need two terminal windows. First, in one shell window, run the firmware downloader. On MacOS, this will be:
+Fourth, you will need two terminal windows. First, in one shell window, run the firmware downloader:
 
-	/Applications/SEGGER/JLink/JLinkExe -device MKL03Z32XXX4 -if SWD -speed 4000 -CommanderScript ../../tools/scripts/jlink.commands
+	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 4000 -CommanderScript ../../tools/scripts/jlink.commands
 
-Second, in the other shell window, launch the JLink RTT client<sup>1</sup>. On MacOS, this will be:
+Second, in the other shell window, launch the JLink RTT client<sup>1</sup>:
 
-	/Applications/SEGGER/JLink/JLinkRTTClient
+	JLinkRTTClient
 
 ## 2. Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
