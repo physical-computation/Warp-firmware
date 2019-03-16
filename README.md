@@ -1,11 +1,7 @@
-# Warp
-Baseline firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) platform.
+# Baseline firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) platform
+**Prerequisites:** You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
 
-
-## Prerequisites
-You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
-
-## Building the Warp firmware
+## 1. Compiling the Warp firmware
 First, make sure the environment variable `ARMGCC_DIR` is set correctly (you can check whether this is set correctly, e.g., via `echo $ARMGCC_DIR`. If this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
 
 	setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
@@ -31,14 +27,14 @@ Second, in the other shell window, launch the JLink RTT client<sup>1</sup>. On M
 
 	/Applications/SEGGER/JLink/JLinkRTTClient
 
-## Editing the firmware
+## 2. Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
 
 The firmware builds on the Kinetis SDK. You can find more documentation on the Kinetis SDK in the document [doc/Kinetis SDK v.1.1 API Reference Manual.pdf](https://github.com/physical-computation/Warp-firmware/blob/master/doc/Kinetis%20SDK%20v.1.1%20API%20Reference%20Manual.pdf).
 
 The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [/src/boot/ksdk1.1.0/README.md](/src/boot/ksdk1.1.0/README.md).
 
-## Interacting with the boot menu.
+## 3. Interacting with the boot menu.
 When the firmware boots, you will be dropped into a menu:
 ````
 [ *				W	a	r	p	(rev. b)			* ]
@@ -114,14 +110,15 @@ This will perpetually stream data from the >90 sensor dimensions at a rate of ~2
 -	`n` (turn on the sensor supply regulators).
 -	`z` (start to stream data from all sensors that can run at the chosen voltage and baud rate).
 
-## To update your fork
+## 4. To update your fork
 From your local clone:
 
 	git remote add upstream https://github.com/physical-computation/Warp-firmware.git
 	git fetch upstream
 	git pull upstream master
 
-## If you use Warp in your research, please cite it as:
+
+### If you use Warp in your research, please cite it as:
 Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
 
 **BibTeX:**
@@ -139,5 +136,5 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 ### Acknowledgements
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
 
-
+----
 <sup>1</sup>&nbsp; Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described below on Unix platforms.
