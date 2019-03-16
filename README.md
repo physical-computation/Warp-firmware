@@ -27,6 +27,8 @@ Second, in the other shell window, launch the JLink RTT client<sup>1</sup>:
 
 	JLinkRTTClient
 
+On some Unix platforms, the `JLinkRTTClient` has a double echo of charcters you type in. You can prevent this by configuring your terminal program to not echo the characters you type.
+
 ## 2. Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`.
 
@@ -137,4 +139,4 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
 
 ----
-<sup>1</sup>&nbsp; Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described below on Unix platforms.
+<sup>1</sup>&nbsp; Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described above.
