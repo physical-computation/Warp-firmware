@@ -93,7 +93,7 @@ You can probe around the menus to figure out what to do. In brief, you will like
 
 *NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine). If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*.
 
-Example:
+### Example 1: Dump all registers for a single sensor
 ````
 Enter selection> j
 
@@ -105,6 +105,14 @@ Enter selection> j
     Maximum voltage for adaptive supply (e.g., '0000')> 2500
     Reference byte for comparisons (e.g., '3e')> 00
 ````
+
+### Example 2: Stream data from all sensors
+This will perpetually stream data from the >90 sensor dimensions at a rate of ~25 >90-tuples per second. Use the following command sequence:
+-	`b` (set baud rate to `0300` for 300 kb/s).
+-	`r` (enable 48MHz "run" mode).
+-	`g` (set supply voltage to `3000` for 3000mV sensor supply voltage).
+-	`n` (turn on the sensor supply regulators).
+-	`z` (start to stream data from all sensors that can run at the chosen voltage and baud rate).
 
 ## To update your fork
 From your local clone:
