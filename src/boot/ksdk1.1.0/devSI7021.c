@@ -68,11 +68,13 @@ initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 }
 
 WarpStatus
-readSensorRegisterSI7021(uint8_t deviceRegister)
+readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t 	cmdBuf[2] = {0xFF, 0xFF};
 	i2c_status_t	status1, status2, status3, status4;
 
+
+	USED(numberOfBytes);
 
 	/*
 	 *	TODO: See SI7021 manual.
@@ -115,7 +117,7 @@ readSensorRegisterSI7021(uint8_t deviceRegister)
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
-							2,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	status3 = I2C_DRV_MasterReceiveDataBlocking(
@@ -124,7 +126,7 @@ readSensorRegisterSI7021(uint8_t deviceRegister)
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
-							2,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	/*
@@ -136,7 +138,7 @@ readSensorRegisterSI7021(uint8_t deviceRegister)
 							NULL,
 							0,
 							(uint8_t *)deviceSI7021State.i2cBuffer,
-							2,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	if (	(status1 != kStatus_I2C_Success) ||

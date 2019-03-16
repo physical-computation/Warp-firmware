@@ -41,7 +41,7 @@
 
 void		initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t menuI2cPullupValue);
-WarpStatus	readSensorRegisterHDC1000(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalHDC1000(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

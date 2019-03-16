@@ -75,7 +75,7 @@ initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 }
 
 WarpStatus
-readSensorRegisterAS7263(uint8_t deviceRegister)
+readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 {
 	/*
 	 *	The sensor has only 3 real registers: STATUS Register 0x00, WRITE Register 0x01 and READ register 0x02.
@@ -88,6 +88,7 @@ readSensorRegisterAS7263(uint8_t deviceRegister)
 	i2c_status_t	returnValue;
 
 
+	USED(numberOfBytes);
 	if (deviceRegister > 0x2B)
 	{
 		return kWarpStatusBadDeviceCommand;

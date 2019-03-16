@@ -41,7 +41,7 @@
 
 
 void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue);
 WarpStatus	readSensorSignalADXL362(WarpTypeMask signal,
 					WarpSignalPrecision precision,

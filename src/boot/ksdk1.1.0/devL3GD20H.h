@@ -40,7 +40,7 @@
 #endif
 
 void		initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterL3GD20H(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalL3GD20H(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

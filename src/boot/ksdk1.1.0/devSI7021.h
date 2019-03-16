@@ -40,7 +40,7 @@
 #endif
 
 void		initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterSI7021(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalSI7021(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

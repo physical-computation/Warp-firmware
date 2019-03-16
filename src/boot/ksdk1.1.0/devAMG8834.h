@@ -40,7 +40,7 @@
 #endif
 
 void		initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterAMG8834(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint8_t menuI2cPullupValue);
 WarpStatus	readSensorSignalAMG8834(WarpTypeMask signal,
