@@ -79,7 +79,7 @@ You can probe around the menus to figure out what to do. In brief, you will like
 
 1. Menu item `b` to set the I2C baud rate.
 
-2. Menu item `r` to switch the processor from low-power mode (2MHz) to run mode (48MHz).
+2. Menu item `r` to switch the processor from low-power mode (2MHz) to "run" mode (48MHz).
 
 3. Menu item `g` to set sensor supply voltage.
 
@@ -103,10 +103,10 @@ Enter selection> j
 ````
 
 ### Example 2: Stream data from all sensors
-This will perpetually stream data from the >90 sensor dimensions at a rate of ~25 >90-tuples per second. Use the following command sequence:
--	`b` (set baud rate to `0300` for 300 kb/s).
--	`r` (enable 48MHz "run" mode).
--	`g` (set supply voltage to `3000` for 3000mV sensor supply voltage).
+This will perpetually stream data from the 90+ sensor dimensions at a rate of about 90-tuples per second. Use the following command sequence:
+-	`b` (set the I2C baud rate to `0300` for 300 kb/s).
+-	`r` (enable 48MHz "run" mode for the processor).
+-	`g` (set sensor supply voltage to `3000` for 3000mV sensor supply voltage).
 -	`n` (turn on the sensor supply regulators).
 -	`z` (start to stream data from all sensors that can run at the chosen voltage and baud rate).
 
