@@ -121,6 +121,7 @@ WarpStatus
 configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint8_t menuI2cPullupValue)
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
+
 	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834Configuration /* register address configuration register */,
 							payloadConfigReg /* payload: 3F initial reset */,
 							menuI2cPullupValue);

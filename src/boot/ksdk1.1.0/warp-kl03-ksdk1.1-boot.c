@@ -76,6 +76,8 @@
 //#include "devAS7263.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+#define WARP_BUILD_BOOT_TO_CSVSTREAM
+
 
 /*
 *	BTstack includes WIP
@@ -198,6 +200,7 @@ void					activateAllLowPowerSensorModes(bool verbose);
 void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
 int					read4digits(void);
+void					printAllSensors(bool hexModeFlag, int menuDelayBetweenEachRun, int i2cPullupValue);
 
 
 /*
@@ -1096,11 +1099,11 @@ main(void)
 
 
 	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp, in 3... ");
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	SEGGER_RTT_WriteString(0, "2... ");
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	SEGGER_RTT_WriteString(0, "1...\n\r");
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 
 
 
@@ -1202,15 +1205,15 @@ main(void)
 	 *	Toggle LED3 (kWarpPinSI4705_nRST)
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(500);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 
 
@@ -1306,6 +1309,25 @@ main(void)
 	/*
 	 *	TODO: initialize the kWarpPinKL03_VDD_ADC, write routines to read the VDD and temperature
 	 */
+
+
+
+
+#ifdef WARP_BUILD_BOOT_TO_CSVSTREAM
+	/*
+	 *	Force to printAllSensors
+	 */
+	gWarpI2cBaudRateKbps = 300;
+	warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+	enableSssupply(3000);
+	enableI2Cpins(menuI2cPullupValue);
+	printAllSensors(false /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, menuI2cPullupValue);
+	/*
+	 *	Notreached
+	 */
+#endif
+
+
 
 
 	while (1)
@@ -1409,7 +1431,6 @@ main(void)
 
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 		key = SEGGER_RTT_WaitKey();
 
 		switch (key)
@@ -2386,11 +2407,6 @@ main(void)
 			 */
 			case 'z':
 			{
-				/*
-				 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling at 60fps
-				 */
-				uint32_t	readingCount = 0;
-				uint32_t	numberOfConfigErrors = 0;
 				bool		hexModeFlag;
 
 
@@ -2406,189 +2422,10 @@ main(void)
 				SEGGER_RTT_printf(0, "\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
 				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
-				#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-				numberOfConfigErrors += configureSensorAMG8834(	0x3F,/* Initial reset */
-								0x01,/* Frame rate 1 FPS */
-								menuI2cPullupValue
-								);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-				numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-								0x01,/* Normal read 8bit, 800Hz, normal, active mode */
-								menuI2cPullupValue
-								);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-				numberOfConfigErrors += configureSensorMAG3110(	0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
-								0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
-								menuI2cPullupValue
-								);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-				numberOfConfigErrors += configureSensorL3GD20H(	0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
-								0b00100000,
-								0b00000000,/* normal mode, disable FIFO, disable high pass filter */
-								menuI2cPullupValue
-								);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVBME680
-				numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
-										0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-										0b00001000,	/*	Turn off heater							*/
-										menuI2cPullupValue
-								);
-
-				SEGGER_RTT_WriteString(0, "\r\n\nBME680 Calibration Data: ");
-				for (uint8_t i = 0; i < kWarpSizesBME680CalibrationValuesCount; i++)
-				{
-					#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-					SEGGER_RTT_printf(0, "0x%02x", deviceBME680CalibrationValues[i]);
-					if (i < kWarpSizesBME680CalibrationValuesCount - 1)
-					{
-						SEGGER_RTT_WriteString(0, ", ");
-					}
-					else
-					{
-						SEGGER_RTT_WriteString(0, "\n\n");
-					}
-
-					OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-					#endif
-				}
-				#endif
-
-				#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-				numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
-								(0b1010000<<8),
-								menuI2cPullupValue
-								);
-				#endif
-
-				#ifdef WARP_BUILD_ENABLE_DEVCCS811
-				uint8_t		payloadCCS811[1];
-				payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
-				numberOfConfigErrors += configureSensorCCS811(payloadCCS811,
-								menuI2cPullupValue
-								);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVBMX055
-				numberOfConfigErrors += configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
-								0b10000000,/* Payload:unfiltered data, shadowing enabled */
-								menuI2cPullupValue
-								);
-				numberOfConfigErrors += configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
-								0b00000001,/* Default 10Hz data rate, forced mode*/
-								menuI2cPullupValue
-								);
-				numberOfConfigErrors += configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
-								0b00000000,/* ODR 2000 Hz, unfiltered */
-								0b00000000,/* normal mode */
-								0b10000000,/* unfiltered data, shadowing enabled */
-								menuI2cPullupValue
-								);
-				#endif
-
-
-				SEGGER_RTT_WriteString(0, "Measurement number, RTC->TSR, RTC->TPR,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
-				#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-				for (uint8_t i = 0; i < 64; i++)
-				{
-					#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-					SEGGER_RTT_printf(0, " AMG8834 %d,", i);
-					OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-					#endif
-				}
-				SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-
-				#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-				SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-				SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-				SEGGER_RTT_WriteString(0, " L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVBME680
-				SEGGER_RTT_WriteString(0, " BME680 Press, BME680 Temp, BME680 Hum,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVBMX055
-				SEGGER_RTT_WriteString(0, " BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				SEGGER_RTT_WriteString(0, " BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				SEGGER_RTT_WriteString(0, " BMX055gyro x, BMX055gyro y, BMX055gyro z,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVCCS811
-				SEGGER_RTT_WriteString(0, " CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-				SEGGER_RTT_WriteString(0, " HDC1000 Temp, HDC1000 Hum,");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				#endif
-				SEGGER_RTT_WriteString(0, " RTC->TSR, RTC->TPR, # Config Errors");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-				SEGGER_RTT_WriteString(0, "\n\n");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
-				while(1)
-				{
-					#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-					SEGGER_RTT_printf(0, "%u, %d, %d,", readingCount, RTC->TSR, RTC->TPR);
-					#endif
-
-					#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-					printSensorDataAMG8834(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-					printSensorDataMMA8451Q(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-					printSensorDataMAG3110(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-					printSensorDataL3GD20H(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVBME680
-					printSensorDataBME680(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVBMX055
-					printSensorDataBMX055accel(hexModeFlag);
-					printSensorDataBMX055mag(hexModeFlag);
-					printSensorDataBMX055gyro(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVCCS811
-					printSensorDataCCS811(hexModeFlag);
-					#endif
-					#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-					printSensorDataHDC1000(hexModeFlag);
-					#endif
-				
-
-					#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-					SEGGER_RTT_printf(0, " %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
-					#endif
-
-					if (menuDelayBetweenEachRun > 0)
-					{
-						OSA_TimeDelay(menuDelayBetweenEachRun);
-					}
-
-					readingCount++;
-				}
+				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, menuI2cPullupValue);
 
 				/*
-				 *	Not reached
+				 *	Not reached (printAllSensors() does not return)
 				 */
 				disableI2Cpins();
 
@@ -2617,6 +2454,206 @@ main(void)
 	return 0;
 }
 
+
+
+void
+printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, int i2cPullupValue)
+{
+	/*
+	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling at 60fps
+	 */
+	uint32_t	readingCount = 0;
+	uint32_t	numberOfConfigErrors = 0;
+
+
+	#ifdef WARP_BUILD_ENABLE_DEVAMG8834
+	numberOfConfigErrors += configureSensorAMG8834(	0x3F,/* Initial reset */
+					0x01,/* Frame rate 1 FPS */
+					i2cPullupValue
+					);
+	#endif
+	#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+	numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
+					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+					i2cPullupValue
+					);
+	#endif
+	#ifdef WARP_BUILD_ENABLE_DEVMAG3110
+	numberOfConfigErrors += configureSensorMAG3110(	0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
+					0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+					i2cPullupValue
+					);
+	#endif
+	#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
+	numberOfConfigErrors += configureSensorL3GD20H(	0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
+					0b00100000,
+					0b00000000,/* normal mode, disable FIFO, disable high pass filter */
+					i2cPullupValue
+					);
+	#endif
+	#ifdef WARP_BUILD_ENABLE_DEVBME680
+	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
+							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
+							0b00001000,	/*	Turn off heater							*/
+							i2cPullupValue
+					);
+
+	if (printHeadersAndCalibration)
+	{
+		SEGGER_RTT_WriteString(0, "\r\n\nBME680 Calibration Data: ");
+		for (uint8_t i = 0; i < kWarpSizesBME680CalibrationValuesCount; i++)
+		{
+			#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+			SEGGER_RTT_printf(0, "0x%02x", deviceBME680CalibrationValues[i]);
+			if (i < kWarpSizesBME680CalibrationValuesCount - 1)
+			{
+				SEGGER_RTT_WriteString(0, ", ");
+			}
+			else
+			{
+				SEGGER_RTT_WriteString(0, "\n\n");
+			}
+
+			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			#endif
+		}
+	}
+	#endif
+
+	#ifdef WARP_BUILD_ENABLE_DEVHDC1000
+	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
+					(0b1010000<<8),
+					i2cPullupValue
+					);
+	#endif
+
+	#ifdef WARP_BUILD_ENABLE_DEVCCS811
+	uint8_t		payloadCCS811[1];
+	payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
+	numberOfConfigErrors += configureSensorCCS811(payloadCCS811,
+					i2cPullupValue
+					);
+	#endif
+	#ifdef WARP_BUILD_ENABLE_DEVBMX055
+	numberOfConfigErrors += configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
+					0b10000000,/* Payload:unfiltered data, shadowing enabled */
+					i2cPullupValue
+					);
+	numberOfConfigErrors += configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
+					0b00000001,/* Default 10Hz data rate, forced mode*/
+					i2cPullupValue
+					);
+	numberOfConfigErrors += configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
+					0b00000000,/* ODR 2000 Hz, unfiltered */
+					0b00000000,/* normal mode */
+					0b10000000,/* unfiltered data, shadowing enabled */
+					i2cPullupValue
+					);
+	#endif
+
+
+	if (printHeadersAndCalibration)
+	{
+		SEGGER_RTT_WriteString(0, "Measurement number, RTC->TSR, RTC->TPR,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+		#ifdef WARP_BUILD_ENABLE_DEVAMG8834
+		for (uint8_t i = 0; i < 64; i++)
+		{
+			#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+			SEGGER_RTT_printf(0, " AMG8834 %d,", i);
+			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			#endif
+		}
+		SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+
+		#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+		SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVMAG3110
+		SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
+		SEGGER_RTT_WriteString(0, " L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVBME680
+		SEGGER_RTT_WriteString(0, " BME680 Press, BME680 Temp, BME680 Hum,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVBMX055
+		SEGGER_RTT_WriteString(0, " BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_WriteString(0, " BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_WriteString(0, " BMX055gyro x, BMX055gyro y, BMX055gyro z,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVCCS811
+		SEGGER_RTT_WriteString(0, " CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVHDC1000
+		SEGGER_RTT_WriteString(0, " HDC1000 Temp, HDC1000 Hum,");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		#endif
+		SEGGER_RTT_WriteString(0, " RTC->TSR, RTC->TPR, # Config Errors");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_WriteString(0, "\n\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+	}
+
+
+	while(1)
+	{
+		#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "%u, %d, %d,", readingCount, RTC->TSR, RTC->TPR);
+		#endif
+
+		#ifdef WARP_BUILD_ENABLE_DEVAMG8834
+		printSensorDataAMG8834(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+		printSensorDataMMA8451Q(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVMAG3110
+		printSensorDataMAG3110(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
+		printSensorDataL3GD20H(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVBME680
+		printSensorDataBME680(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVBMX055
+		printSensorDataBMX055accel(hexModeFlag);
+		printSensorDataBMX055mag(hexModeFlag);
+		printSensorDataBMX055gyro(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVCCS811
+		printSensorDataCCS811(hexModeFlag);
+		#endif
+		#ifdef WARP_BUILD_ENABLE_DEVHDC1000
+		printSensorDataHDC1000(hexModeFlag);
+		#endif
+	
+
+		#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, " %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
+		#endif
+
+		if (menuDelayBetweenEachRun > 0)
+		{
+			OSA_TimeDelay(menuDelayBetweenEachRun);
+		}
+
+		readingCount++;
+	}
+}
 
 
 void
