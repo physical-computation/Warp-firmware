@@ -21,7 +21,7 @@ This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds
 
 Fourth, you will need two terminal windows. First, in one shell window, run the firmware downloader:
 
-	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 4000 -CommanderScript ../../tools/scripts/jlink.commands
+	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
 
 Second, in the other shell window, launch the JLink RTT client<sup>1</sup>:
 
