@@ -17,7 +17,7 @@ Third, you should be able to build the Warp firmware by
 	cd build/ksdk1.1/
 	./build.sh
 
-This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more.
+This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `Warp/src/boot/ksdk1.1.0/`, not the files in the build location, since the latter are overwritten during each build._
 
 Fourth, you will need two terminal windows. First, in one shell window, run the firmware downloader:
 
