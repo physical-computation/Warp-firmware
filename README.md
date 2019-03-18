@@ -23,11 +23,11 @@ Fourth, you will need two terminal windows. In one shell window, run the firmwar
 
 	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
 
-In the other shell window, launch the JLink RTT client<sup>1</sup>:
+In the other shell window, launch the JLink RTT client<sup>see note 1 below</sup>:
 
 	JLinkRTTClient
 
-On some Unix platforms, the `JLinkRTTClient` has a double echo of characters you type in. You can prevent this by configuring your terminal program to not echo the characters you type.
+
 
 ## 2.  Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c` and the per-sensor drivers in `src/boot/ksdk1.1.0/dev*.[c,h]`.
@@ -37,7 +37,7 @@ The firmware builds on the Kinetis SDK. You can find more documentation on the K
 The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [src/boot/ksdk1.1.0/README.md](src/boot/ksdk1.1.0/README.md).
 
 ## 3.  Interacting with the boot menu.
-When the firmware boots, you will be dropped into a menu:
+When the firmware boots, you will be dropped into a menu with a rich set of commands. The Warp boot menu allows you to conduct most of the experiments you will likely need without modifying the firmware:
 ````
 [ *				W	a	r	p	(rev. b)			* ]
 [  				      Cambridge / Physcomplab   				  ]
@@ -77,7 +77,7 @@ Select:
 - 'z': dump all sensors data.
 Enter selection> 
 ````
-You can probe around the menus to figure out what to do. In brief, you will likely want:
+You can probe around the menu to figure out what to do. In brief, you will likely want:
 
 1. Menu item `b` to set the I2C baud rate.
 
@@ -89,7 +89,7 @@ You can probe around the menus to figure out what to do. In brief, you will like
 
 5. Menu item `z` to repeatedly read from all the sensors whose drivers are compiled into the build.
 
-*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine). If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*.
+*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>see note 1 below</sup>. If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
 
 ### Example 1: Dump all registers for a single sensor
 ````
@@ -140,4 +140,4 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
 
 ----
-<sup>1</sup>&nbsp; Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described above.
+<sup>1</sup>&nbsp; On some Unix platforms, the `JLinkRTTClient` has a double echo of characters you type in. You can prevent this by configuring your terminal program to not echo the characters you type. Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described above.
