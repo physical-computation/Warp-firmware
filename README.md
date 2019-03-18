@@ -23,7 +23,7 @@ Fourth, you will need two terminal windows. In one shell window, run the firmwar
 
 	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
 
-In the other shell window, launch the JLink RTT client<sup>see note 1 below</sup>:
+In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>:
 
 	JLinkRTTClient
 
@@ -89,7 +89,7 @@ You can probe around the menu to figure out what to do. In brief, you will likel
 
 5. Menu item `z` to repeatedly read from all the sensors whose drivers are compiled into the build.
 
-*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>see note 1 below</sup>. If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
+*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>. If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
 
 ### Example 1: Dump all registers for a single sensor
 ````
@@ -140,4 +140,5 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
 
 ----
+### Notes
 <sup>1</sup>&nbsp; On some Unix platforms, the `JLinkRTTClient` has a double echo of characters you type in. You can prevent this by configuring your terminal program to not echo the characters you type. Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior described above.
