@@ -36,7 +36,7 @@ The firmware builds on the Kinetis SDK. You can find more documentation on the K
 
 The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [src/boot/ksdk1.1.0/README.md](src/boot/ksdk1.1.0/README.md).
 
-## 3.  Interacting with the boot menu.
+## 3.  Interacting with the boot menu
 When the firmware boots, you will be dropped into a menu with a rich set of commands. The Warp boot menu allows you to conduct most of the experiments you will likely need without modifying the firmware:
 ````
 [ *				W	a	r	p	(rev. b)			* ]
