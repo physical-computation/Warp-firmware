@@ -19,11 +19,11 @@ Third, you should be able to build the Warp firmware by
 
 This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `Warp/src/boot/ksdk1.1.0/`, not the files in the build location, since the latter are overwritten during each build._
 
-Fourth, you will need two terminal windows. First, in one shell window, run the firmware downloader:
+Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
 
 	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
 
-Second, in the other shell window, launch the JLink RTT client<sup>1</sup>:
+In the other shell window, launch the JLink RTT client<sup>1</sup>:
 
 	JLinkRTTClient
 
