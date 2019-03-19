@@ -200,7 +200,7 @@ void					activateAllLowPowerSensorModes(bool verbose);
 void					powerupAllSensors(void);
 uint8_t					readHexByte(void);
 int					read4digits(void);
-void					printAllSensors(bool hexModeFlag, int menuDelayBetweenEachRun, int i2cPullupValue);
+void					printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, int i2cPullupValue);
 
 
 /*

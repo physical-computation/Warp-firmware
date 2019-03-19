@@ -191,8 +191,8 @@ readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataMAG3110(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatus;

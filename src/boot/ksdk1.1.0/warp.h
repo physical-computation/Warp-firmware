@@ -187,8 +187,9 @@ typedef enum
 
 	kWarpSensorConfigurationRegisterHDC1000Configuration		= 0x02,
 
-	kWarpSensorConfigurationRegisterAMG8834Configuration		= 0x01,
-	kWarpSensorConfigurationRegisterAMG8834FrameRate		= 0x02,
+	kWarpSensorConfigurationRegisterAMG8834PCTL			= 0x00,
+	kWarpSensorConfigurationRegisterAMG8834RST			= 0x01,
+	kWarpSensorConfigurationRegisterAMG8834FPSC			= 0x02,
 
 	kWarpSensorConfigurationRegisterCCS811MEAS_MODE			= 0x01,
 	kWarpSensorConfigurationRegisterCCS811APP_START			= 0xF4,

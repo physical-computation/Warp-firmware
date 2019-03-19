@@ -198,8 +198,8 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataL3GD20H(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;

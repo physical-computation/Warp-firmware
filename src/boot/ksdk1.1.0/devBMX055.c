@@ -383,8 +383,8 @@ readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataBMX055accel(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
@@ -499,8 +499,8 @@ printSensorDataBMX055accel(bool hexModeFlag)
 void
 printSensorDataBMX055gyro(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
@@ -584,8 +584,8 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 void
 printSensorDataBMX055mag(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
