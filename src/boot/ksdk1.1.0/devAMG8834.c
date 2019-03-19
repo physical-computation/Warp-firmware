@@ -122,12 +122,12 @@ configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, ui
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
 
-	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834Configuration /* register address configuration register */,
-							payloadConfigReg /* payload: 3F initial reset */,
+	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834RST /* register address configuration register */,
+							payloadConfigReg,
 							menuI2cPullupValue);
 
-	i2cWriteStatus2 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834FrameRate /* register address frame rate register */,
-							payloadFrameRateReg /* payload: 1 FPS */,
+	i2cWriteStatus2 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834FPSC /* register address frame rate register */,
+							payloadFrameRateReg,
 							menuI2cPullupValue);
 
 	return (i2cWriteStatus1 | i2cWriteStatus2);
@@ -174,8 +174,8 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataAMG8834(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
@@ -184,7 +184,17 @@ printSensorDataAMG8834(bool hexModeFlag)
 		i2cReadStatus			= readSensorRegisterAMG8834(bufAddress, 2 /* numberOfBytes */);
 		readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
 		readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
-		readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+
+		/*
+		 *	Format is 12 bits with the highest-order bit being a sign (0 +ve, 1 -ve)
+		 */
+		readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0x07) << 8) | (readSensorRegisterValueLSB & 0xFF);
+		readSensorRegisterValueCombined *= ((readSensorRegisterValueMSB & (1 << 3)) == 0 ? 1 : -1);
+
+		/*
+		 *	Specification, page 14/26, says LSB counts for 0.25 C (1/4 C)
+		 */
+		readSensorRegisterValueCombined >>= 2;
 
 		if (i2cReadStatus != kWarpStatusOK)
 		{
@@ -206,7 +216,17 @@ printSensorDataAMG8834(bool hexModeFlag)
 	i2cReadStatus			= readSensorRegisterAMG8834(kWarpSensorOutputRegisterAMG8834TTHL, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
 	readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
-	readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0xFF)<<8) + (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	Format is 12 bits with the highest-order bit being a sign (0 +ve, 1 -ve)
+	 */
+	readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0x07) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined *= ((readSensorRegisterValueMSB & (1 << 3)) == 0 ? 1 : -1);
+
+	/*
+	 *	Specification, page 13/26, says LSB of the 12-bit thermistor value counts for 0.0625 C (1 / 16 C)
+	 */
+	readSensorRegisterValueCombined >>= 4;
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{

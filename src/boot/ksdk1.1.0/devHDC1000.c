@@ -226,8 +226,8 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataHDC1000(bool hexModeFlag)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 

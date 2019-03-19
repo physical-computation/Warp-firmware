@@ -192,9 +192,9 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 void
 printSensorDataBME680(bool hexModeFlag, uint8_t menuI2cPullupValue)
 {
-	uint8_t		readSensorRegisterValueLSB;
-	uint8_t		readSensorRegisterValueMSB;
-	uint8_t		readSensorRegisterValueXLSB;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
+	uint16_t	readSensorRegisterValueXLSB;
 	uint32_t	unsignedRawAdcValue;
 	WarpStatus	triggerStatus, i2cReadStatus;
 
