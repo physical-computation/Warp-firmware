@@ -111,7 +111,7 @@ writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t
 }
 
 WarpStatus
-configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW, uint8_t menuI2cPullupValue)
+configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW, uint16_t menuI2cPullupValue)
 {
 	WarpStatus	status1, status2;
 
@@ -212,7 +212,7 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t m
 }
 
 WarpStatus
-configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode, uint8_t menuI2cPullupValue)
+configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode, uint16_t menuI2cPullupValue)
 {
 	WarpStatus	status1, status2;
 
@@ -316,7 +316,7 @@ writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t 
 }
 
 WarpStatus
-configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t payloadLPM1, uint8_t payloadRATE_HBW, uint8_t menuI2cPullupValue)
+configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t payloadLPM1, uint8_t payloadRATE_HBW, uint16_t menuI2cPullupValue)
 {
 	WarpStatus	status1, status2, status3, status4;
 
