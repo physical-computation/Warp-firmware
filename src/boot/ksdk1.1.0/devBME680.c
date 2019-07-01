@@ -149,7 +149,7 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 
 WarpStatus
-configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint8_t menuI2cPullupValue)
+configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint16_t menuI2cPullupValue)
 {
 	uint8_t		reg, index = 0;
 	WarpStatus	status1, status2, status3, status4 = 0;
@@ -190,7 +190,7 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 
 
 void
-printSensorDataBME680(bool hexModeFlag, uint8_t menuI2cPullupValue)
+printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 {
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;

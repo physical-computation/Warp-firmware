@@ -41,7 +41,7 @@
 
 void		initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue);
-WarpStatus	configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint8_t menuI2cPullupValue);
+WarpStatus	configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalCCS811(WarpTypeMask signal,
 					WarpSignalPrecision precision,
