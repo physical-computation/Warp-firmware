@@ -99,7 +99,7 @@ WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
   uint8_t cmdBuff[1];
   i2c_status_t status;
 
-  if (deviceRegister > 0xFF) {
+  if (deviceRegister > 0x2F) {
     return kWarpStatusBadDeviceCommand;
   }
 
@@ -130,7 +130,7 @@ WarpStatus readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, 
   uint8_t cmdBuff[1];
   i2c_status_t status;
 
-  if (deviceStartRegister > 0xFF) {
+  if (deviceStartRegister > 0x2F) {
     return kWarpStatusBadDeviceCommand;
   }
 
@@ -160,7 +160,7 @@ WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload) {
   uint8_t cmdBuff[1], txBuff[1];
   i2c_status_t status;
 
-  if (deviceRegister > 0xFF) {
+  if (deviceRegister > 0x2F) {
     return kWarpStatusBadDeviceCommand;
   }
 
@@ -192,7 +192,7 @@ WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs,
   uint8_t cmdBuff[1];
   i2c_status_t status;
 
-  if (deviceStartRegister > 0xFF) {
+  if (deviceStartRegister > 0x2F) {
     return kWarpStatusBadDeviceCommand;
   }
 
