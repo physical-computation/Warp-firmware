@@ -1154,7 +1154,7 @@ int main(void) {
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-  initRV8803C7(0x64 /* i2cAddress */, &deviceRV8803C7State);
+  initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
 #endif
 
   /*
@@ -2002,9 +2002,16 @@ int main(void) {
     }
 
     case 'v': {
+      SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
+      enableI2Cpins(menuI2cPullupValue);
+
+      SEGGER_RTT_WriteString(0, "\r\n\tSet wake up for 3 seconds...\n");
       setRTCCountdownRV8803C7(3, TD_1HZ, true);
       //warpSetLowPowerMode(kWarpPowerModeVLPS,
       //                    0 /* sleep seconds : irrelevant here */);
+      SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");
+      OSA_TimeDelay(10000);
+      break;
     }
 
     /*

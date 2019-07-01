@@ -103,6 +103,7 @@ WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
     return kWarpStatusBadDeviceCommand;
   }
 
+
   i2c_device_t slave = {
                         .address = deviceRV8803C7State.i2cAddress,
                         .baudRate_kbps = gWarpI2cBaudRateKbps
@@ -285,22 +286,34 @@ WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, RV8803_EXT_TD_t clk_freq,
     return 1;
 
   uint8_t ext, flags, ctrl, ret;
-  ret = readRTCRegisterRV8803C7(RV8803_FLAG, &ext);
+  ret = readRTCRegisterRV8803C7(RV8803_EXT, &ext);
+  if (ret)
+    return ret;
+
   ret = readRTCRegisterRV8803C7(RV8803_FLAG, &flags);
-  ret = readRTCRegisterRV8803C7(RV8803_FLAG, &ctrl);
+  if (ret)
+    return ret;
+
+  ret = readRTCRegisterRV8803C7(RV8803_CTRL, &ctrl);
+  if (ret)
+    return ret;
 
   // stop countdown
-  ret = writeRTCRegisterRV8803C7(RV8803_EXT, ext & ~RV8803_EXT_TE);
+  ext &= ~RV8803_EXT_TE;
+  ret = writeRTCRegisterRV8803C7(RV8803_EXT, ext);
   if (ret)
     return ret;
 
   // set the timer clock frequency
-  ret = writeRTCRegisterRV8803C7(RV8803_EXT, (ext & RV8803_EXT_TD_CLR) | clk_freq);
+  ext &= RV8803_EXT_TD_CLR;
+  ext |= clk_freq;
+  ret = writeRTCRegisterRV8803C7(RV8803_EXT, ext);
   if (ret)
     return ret;
 
   // clear the timer flag
-  ret = writeRTCRegisterRV8803C7(RV8803_FLAG, flags & ~RV8803_FLAG_TF);
+  flags &= ~RV8803_FLAG_TF;
+  ret = writeRTCRegisterRV8803C7(RV8803_FLAG, flags);
   if (ret)
     return ret;
 
@@ -310,17 +323,21 @@ WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, RV8803_EXT_TD_t clk_freq,
     return ret;
 
   uint8_t MSByte = (countdown >> 8) & 0xFF;
-  ret = writeRTCRegisterRV8803C7(RV8803_TIMER_COUNTER_0, MSByte);
+  ret = writeRTCRegisterRV8803C7(RV8803_TIMER_COUNTER_1, MSByte);
   if (ret)
     return ret;
 
   // set the signal interrupt pin on countdown
   if (interupt_enable)
-    ret = writeRTCRegisterRV8803C7(RV8803_CTRL, ctrl | RV8803_CTRL_TIE);
+    ctrl |= RV8803_CTRL_TIE;
   else
-    ret = writeRTCRegisterRV8803C7(RV8803_CTRL, ctrl & ~RV8803_CTRL_TIE);
+    ctrl &= ~RV8803_CTRL_TIE;
+  ret = writeRTCRegisterRV8803C7(RV8803_CTRL, ctrl);
+  if (ret)
+    return ret;
 
   // start countdown again
-  ret = writeRTCRegisterRV8803C7(RV8803_EXT, ext | RV8803_EXT_TE);
+  ext |= RV8803_EXT_TE;
+  ret = writeRTCRegisterRV8803C7(RV8803_EXT, ext);
   return ret;
 }
