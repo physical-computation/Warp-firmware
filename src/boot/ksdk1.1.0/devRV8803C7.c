@@ -36,12 +36,13 @@
 */
 
 #include <stdint.h>
-#include "warp.h"
 #include "fsl_rtc_driver.h"
+#include "fsl_i2c_master_driver.h"
+#include "fsl_spi_master_driver.h" /* Crazy we need to include this as spi is unused, but otherwise we need to put it in warp.h, which is against the coding style. */
 
+#include "warp.h"
 #include "devRV8803C7.h"
 
-#include "fsl_i2c_master_driver.h"
 
 typedef enum {kWarpRV8803RegSec = 0x00,
               kWarpRV8803RegMin = 0x01,

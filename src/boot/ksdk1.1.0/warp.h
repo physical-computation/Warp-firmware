@@ -1,7 +1,3 @@
-#pragma once
-
-#include "fsl_spi_master_driver.h"
-
 #define	min(x,y)	((x) < (y) ? (x) : (y))
 #define	USED(x)		(void)(x)
 
