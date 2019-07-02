@@ -16,7 +16,7 @@
 
 #include "warp.h"
 
-
+#include "devRV8803C7.h" /* This seems like a bad thing to include, any suggestions? */
 
 /*
  *	From KSDK power_manager_demo.c <<BEGIN>>>
@@ -262,8 +262,20 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS0:
 		{
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/* turn off SPI */
+			disableSPIpins();
+			/* program RTC interrupt */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/* connect LLWU to RTC via LLWU_P4 */
+			//llwu_reset_enable_mode_t resetEnableMode = {
+			//	.lowLeakageMode = false,
+			//	.digitalFilterMode = false
+			//};
+			//LLWU_HAL_SetResetEnableMode(LLWU_BASE, resetEnableMode);
+			//LLWU_HAL_SetExternalInputPinMode(LLWU_BASE, kLlwuExternalPinFallingEdge, kLlwuWakeupPin4);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
-
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
 			 *	(soft) reset once their wakeup source fires. See, e.g., 

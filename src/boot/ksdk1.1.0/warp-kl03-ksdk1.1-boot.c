@@ -52,6 +52,8 @@
 #include "fsl_rtc_driver.h"
 #include "fsl_spi_master_driver.h"
 
+
+
 #include "SEGGER_RTT.h"
 #include "gpio_pins.h"
 #include "warp.h"
@@ -61,7 +63,7 @@
  */
 // #include "devBMX055.h"
 //#include "devADXL362.h"
-#include "devMMA8451Q.h"
+//#include "devMMA8451Q.h"
 //#include "devLPS25H.h"
 #include "devHDC1000.h"
 //#include "devMAG3110.h"
@@ -371,6 +373,7 @@ void disableLPUARTpins(void) {
   CLOCK_SYS_DisableLpuartClock(0);
 }
 
+bool spiEnabled = false;
 void enableSPIpins(void) {
   CLOCK_SYS_EnableSpiClock(0);
 
@@ -397,25 +400,27 @@ void enableSPIpins(void) {
   SPI_DRV_MasterConfigureBus(0 /* SPI master instance */,
                              (spi_master_user_config_t *)&spiUserConfig,
                              &calculatedBaudRate);
+  spiEnabled = true;
 }
 
 void disableSPIpins(void) {
-  SPI_DRV_MasterDeinit(0);
+	if (spiEnabled)
+		SPI_DRV_MasterDeinit(0);
 
-  /*	Warp KL03_SPI_MISO	--> PTA6	(GPI)		*/
+  /*	Warp KL03_SPI_MISO	--> PTA6	(GPIO)		*/
   PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 
   /*	Warp KL03_SPI_MOSI	--> PTA7	(GPIO)		*/
   PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
-  /*	Warp KL03_SPI_SCK	--> PTB0	(GPIO)		*/
-  PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
+  /*	Warp KL03_SPI_SCK	--> PTB0	(Z)		*/
+  PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortPinDisabled);
 
   GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI);
   GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO);
-  GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
 
   CLOCK_SYS_DisableSpiClock(0);
+  spiEnabled = false;
 }
 
 void enableI2Cpins(uint16_t pullupValue) {
@@ -2004,12 +2009,9 @@ int main(void) {
     case 'v': {
       SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
       enableI2Cpins(menuI2cPullupValue);
-
       SEGGER_RTT_WriteString(0, "\r\n\tSet wake up for 3 seconds...\n");
-      setRTCCountdownRV8803C7(3, TD_1HZ, true);
-      //warpSetLowPowerMode(kWarpPowerModeVLPS,
-      //                    0 /* sleep seconds : irrelevant here */);
-      SEGGER_RTT_WriteString(0, "\r\tDone.\n\n");
+      warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /*sleep seconds*/);
+      SEGGER_RTT_WriteString(0, "\r\tThis should never happen.\n\n");
       OSA_TimeDelay(10000);
       break;
     }
