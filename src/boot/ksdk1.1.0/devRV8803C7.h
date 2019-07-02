@@ -34,11 +34,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
-
-#include <stdint.h>
-#include "fsl_rtc_driver.h"
-#include "warp.h"
 
 #ifndef WARP_BUILD_ENABLE_DEVRV8803C7
 #define WARP_BUILD_ENABLE_DEVRV8803C7
@@ -46,8 +41,8 @@
 
 #define I2C_0X64
 
-typedef enum RV8803_EXT_TD {TD_4kHZ=0, TD_64HZ=1, TD_1HZ=2, TD_60S=3} RV8803_EXT_TD_t;
-typedef enum RV8803_EXT_FD {FD_32kHZ=0, FD_1kHZ=4, FD_1HZ=8} RV8803_EXT_FD_t;
+typedef enum {TD_4kHZ=0, TD_64HZ=1, TD_1HZ=2, TD_60S=3} WarpRV8803ExtTD_t;
+typedef enum {FD_32kHZ=0, FD_1kHZ=4, FD_1HZ=8} WarpRV8803ExtFD_t;
 
 void initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer);
 
@@ -58,20 +53,17 @@ WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload
 WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]);
 
 WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm);
-WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, RV8803_EXT_TD_t clk_freq, bool interupt_enable);
+WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable);
 
 /*
-handle_irq
-
-gettime
-WarpStatus setRTCTimeRV8803C7();
-time_update_irq_enable
-
-set_countdown
-get_countdown
-countdown_irq_enable
-
-getalarm
-setalarm
-alarm_irq_enable
+ *	TODO: Impalement other functions
+ *	handle_irq
+ *	gettime
+ *	time_update_irq_enable
+ *	set_countdown
+ *	get_countdown
+ *	countdown_irq_enable
+ *	getalarm
+ *	setalarm
+ *	alarm_irq_enable
 */
