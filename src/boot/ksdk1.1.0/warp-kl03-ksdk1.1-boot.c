@@ -1160,6 +1160,9 @@ int main(void) {
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
   initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
+  enableI2Cpins(menuI2cPullupValue);
+  setRTCCountdownRV8803C7(100, TD_1HZ, false);
+  disableI2Cpins();
 #endif
 
   /*
@@ -1314,7 +1317,7 @@ int main(void) {
     SEGGER_RTT_WriteString(0, "\r- 'u': set I2C address.\n");
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-    SEGGER_RTT_WriteString(0, "\r- 'v': ultra-low power for 3 seconds, then reset\n");
+    SEGGER_RTT_WriteString(0, "\r- 'v': VSSL0 low-power mode for 3 seconds, then reset\n");
     OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 #endif
 
@@ -2006,17 +2009,17 @@ int main(void) {
       break;
     }
 
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
     case 'v': {
-      SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
-      enableI2Cpins(menuI2cPullupValue);
-      SEGGER_RTT_WriteString(0, "\r\n\tSet wake up for 3 seconds...\n");
-      warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /*sleep seconds*/);
-      SEGGER_RTT_WriteString(0, "\r\tThis should never happen.\n\n");
-      OSA_TimeDelay(10000);
-      break;
+	    SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
+	    enableI2Cpins(menuI2cPullupValue);
+	    SEGGER_RTT_WriteString(0, "\r\n\tReset in 3 seconds...\n");
+	    warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /*sleep seconds*/);
+	    SEGGER_RTT_WriteString(0, "\r\tThis should never happen.\n\n");
+	    break;
     }
-
-    /*
+#endif
+	  /*
      *	Simply spin for 10 seconds. Since the SWD pins should only be enabled
      *when we are waiting for key at top of loop (or toggling after printf),
      *during this time there should be no interference from the SWD.

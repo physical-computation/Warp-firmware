@@ -263,17 +263,13 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 		case kWarpPowerModeVLLS0:
 		{
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/* turn off SPI */
-			disableSPIpins();
-			/* program RTC interrupt */
+			/* program RV8803 external interrupt */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
-			/* connect LLWU to RTC via LLWU_P4 */
-			//llwu_reset_enable_mode_t resetEnableMode = {
-			//	.lowLeakageMode = false,
-			//	.digitalFilterMode = false
-			//};
-			//LLWU_HAL_SetResetEnableMode(LLWU_BASE, resetEnableMode);
-			//LLWU_HAL_SetExternalInputPinMode(LLWU_BASE, kLlwuExternalPinFallingEdge, kLlwuWakeupPin4);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
 #endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 			/*
@@ -288,6 +284,16 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS1:
 		{
+			/* TODO: this can be replaced using the internal RTC */
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/* program RV8803 external interrupt */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
@@ -301,6 +307,16 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS3:
 		{
+			/* TODO: this can be replaced using the internal RTC */
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/* program RV8803 external interrupt */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
