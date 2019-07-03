@@ -16,7 +16,6 @@
 
 #include "warp.h"
 
-#include "devRV8803C7.h" /* This seems like a bad thing to include, any suggestions? */
 
 /*
  *	From KSDK power_manager_demo.c <<BEGIN>>>

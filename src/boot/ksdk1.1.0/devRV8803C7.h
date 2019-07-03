@@ -39,8 +39,6 @@
 #define WARP_BUILD_ENABLE_DEVRV8803C7
 #endif
 
-#define I2C_0X64
-
 typedef enum {TD_4kHZ=0, TD_64HZ=1, TD_1HZ=2, TD_60S=3} WarpRV8803ExtTD_t;
 typedef enum {FD_32kHZ=0, FD_1kHZ=4, FD_1HZ=8} WarpRV8803ExtFD_t;
 
