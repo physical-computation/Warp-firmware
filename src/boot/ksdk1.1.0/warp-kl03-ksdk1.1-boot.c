@@ -2112,7 +2112,7 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins\n");
 				enableI2Cpins(menuI2cPullupValue);
 				SEGGER_RTT_WriteString(0, "\r\n\tSleeping for 3 seconds, then resetting\n");
-				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds : irrelevant here */);
+				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */);
 				SEGGER_RTT_WriteString(0, "\r\n\tThis should never happen...\n");
 			}
 #endif
