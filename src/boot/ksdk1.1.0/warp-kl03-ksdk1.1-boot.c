@@ -605,7 +605,6 @@ lowPowerPinStates(void)
 	{
 		GPIO_DRV_SetPinOutput(kWarpPinKL03_VDD_ADC);
 	}
-	
 #ifdef WARP_FRDMKL03
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
 #else
@@ -1287,7 +1286,7 @@ main(void)
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
   initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
   enableI2Cpins(menuI2cPullupValue);
-  setRTCCountdownRV8803C7(100, TD_1HZ, false);
+  setRTCCountdownRV8803C7(0, TD_1HZ, false);
   disableI2Cpins();
 #endif
 
@@ -1305,6 +1304,8 @@ main(void)
 #ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	initPAN1326B(&devicePAN1326BState);
 #endif
+
+
 
 	/*
 	 *	Make sure SCALED_SENSOR_SUPPLY is off.
