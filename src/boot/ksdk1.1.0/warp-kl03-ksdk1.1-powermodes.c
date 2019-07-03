@@ -229,7 +229,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			{
 				// for now, always go to VLPR upon completion of prior mode
 				CLOCK_SYS_UpdateConfiguration(CLOCK_CONFIG_INDEX_FOR_VLPR, kClockManagerPolicyForcible);
-
+				
 			}
 
 			if (status != kPowerManagerSuccess)
@@ -243,7 +243,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 		case kWarpPowerModeRUN:
 		{
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
-
+			
 			/*
 			 *	In this case, we should return from POWER_SYS_SetMode() immediately
 			 *	since we don't go to sleep.
