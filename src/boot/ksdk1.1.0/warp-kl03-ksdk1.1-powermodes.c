@@ -262,7 +262,9 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 		case kWarpPowerModeVLLS0:
 		{
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/* program RV8803 external interrupt */
+			/*
+			 *	program RV8803 external interrupt
+			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
@@ -283,9 +285,13 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS1:
 		{
-			/* TODO: this can be replaced using the internal RTC */
+			/*
+			 *	TODO: this can be replaced using the internal RTC
+			 */
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/* program RV8803 external interrupt */
+			/*
+			 *	program RV8803 external interrupt
+			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
@@ -306,9 +312,13 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS3:
 		{
-			/* TODO: this can be replaced using the internal RTC */
+			/*
+			 *	TODO: this can be replaced using the internal RTC
+			 */
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/* program RV8803 external interrupt */
+			/*
+			 *	program RV8803 external interrupt
+			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
