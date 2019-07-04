@@ -38,7 +38,6 @@
 #include <stdint.h>
 #include "fsl_rtc_driver.h"
 #include "fsl_i2c_master_driver.h"
-#include "fsl_spi_master_driver.h" /* Crazy we need to include this as spi is unused, but otherwise we need to put it in warp.h, which is against the coding style. */
 
 #include "warp.h"
 #include "devRV8803C7.h"
