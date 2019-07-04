@@ -99,7 +99,9 @@ void initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * device
 }
 
 WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData) {
-	/* read address in 'deviceRegister' into 'receiveData' over i2c from the RTC */
+	/*
+	 *	Read address in 'deviceRegister' into 'receiveData' over i2c from the RTC
+	 */
 	uint8_t cmdBuff[1];
 	i2c_status_t status;
 
@@ -130,7 +132,10 @@ WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 }
 
 WarpStatus readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *receiveData) {
-	/* read 'nRegs' number of consecutive addresses from 'deviceStartRegister' into 'receiveData' over i2c from the RTC */
+	/*
+	 *	Read 'nRegs' number of consecutive addresses from 'deviceStartRegister' into 'receiveData'
+	 *	over i2c from the RTC
+	 */
 	uint8_t cmdBuff[1];
 	i2c_status_t status;
 	
@@ -160,7 +165,9 @@ WarpStatus readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, 
 }
 
 WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload) {
-	/* write the value in 'payload' to the to the address in 'deviceRegister' over i2c to the RTC */
+	/*
+	 *	Write the value in 'payload' to the to the address in 'deviceRegister' over i2c to the RTC
+	 */
 	uint8_t cmdBuff[1], txBuff[1];
 	i2c_status_t status;
 	
@@ -191,7 +198,8 @@ WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload) {
 }
 
 WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]) {
-	/*	write to fill 'nRegs' number of consecutive registers, starting with the address at 'deviceStartRegister'
+	/*
+	 *	Write to fill 'nRegs' number of consecutive registers, starting with the address at 'deviceStartRegister'
 	 *	with the values in 'payload' over i2c to the RTC.
 	 */
 	uint8_t cmdBuff[1];
@@ -223,7 +231,9 @@ WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs,
 }
 
 uint8_t bin2bcd(uint8_t bin) {
-	/* convert a int to bcd format */
+	/*
+	 *	Convert a int to bcd format
+	 */
 	uint8_t r, d, bcd;
 	d = bin;
 	bcd = 0;
@@ -237,25 +247,35 @@ uint8_t bin2bcd(uint8_t bin) {
 
 /* typedef enum { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY} WEEKDAY; */
 uint8_t date2weekday(uint8_t day, uint8_t month, uint8_t year) {
-	/* returns day of week based on date, TODO replace with more understandable expression */
+	/*
+	 *	Returns day of week based on date
+	 *	TODO replace with more understandable expression
+	 */
 	uint8_t weekday  = (day += month < 3 ? year-- : year - 2, 23*month/9 + day + 4 + year/4- year/100 + year/400)%7;
 	return weekday;
 }
 
 WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm) {
-	/* set the time and date of the RV-8803-C7 */
+	/*
+	 *	Set the time and date of the RV-8803-C7
+	 */
 	WarpStatus ret;
 	uint8_t ctrl, flags;
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &ctrl);
-	if (ret | ctrl < 0) /* check what I need to do if ctrl < 0 */
+	if (ret | ctrl < 0) { /* check what I need to do if ctrl < 0 */
 		return ret;
-	
-	/* Stop the clock */
+	}
+	/*
+	 *	Stop the clock
+	 */
 	ctrl |= kWarpRV8803CtrlRESET;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
+	/*
+	 *	Program the time and date
+	 */
 	uint8_t weekday = date2weekday(tm->day, tm->month, tm->year);
 	uint8_t date[7] = {
 		bin2bcd(tm->second),
@@ -268,18 +288,21 @@ WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm) {
 	};
 	
 	ret = writeRTCRegistersRV8803C7(kWarpRV8803RegSec, 7, date);
-	if (ret)
+	if (ret) {
 		return ret;
-	
-	/* Restart the clock */
+	}
+	/*
+	 *	Restart the clock
+	 */
 	ctrl &= kWarpRV8803CtrlRESET;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &flags);
-	if (ret | flags < 0) /* check what I need to do if flags < 0 */
+	if (ret | flags < 0) { /* check what I need to do if flags < 0 */
 		return ret;
+	}
 	
 	flags &= ~(kWarpRV8803FlagV1F | kWarpRV8803FlagV2F);
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegFlag, flags);
@@ -287,56 +310,67 @@ WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm) {
 }
 
 WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable) {
-	/* set the countdown timer, and if it should cause the interupt pin of the RV8803 to activate */
-	if (countdown > 4095)
+	/*
+	 *	Set the countdown timer, and if it should cause the interupt pin of the RV8803 to activate
+	 */
+	if (countdown > 4095) {
 		return 1;
+	}
 	
 	uint8_t ext, flags, ctrl, ret;
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &ext);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &flags);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &ctrl);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	ext &= ~kWarpRV8803ExtTE; /* stop countdown */
 	ext &= kWarpRV8803ExtClrTD; /* clear the timer clock frequency */
 	ext |= clk_freq; /* set the timer clock frequency */
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, ext);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	flags &= ~kWarpRV8803FlagTF; /* clear the timer flag */
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegFlag, flags);
-	if (ret)
+	if (ret) {
 		return ret;
-	
-	/* set the number of counts before the timer is triggered */
+	}
+	/*
+	 *	set the number of counts before the timer is triggered
+	 */
 	uint8_t MSByte = (countdown >> 8) & 0xFF;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegTimerCounter1, MSByte);
-	if (ret)
+	if (ret) {
 		return ret;
-	
+	}
 	uint8_t LSByte = countdown & 0xFF;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegTimerCounter0, LSByte);
-	if (ret)
+	if (ret) {
 		return ret;
-	
-	/* set the signal interrupt pin on countdown */
-	if (interupt_enable)
+	}
+	/*
+	 *	Set the signal interrupt pin on countdown
+	 */
+	if (interupt_enable) {
 		ctrl |= kWarpRV8803CtrlTIE;
-	else
+	} else {
 		ctrl &= ~kWarpRV8803CtrlTIE;
+	}
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret)
+	if (ret) {
 		return ret;
-	
-	ext |= kWarpRV8803ExtTE; /* start countdown again */
+	}
+	/*
+	 *	Start countdown again
+	 */
+	ext |= kWarpRV8803ExtTE;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, ext);
 	return ret;
 }
