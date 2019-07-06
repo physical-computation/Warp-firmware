@@ -1,7 +1,7 @@
 /*
 	Authored 2016-2018. Phillip Stanley-Marbell.
 	
-	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang.
+	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang, Sam Willis.
 
 	All rights reserved.
 
@@ -59,21 +59,22 @@
 *	Comment out the header file to disable devices
 */
 #include "devBMX055.h"
-//#include "devADXL362.h"
+#include "devADXL362.h"
 #include "devMMA8451Q.h"
-//#include "devLPS25H.h"
+#include "devLPS25H.h"
 #include "devHDC1000.h"
 #include "devMAG3110.h"
-//#include "devSI7021.h"
+#include "devSI7021.h"
 #include "devL3GD20H.h"
 #include "devBME680.h"
-//#include "devTCS34725.h"
-//#include "devSI4705.h"
+#include "devTCS34725.h"
+#include "devSI4705.h"
 #include "devCCS811.h"
 #include "devAMG8834.h"
-//#include "devPAN1326.h"
-//#include "devAS7262.h"
-//#include "devAS7263.h"
+#include "devPAN1326.h"
+#include "devAS7262.h"
+#include "devAS7263.h"
+#include "devRV8803C7.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -156,6 +157,10 @@ volatile WarpI2CDeviceState			deviceAS7262State;
 
 #ifdef WARP_BUILD_ENABLE_DEVAS7263
 volatile WarpI2CDeviceState			deviceAS7263State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+volatile WarpI2CDeviceState			deviceRV8803C7State;
 #endif
 
 /*
@@ -600,7 +605,6 @@ lowPowerPinStates(void)
 	{
 		GPIO_DRV_SetPinOutput(kWarpPinKL03_VDD_ADC);
 	}
-	
 #ifdef WARP_FRDMKL03
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
 #else
@@ -1279,7 +1283,12 @@ main(void)
 	initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
 #endif
 
-
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+  initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
+  enableI2Cpins(menuI2cPullupValue);
+  setRTCCountdownRV8803C7(0, TD_1HZ, false);
+  disableI2Cpins();
+#endif
 
 	/*
 	 *	Initialization: Devices hanging off SPI
@@ -1418,6 +1427,10 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'u': set I2C address.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+		SEGGER_RTT_WriteString(0, "\r- 'v': Enter VLLS0 low-power mode for 3s, then reset\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#endif
 		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
@@ -2093,7 +2106,16 @@ main(void)
 
 				break;
 			}
-
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			case 'v':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins\n");
+				enableI2Cpins(menuI2cPullupValue);
+				SEGGER_RTT_WriteString(0, "\r\n\tSleeping for 3 seconds, then resetting\n");
+				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */);
+				SEGGER_RTT_WriteString(0, "\r\n\tThis should never happen...\n");
+			}
+#endif
 			/*
 			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
 			 */
