@@ -41,11 +41,11 @@
 
 void		initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
-WarpStatus	configureSensorBME680(uint8_t payloadCtrl_Meas,
-					uint8_t payloadCtrl_Hum,
-					uint8_t payloadConfig,
-					uint8_t menuI2cPullupValue);
-WarpStatus	readSensorRegisterBME680(uint8_t deviceRegister);
+WarpStatus	configureSensorBME680(	uint8_t payloadCtrl_Hum,
+					uint8_t payloadCtrl_Meas,
+					uint8_t payloadGas_0,
+					uint16_t menuI2cPullupValue);
+WarpStatus	readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalBME680(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

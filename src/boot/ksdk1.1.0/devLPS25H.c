@@ -68,12 +68,13 @@ initLPS25H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStateP
 }
 
 WarpStatus
-readSensorRegisterLPS25H(uint8_t deviceRegister)
+readSensorRegisterLPS25H(uint8_t deviceRegister, int numberOfBytes)
 {
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	status1, status2;
 
 
+	USED(numberOfBytes);
 	if ((deviceRegister < 0x0F) || (deviceRegister > 0x39))
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -114,7 +115,7 @@ readSensorRegisterLPS25H(uint8_t deviceRegister)
 							cmdBuf,
 							1,
 							(uint8_t *)deviceLPS25HState.i2cBuffer,
-							1,
+							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
 	if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))

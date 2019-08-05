@@ -50,19 +50,19 @@ WarpStatus	writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload,
 
 WarpStatus	configureSensorBMX055accel(uint8_t payloadPMU_RANGE,
 					uint8_t payloadACCD_HBW,
-					uint8_t menuI2cPullupValue);
+					uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorBMX055gyro(uint8_t payloadRANGE,
 					uint8_t payloadBW,
 					uint8_t payloadLPM1,
 					uint8_t payloadRATE_HBW,
-					uint8_t menuI2cPullupValue);
+					uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorBMX055mag(uint8_t payloadPowerCtrl,
 					uint8_t payloadOpMode,
-					uint8_t menuI2cPullupValue);
+					uint16_t menuI2cPullupValue);
 
-WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister);
-WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister);
-WarpStatus	readSensorRegisterBMX055mag(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes);
+WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes);
+WarpStatus	readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes);
 
 WarpStatus	readSensorSignalBMX055accel(WarpTypeMask signal,
 					WarpSignalPrecision precision,

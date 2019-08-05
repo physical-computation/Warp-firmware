@@ -40,7 +40,7 @@
 #endif
 
 void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalTCS34725(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

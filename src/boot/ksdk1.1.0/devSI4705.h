@@ -40,7 +40,7 @@
 #endif
 
 void		initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterSI4705(uint8_t deviceRegister);
+WarpStatus	readSensorRegisterSI4705(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorSignalSI4705(WarpTypeMask signal,
 					WarpSignalPrecision precision,
 					WarpSignalAccuracy accuracy,

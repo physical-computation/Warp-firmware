@@ -17,7 +17,6 @@
 #include "warp.h"
 
 
-
 /*
  *	From KSDK power_manager_demo.c <<BEGIN>>>
  */
@@ -262,8 +261,18 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS0:
 		{
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/*
+			 *	program RV8803 external interrupt
+			 */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
-
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
 			 *	(soft) reset once their wakeup source fires. See, e.g., 
@@ -276,6 +285,20 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS1:
 		{
+			/*
+			 *	TODO: this can be replaced using the internal RTC
+			 */
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/*
+			 *	program RV8803 external interrupt
+			 */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
@@ -289,6 +312,20 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 		case kWarpPowerModeVLLS3:
 		{
+			/*
+			 *	TODO: this can be replaced using the internal RTC
+			 */
+#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
+			/*
+			 *	program RV8803 external interrupt
+			 */
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			/*
+			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
+			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
+			 */
+			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
+#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
