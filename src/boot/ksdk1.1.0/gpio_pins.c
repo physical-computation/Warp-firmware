@@ -182,21 +182,9 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 #endif
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
-		.pinName = kWarpPinFRDMKL03LED_Red,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinFRDMKL03LED_Green,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-		{
-		.pinName = kWarpPinFRDMKL03LED_Blue,
+		.pinName = kGlauxPinLED,
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,

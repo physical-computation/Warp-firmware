@@ -265,7 +265,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			/*
 			 *	program RV8803 external interrupt
 			 */
-			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
@@ -292,7 +292,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			/*
 			 *	program RV8803 external interrupt
 			 */
-			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
@@ -319,7 +319,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			/*
 			 *	program RV8803 external interrupt
 			 */
-			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true);
+			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms

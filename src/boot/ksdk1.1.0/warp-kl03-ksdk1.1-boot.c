@@ -51,6 +51,11 @@
 #include "fsl_port_hal.h"
 #include "fsl_lpuart_driver.h"
 
+/*
+ *	Define this here to activate Glaux-specific pin names etc.
+ */
+#define WARP_BUILD_ENABLE_GLAUX_VARIANT
+
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
@@ -58,27 +63,26 @@
 /*
 *	Comment out the header file to disable devices
 */
-#include "devBMX055.h"
+//#include "devBMX055.h"
 //#include "devADXL362.h"
-#include "devMMA8451Q.h"
+//#include "devMMA8451Q.h"
 //#include "devLPS25H.h"
-#include "devHDC1000.h"
-#include "devMAG3110.h"
+//#include "devHDC1000.h"
+//#include "devMAG3110.h"
 //#include "devSI7021.h"
-#include "devL3GD20H.h"
+//#include "devL3GD20H.h"
 #include "devBME680.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
-#include "devCCS811.h"
-#include "devAMG8834.h"
+//#include "devCCS811.h"
+//#include "devAMG8834.h"
 //#include "devPAN1326.h"
 //#include "devAS7262.h"
 //#include "devAS7263.h"
-//#include "devRV8803C7.h"
+#include "devRV8803C7.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
-
 
 /*
 *	BTstack includes WIP
@@ -499,7 +503,118 @@ disableI2Cpins(void)
 }
 
 
-// TODO: add pin states for pan1326 lp states
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+void
+lowPowerPinStates(void)
+{
+	/*
+	 *	Following Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf),
+	 *	we configure all pins as output and set them to a known state, except for the
+	 *	sacrificial pins (WLCSP package, Glaux) where we set them to disabled. We choose
+	 *	to set non-disabled pins to '0'.
+	 *
+	 *	NOTE: Pin state "disabled" means default functionality is active.
+	 */
+
+	/*
+	 *			PORT A
+	 */
+	/*
+	 *	Leave PTA0/1/2 SWD pins in their default state (i.e., as SWD).
+	 *
+	 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
+	 */
+	/*
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAsGpio);
+	*/
+
+	/*
+	 *	PTA3 and PTA4 are the EXTAL/XTAL. They are also connected to the clock output
+	 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them. 
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
+
+	/*
+	 *	Setup PTA5 as RTC_CLKIN (kPortMuxAsGpio is the "Alt1")
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
+
+	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
+
+
+
+	/*
+	 *	NOTE: The KL03 has no PTA10 or PTA11
+	 */
+
+
+	/*
+	 *	In Glaux, PTA12 is a sacrificial pin for SWD_RESET, so careful not to drive it.
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortPinDisabled);
+
+
+
+	/*
+	 *			PORT B
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
+
+	/*
+	 *	PTB3 and PTB3 (I2C pins) are true open-drain
+	 *	and we purposefully leave them disabled since they have pull-ups.
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
+
+
+	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);
+
+
+
+	/*
+	 *	NOTE: The KL03 has no PTB8, PTB9, or PTB12. The WLCSP has no PTB6, PTB7, PTB10, or PTB11
+	 */
+
+
+
+	/*
+	 *	In Glaux, PTB13 is a sacrificial pin for SWD_RESET, so careful not to drive it.
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
+
+
+
+	/*
+	 *	Now, set the non-disabled pins (PTA6, PTA7, PTA8 (sacrificial), PTA9 and PTB0, PTB1, PTB2, PTB3, PTB4), to 0
+	 */
+
+
+
+	/*
+	 *	If we are in mode where we disable the ADC, then drive the pin high since it is tied to KL03_VDD
+	 */
+	GPIO_DRV_ClearPinOutput(kGlauxPinFlash_CS);
+	GPIO_DRV_ClearPinOutput(kGlauxPinUnusedPTB1);
+	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
+	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA);
+	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL);
+	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI);
+	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO);
+	GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
+
+
+	return;
+}
+#else
 void
 lowPowerPinStates(void)
 {
@@ -608,10 +723,8 @@ lowPowerPinStates(void)
 #ifdef WARP_FRDMKL03
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
 #else
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 #ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
-#endif
 #endif
 #endif
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740A_CTLEN);
@@ -619,20 +732,14 @@ lowPowerPinStates(void)
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL1);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL2);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL3);
-
-#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	GPIO_DRV_ClearPinOutput(kWarpPinCLKOUT32K);
-#endif
-
 	GPIO_DRV_ClearPinOutput(kWarpPinTS5A3154_IN);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 
 	/*
 	 *	Drive these chip selects high since they are active low:
 	 */
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
-#endif
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 	GPIO_DRV_SetPinOutput(kWarpPinADXL362_CS);
 #endif
@@ -690,9 +797,9 @@ lowPowerPinStates(void)
 	 */
 	//GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI);
 }
+#endif
 
-
-
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 void
 disableTPS82740A(void)
 {
@@ -893,7 +1000,7 @@ disableSssupply(void)
 	 */
 	OSA_TimeDelay(gWarpSupplySettlingDelayMilliseconds);
 }
-
+#endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
 
 
 void
@@ -984,28 +1091,6 @@ dumpProcessorState(void)
 */
 }
 
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-void
-addAndMultiplicationBusyLoop(long iterations)
-{
-	int value;
-	for (volatile long i = 0; i < iterations; i++)
-	{
-		value = kWarpThermalChamberBusyLoopAdder + value * kWarpThermalChamberBusyLoopMutiplier;
-	}
-}
-
-uint8_t
-checkSum(uint8_t *  pointer, uint16_t length) /*	Adapted from https://stackoverflow.com/questions/31151032/writing-an-8-bit-checksum-in-c	*/
-{
-	unsigned int sum;
-	for ( sum = 0 ; length != 0 ; length-- )
-	{
-		sum += *(pointer++);
-	}
-	return (uint8_t)sum;
-}
-#endif
 
 int
 main(void)
@@ -1196,18 +1281,33 @@ main(void)
 	 *	See also Section 30.3.3 GPIO Initialization of KSDK13APIRM.pdf
 	 */
 	GPIO_DRV_Init(inputPins  /* input pins */, outputPins  /* output pins */);
-	
+
+
 	/*
 	 *	Note that it is lowPowerPinStates() that sets the pin mux mode,
 	 *	so until we call it pins are in their default state.
 	 */
+	SEGGER_RTT_WriteString(0, "Debug: not skipping lowPowerPinStates()...\n");
 	lowPowerPinStates();
 
 
 
 	/*
-	 *	Toggle LED3 (kWarpPinSI4705_nRST)
+	 *	Toggle LED3 (kWarpPinSI4705_nRST on Warp revB, kGlauxPinLED on Glaux)
 	 */
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	GPIO_DRV_SetPinOutput(kGlauxPinLED);
+	OSA_TimeDelay(2000);
+	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
+	OSA_TimeDelay(2000);
+	GPIO_DRV_SetPinOutput(kGlauxPinLED);
+	OSA_TimeDelay(2000);
+	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
+	OSA_TimeDelay(2000);
+	GPIO_DRV_SetPinOutput(kGlauxPinLED);
+	OSA_TimeDelay(2000);
+	GPIO_DRV_ClearPinOutput(kGlauxPinLED);	
+#else
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
 	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
@@ -1218,8 +1318,9 @@ main(void)
 	OSA_TimeDelay(200);
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
 	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-
+	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);	
+#endif
+	SEGGER_RTT_WriteString(0, "Done boot LED strobe...\n");
 
 
 	/*
@@ -1284,10 +1385,14 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-  initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
-  enableI2Cpins(menuI2cPullupValue);
-  setRTCCountdownRV8803C7(0, TD_1HZ, false);
-  disableI2Cpins();
+	SEGGER_RTT_WriteString(0, "About to initRV8803C7()...\n");
+	initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
+	enableI2Cpins(menuI2cPullupValue);
+	SEGGER_RTT_WriteString(0, "Debug: not skipping setRTCCountdownRV8803C7()...\n");
+	setRTCCountdownRV8803C7(0 /* countdown */, TD_1HZ /* frequency */, false /* interupt_enable */);
+	SEGGER_RTT_WriteString(0, "Debug: not skipping disableI2Cpins()...\n");
+	disableI2Cpins();
+	SEGGER_RTT_WriteString(0, "done setRTCCountdownRV8803C7()...\n");
 #endif
 
 	/*
@@ -1312,12 +1417,9 @@ main(void)
 	 *
 	 *	(There's no point in calling activateAllLowPowerSensorModes())
 	 */
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	disableSssupply();
-
-
-	/*
-	 *	TODO: initialize the kWarpPinKL03_VDD_ADC, write routines to read the VDD and temperature
-	 */
+#endif
 
 
 
@@ -1338,6 +1440,36 @@ main(void)
 
 
 
+
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	enableI2Cpins(menuI2cPullupValue);
+	SEGGER_RTT_WriteString(0, "About to configureSensorBME680()...\n");
+	configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
+				0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
+				0b00001000,	/*	Turn off heater							*/
+				0 		/*	i2cPullupValue: meaningless on Glaux revA			*/
+				);
+
+	SEGGER_RTT_WriteString(0, "About to loop with printSensorDataBME680()...\n");
+
+	while (1)
+	{
+		printSensorDataBME680(false /* hexModeFlag */);
+
+		GPIO_DRV_SetPinOutput(kGlauxPinLED);
+		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
+		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
+		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */);
+
+		/*
+		 *	Go into very low leakage stop mode (VLLS0) for 10 seconds.
+		 *	The end of the VLLS0 sleep triggers a reset
+		 */
+		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 10 seconds (will reset afterwords)...\n");
+		warpSetLowPowerMode(kWarpPowerModeVLLS0, 10 /* sleep seconds */);		
+		SEGGER_RTT_WriteString(0, "Should not get here...");
+	}
+#endif
 
 	while (1)
 	{
@@ -1433,11 +1565,6 @@ main(void)
 #endif
 		SEGGER_RTT_WriteString(0, "\r- 'x': disable SWD and spin for 10 secs.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-		SEGGER_RTT_WriteString(0, "\r- 'y': stress test (need a force quit)\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-#endif
 
 		SEGGER_RTT_WriteString(0, "\r- 'z': dump all sensors data.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
@@ -2128,302 +2255,6 @@ main(void)
 				break;
 			}
 
-			/*
-			 *	Stress test, including bit-wise toggling and checksum, as well as extensive add and mul, with continous read and write to I2C MMA8451Q
-			 */
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-			case 'y':
-			{
-				/*	
-				 *	I2C MMA8451Q initialization
-				 */
-
-				WarpStatus i2cWriteStatusA, i2cWriteStatusB;
-				WarpStatus i2cReadStatusX = kWarpStatusDeviceCommunicationFailed;
-				WarpStatus i2cReadStatusY = kWarpStatusDeviceCommunicationFailed;
-				WarpStatus i2cReadStatusZ = kWarpStatusDeviceCommunicationFailed;
-
-				enableI2Cpins(menuI2cPullupValue);
-				i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
-										0x00 /* payload: Disable FIFO */,
-										1);
-
-				i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
-										0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
-										1);
-
-				if((i2cWriteStatusA != kWarpStatusOK) && (i2cWriteStatusB != kWarpStatusOK))
-				{
-					SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-					for(int errorLED = 0; errorLED < 5; errorLED++)
-					{
-						/*
-						 *	Error when writing to I2C device
-						 *	LED pattern : All On -> All off -> Red
-						 */
-						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-						OSA_TimeDelay(100);
-						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-						GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-						OSA_TimeDelay(100);
-						GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-						OSA_TimeDelay(1000);
-					}
-				}
-				/*	
-				 *	Fill up the remaining memory space using a fixed size array
-				 *	The size of this array is highly dependent on the firmware code size
-				 */
-				WarpThermalChamberKL03MemoryFill	KL03MemoryFill;
-				KL03MemoryFill.outputBuffer[0] = 0;
-				KL03MemoryFill.outputBuffer[1] = 0;
-				KL03MemoryFill.outputBuffer[2] = 0;
-
-				GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-				GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-				GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-				OSA_TimeDelay(1000);
-				GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-				OSA_TimeDelay(1000);
-				GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-				OSA_TimeDelay(1000);
-				SEGGER_RTT_printf(0, "\n\nFilling memory");
-
-				for (uint16_t i = 0; i < sizeof(KL03MemoryFill.memoryFillingBuffer); i++)
-				{
-					if(i % 2 == 0)
-					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpThermalChamberMemoryFillEvenComponent;
-					}
-					if(i % 2 != 0)
-					{
-						KL03MemoryFill.memoryFillingBuffer[i] = kWarpThermalChamberMemoryFillOddComponent;
-					}
-				}
-
-				uint8_t checkSumValue = checkSum(KL03MemoryFill.memoryFillingBuffer, 
-								sizeof(KL03MemoryFill.memoryFillingBuffer));
-
-
-				while (1)
-				{
-					/*
-					 *	(1) addAndMultiplicationLoop performs basic multiplication and addition
-					 *	(2) bit-wise toggling and checksum operations are performed
-					 *	(3) checking the I2C read and write status
-					 */
-
-					GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-					OSA_TimeDelay(100);
-
-					addAndMultiplicationBusyLoop(kWarpThermalChamberBusyLoopCountOffset);
-
-					/*
-					 *	Error-less operation
-					 *	LED pattern : Blue -> Red -> Blue
-					 */
-					GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-					OSA_TimeDelay(100);
-					GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-					OSA_TimeDelay(100);
-					GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-					GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-					OSA_TimeDelay(100);
-
-					for(uint16_t j = 0; j < sizeof(KL03MemoryFill.memoryFillingBuffer); j++)
-					{
-						KL03MemoryFill.memoryFillingBuffer[j] = ~KL03MemoryFill.memoryFillingBuffer[j];
-					}
-					SEGGER_RTT_printf(0, "\nBit-wise flip");
-
-					uint8_t checkSumValueOnline = checkSum(KL03MemoryFill.memoryFillingBuffer,
-										sizeof(KL03MemoryFill.memoryFillingBuffer));
-					if(checkSumValue == checkSumValueOnline)
-					{
-						i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
-												0x00 /* payload: Disable FIFO */,
-												1);
-
-						i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
-												0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
-												1);
-						SEGGER_RTT_printf(0, "\nWriting to I2C device");
-						if((i2cWriteStatusA != kWarpStatusOK) && (i2cWriteStatusB != kWarpStatusOK))
-						{
-							SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-							for(int errorLED = 0; errorLED < 5; errorLED++)
-							{
-								/*
-								 *	Error when writing to I2C device
-								 *	LED pattern : All On -> All off -> Red
-								 */
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-								OSA_TimeDelay(100);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-								OSA_TimeDelay(100);
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-								OSA_TimeDelay(1000);
-							}
-						}
-
-						i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
-						if(i2cReadStatusX == kWarpStatusOK)
-						{
-							KL03MemoryFill.outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
-							SEGGER_RTT_printf(0, "\nReading from sensor X: %d", KL03MemoryFill.outputBuffer[0]);
-
-							i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
-							if(i2cReadStatusY == kWarpStatusOK)
-							{
-								KL03MemoryFill.outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
-								SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", KL03MemoryFill.outputBuffer[1]);
-
-								i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
-								if(i2cReadStatusZ == kWarpStatusOK)
-								{
-									KL03MemoryFill.outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
-									SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", KL03MemoryFill.outputBuffer[2]);
-								}
-							}
-						}
-
-						if((i2cReadStatusX != kWarpStatusOK) && (i2cReadStatusY != kWarpStatusOK) &&
-								(i2cReadStatusZ != kWarpStatusOK))
-						{
-							SEGGER_RTT_printf(0, "\nError when reading from I2C device");
-							for(int errorLED = 0; errorLED < 5; errorLED++)
-							{
-								/*
-								 *	Error when reading from I2C device
-								 *	LED pattern : Red -> All off
-								 */
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-								GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-								OSA_TimeDelay(100);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-								GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-								OSA_TimeDelay(100);
-							}
-						}
-						else
-						{
-							KL03MemoryFill.outputBuffer[0] = 0;
-							KL03MemoryFill.outputBuffer[1] = 0;
-							KL03MemoryFill.outputBuffer[2] = 0;
-						}
-					}
-					else
-					{
-						while(1)
-						{
-							/*
-							 *	Error in checksum leading to error in bit wise operation
-							 *	LED pattern : Red -> All off
-							 */
-							SEGGER_RTT_printf(0, "\nError in checksum");
-							GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-							GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-							GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-							OSA_TimeDelay(100);
-							GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-							OSA_TimeDelay(100);
-
-							SEGGER_RTT_printf(0, "\nWriting to I2C device");
-							i2cWriteStatusA = writeSensorRegisterMMA8451Q(0x09 /* register address F_SETUP */,
-												0x00 /* payload: Disable FIFO */,
-												1);
-
-							i2cWriteStatusB = writeSensorRegisterMMA8451Q(0x2A /* register address */,
-												0x03 /* payload: Enable fast read 8bit, 800Hz, normal, active mode */,
-												1);
-
-							if((i2cWriteStatusA != kWarpStatusOK) && (i2cWriteStatusB != kWarpStatusOK))
-							{
-								SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-								for(int errorLED = 0; errorLED < 5; errorLED++)
-								{
-									/*
-									 *	Error when writing to I2C device
-									 *	LED pattern : All On -> All off -> Red
-									 */
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-									OSA_TimeDelay(100);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-									OSA_TimeDelay(100);
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-									OSA_TimeDelay(1000);
-								}
-							}
-							
-							i2cReadStatusX = readSensorRegisterMMA8451Q(0x01);
-							if(i2cReadStatusX == kWarpStatusOK)
-							{
-								KL03MemoryFill.outputBuffer[0] = deviceMMA8451QState.i2cBuffer[0];
-								SEGGER_RTT_printf(0, "\nReading from sensor X: %d", KL03MemoryFill.outputBuffer[0]);
-
-								i2cReadStatusY = readSensorRegisterMMA8451Q(0x03);
-								if(i2cReadStatusY == kWarpStatusOK)
-								{
-									KL03MemoryFill.outputBuffer[1] = deviceMMA8451QState.i2cBuffer[0];
-									SEGGER_RTT_printf(0, "\nReading from sensor Y: %d", KL03MemoryFill.outputBuffer[1]);
-
-									i2cReadStatusZ = readSensorRegisterMMA8451Q(0x05);
-									if(i2cReadStatusZ == kWarpStatusOK)
-									{
-										KL03MemoryFill.outputBuffer[2] = deviceMMA8451QState.i2cBuffer[0];
-										SEGGER_RTT_printf(0, "\nReading from sensor Z: %d", KL03MemoryFill.outputBuffer[2]);
-									}
-								}
-							}
-
-							if((i2cReadStatusX != kWarpStatusOK) && (i2cReadStatusY != kWarpStatusOK) &&
-								(i2cReadStatusZ != kWarpStatusOK))
-							{
-								SEGGER_RTT_printf(0, "\nError when reading from I2C device");
-								for(int errorLED = 0; errorLED < 5; errorLED++)
-								{
-									/*
-									 *	Error when reading from I2C device
-									 *	LED pattern : All on -> All off
-									 */
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-									GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-									OSA_TimeDelay(100);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-									GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-									OSA_TimeDelay(100);
-								}
-							}
-						}
-					}
-				}
-				disableI2Cpins();
-
-				break;
-			}
-#endif
 			/*
 			 *	Dump all the sensor data in one go
 			 */
@@ -3434,15 +3265,13 @@ writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength)
 void
 powerupAllSensors(void)
 {
-	WarpStatus	status;
-
 	/*
 	 *	BMX055mag
 	 *
 	 *	Write '1' to power control bit of register 0x4B. See page 134.
 	 */
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
-	status = writeByteToI2cDeviceRegister(	deviceBMX055magState.i2cAddress		/*	i2cAddress		*/,
+	WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055magState.i2cAddress		/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x4B					/*	commandByte		*/,
 						true					/*	sendPayloadByte		*/,
@@ -3451,11 +3280,11 @@ powerupAllSensors(void)
 	{
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 		SEGGER_RTT_printf(0, "\r\tPowerup command failed, code=%d, for BMX055mag @ 0x%02x.\n", status, deviceBMX055magState.i2cAddress);
-#endif
+#endif	//WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 	}
-	#else
+#else	//WARP_BUILD_ENABLE_DEVBMX055
 	SEGGER_RTT_WriteString(0, "\r\tPowerup command failed. BMX055 disabled \n");
-#endif
+#endif	//WARP_BUILD_ENABLE_DEVBMX055
 }
 
 
@@ -3463,10 +3292,6 @@ powerupAllSensors(void)
 void
 activateAllLowPowerSensorModes(bool verbose)
 {
-	WarpStatus	status;
-
-
-
 	/*
 	 *	ADXL362:	See Power Control Register (Address: 0x2D, Reset: 0x00).
 	 *
@@ -3481,7 +3306,7 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
 	 */
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
-	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
+	WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
 						true					/*	sendCommandByte		*/,
 						0x11					/*	commandByte		*/,
 						true					/*	sendPayloadByte		*/,
@@ -3640,10 +3465,8 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 #ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
-#endif
 #endif
 #endif
 }

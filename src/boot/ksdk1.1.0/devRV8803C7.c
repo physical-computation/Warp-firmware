@@ -102,23 +102,27 @@ extern volatile WarpI2CDeviceState deviceRV8803C7State;
 extern volatile uint32_t gWarpI2cBaudRateKbps;
 extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
 
-void initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer) {
+void
+initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer)
+{
 	deviceStatePointer->i2cAddress = i2cAddress;
+
 	return;
 }
 
-WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData) {
+WarpStatus
+readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
+{
 	/*
 	 *	Read address in 'deviceRegister' into 'receiveData' over i2c from the RTC
 	 */
-	uint8_t cmdBuff[1];
-	i2c_status_t status;
+	uint8_t		cmdBuff[1];
+	i2c_status_t	status;
 
 	if (deviceRegister > 0x2F) {
 		return kWarpStatusBadDeviceCommand;
 	}
-	
-	
+
 	i2c_device_t slave = {
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
@@ -126,29 +130,33 @@ WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 	
 	cmdBuff[0] = deviceRegister;
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
-	                                           &slave,
-	                                           cmdBuff,
-	                                           1,
-	                                           receiveData,
-	                                           1,
-	                                           gWarpI2cTimeoutMilliseconds);
-	
-	if (status != kStatus_I2C_Success) {
+							&slave,
+							cmdBuff,
+							1,
+							receiveData,
+							1,
+							gWarpI2cTimeoutMilliseconds);
+
+	if (status != kStatus_I2C_Success)
+	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-	
+
 	return kWarpStatusOK;
 }
 
-WarpStatus readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *receiveData) {
+WarpStatus
+readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *receiveData)
+{
 	/*
 	 *	Read 'nRegs' number of consecutive addresses from 'deviceStartRegister' into 'receiveData'
 	 *	over i2c from the RTC
 	 */
-	uint8_t cmdBuff[1];
-	i2c_status_t status;
+	uint8_t		cmdBuff[1];
+	i2c_status_t	status;
 	
-	if (deviceStartRegister > 0x2F) {
+	if (deviceStartRegister > 0x2F)
+	{
 		return kWarpStatusBadDeviceCommand;
 	}
 	
@@ -159,31 +167,37 @@ WarpStatus readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, 
 	
 	cmdBuff[0] = deviceStartRegister;
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
-	                                           &slave,
-	                                           cmdBuff,
-	                                           1,
-	                                           receiveData,
-	                                           nRegs,
-	                                           gWarpI2cTimeoutMilliseconds);
-	
-	if (status != kStatus_I2C_Success) {
+							&slave,
+							cmdBuff,
+							1,
+							receiveData,
+							nRegs,
+							gWarpI2cTimeoutMilliseconds);
+
+	if (status != kStatus_I2C_Success)
+	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-	
+
 	return kWarpStatusOK;
 }
 
-WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload) {
+WarpStatus
+writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
+{
 	/*
 	 *	Write the value in 'payload' to the to the address in 'deviceRegister' over i2c to the RTC
 	 */
-	uint8_t cmdBuff[1], txBuff[1];
-	i2c_status_t status;
-	
-	if (deviceRegister > 0x2F) {
+	uint8_t		cmdBuff[1];
+	uint8_t		txBuff[1];
+	i2c_status_t	status;
+
+
+	if (deviceRegister > 0x2F)
+	{
 		return kWarpStatusBadDeviceCommand;
 	}
-	
+
 	i2c_device_t slave = {
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
@@ -192,61 +206,70 @@ WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload) {
 	cmdBuff[0] = deviceRegister;
 	txBuff[0] = payload;
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
-	                                        &slave,
-	                                        cmdBuff,
-	                                        1,
-	                                        txBuff,
-	                                        1,
-	                                        gWarpI2cTimeoutMilliseconds);
-	
-	if (status != kStatus_I2C_Success) {
+						&slave,
+						cmdBuff,
+						1,
+						txBuff,
+						1,
+						gWarpI2cTimeoutMilliseconds);
+
+	if (status != kStatus_I2C_Success)
+	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-	
+
 	return kWarpStatusOK;
 }
 
-WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]) {
+WarpStatus
+writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[])
+{
 	/*
 	 *	Write to fill 'nRegs' number of consecutive registers, starting with the address at 'deviceStartRegister'
 	 *	with the values in 'payload' over i2c to the RTC.
 	 */
-	uint8_t cmdBuff[1];
-	i2c_status_t status;
-	
-	if (deviceStartRegister > 0x2F) {
+	uint8_t		cmdBuff[1];
+	i2c_status_t	status;
+
+	if (deviceStartRegister > 0x2F)
+	{
 		return kWarpStatusBadDeviceCommand;
 	}
-	
+
 	i2c_device_t slave = {
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
-	
+
 	cmdBuff[0] = deviceStartRegister;
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
-	                                        &slave,
-	                                        cmdBuff,
-	                                        1,
-	                                        payload,
-	                                        nRegs,
-	                                        gWarpI2cTimeoutMilliseconds);
-	
-	if (status != kStatus_I2C_Success) {
+						&slave,
+						cmdBuff,
+						1,
+						payload,
+						nRegs,
+						gWarpI2cTimeoutMilliseconds);
+
+	if (status != kStatus_I2C_Success)
+	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-	
+
 	return kWarpStatusOK;
 }
 
-uint8_t bin2bcd(uint8_t bin) {
+uint8_t
+bin2bcd(uint8_t bin)
+{
 	/*
 	 *	Convert a int to bcd format
 	 */
-	uint8_t r, d, bcd;
+	uint8_t		r, d, bcd;
 	d = bin;
 	bcd = 0;
-	for (uint8_t n = 0; n<16; n+=4) {
+
+	for (uint8_t n = 0; n<16; n+=4)
+	{
 		r = d % 10;
 		d /= 10;
 		bcd |= (r << n);
@@ -254,133 +277,183 @@ uint8_t bin2bcd(uint8_t bin) {
 	return bcd;
 }
 
-/* typedef enum { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY} WEEKDAY; */
-uint8_t date2weekday(uint8_t day, uint8_t month, uint8_t year) {
+uint8_t
+date2weekday(uint8_t day, uint8_t month, uint8_t year)
+{
 	/*
 	 *	Returns day of week based on date
 	 *	TODO replace with more understandable expression
 	 */
-	uint8_t weekday  = (day += month < 3 ? year-- : year - 2, 23*month/9 + day + 4 + year/4- year/100 + year/400)%7;
-	return weekday;
+	uint8_t	weekday  = (day += month < 3 ? year-- : year - 2, 23*month/9 + day + 4 + year/4- year/100 + year/400)%7;
+	return	weekday;
 }
 
-WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm) {
+WarpStatus
+setRTCTimeRV8803C7(rtc_datetime_t *tm)
+{
 	/*
 	 *	Set the time and date of the RV-8803-C7
 	 */
-	WarpStatus ret;
-	uint8_t ctrl, flags;
+	WarpStatus	ret;
+	uint8_t		ctrl, flags;
+
+
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &ctrl);
-	if (ret | ctrl < 0) { /* check what I need to do if ctrl < 0 */
+
+	/*
+	 *	TODO: Is there special handling needed when ctrl < 0?
+	 */
+	if (ret | (ctrl < 0))
+	{
 		return ret;
 	}
+
 	/*
 	 *	Stop the clock
 	 */
 	ctrl |= kWarpRV8803CtrlRESET;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	/*
 	 *	Program the time and date
 	 */
 	uint8_t weekday = date2weekday(tm->day, tm->month, tm->year);
 	uint8_t date[7] = {
-		bin2bcd(tm->second),
-		bin2bcd(tm->minute),
-		bin2bcd(tm->hour),
-		1 << weekday,
-		bin2bcd(tm->day),
-		bin2bcd(tm->month + 1),
-		bin2bcd(tm->year - 100)
+				bin2bcd(tm->second),
+				bin2bcd(tm->minute),
+				bin2bcd(tm->hour),
+				1 << weekday,
+				bin2bcd(tm->day),
+				bin2bcd(tm->month + 1),
+				bin2bcd(tm->year - 100)
 	};
-	
+
 	ret = writeRTCRegistersRV8803C7(kWarpRV8803RegSec, 7, date);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	/*
 	 *	Restart the clock
 	 */
 	ctrl &= kWarpRV8803CtrlRESET;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &flags);
-	if (ret | flags < 0) { /* check what I need to do if flags < 0 */
+
+	/*
+	 *	TODO: Is there special handling needed when flags < 0?
+	 */
+	if (ret | (flags < 0))
+	{
 		return ret;
 	}
-	
+
 	flags &= ~(kWarpRV8803FlagV1F | kWarpRV8803FlagV2F);
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegFlag, flags);
+
+
 	return ret;
 }
 
-WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable) {
+WarpStatus
+setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable)
+{
+	uint8_t	ext, flags, ctrl, ret;
+
 	/*
 	 *	Set the countdown timer, and if it should cause the interupt pin of the RV8803 to activate
 	 */
-	if (countdown > 4095) {
+	if (countdown > 4095)
+	{
 		return 1;
 	}
-	
-	uint8_t ext, flags, ctrl, ret;
+
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &ext);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &flags);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &ctrl);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
-	ext &= ~kWarpRV8803ExtTE; /* stop countdown */
-	ext &= kWarpRV8803ExtClrTD; /* clear the timer clock frequency */
-	ext |= clk_freq; /* set the timer clock frequency */
+
+	ext &= ~kWarpRV8803ExtTE;	/*	Stop countdown			*/
+	ext &= kWarpRV8803ExtClrTD;	/*	Clear the timer clock frequency	*/
+	ext |= clk_freq; 		/*	Set the timer clock frequency	*/
+
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, ext);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	flags &= ~kWarpRV8803FlagTF; /* clear the timer flag */
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegFlag, flags);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	/*
-	 *	set the number of counts before the timer is triggered
+	 *	Set the number of counts before the timer is triggered
 	 */
-	uint8_t MSByte = (countdown >> 8) & 0xFF;
+	uint8_t	MSByte = (countdown >> 8) & 0xFF;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegTimerCounter1, MSByte);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
-	uint8_t LSByte = countdown & 0xFF;
+
+	uint8_t	LSByte = countdown & 0xFF;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegTimerCounter0, LSByte);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	/*
 	 *	Set the signal interrupt pin on countdown
 	 */
-	if (interupt_enable) {
+	if (interupt_enable)
+	{
 		ctrl |= kWarpRV8803CtrlTIE;
-	} else {
+	}
+	else 
+	{
 		ctrl &= ~kWarpRV8803CtrlTIE;
 	}
+
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegCtrl, ctrl);
-	if (ret) {
+	if (ret)
+	{
 		return ret;
 	}
+
 	/*
 	 *	Start countdown again
 	 */
 	ext |= kWarpRV8803ExtTE;
 	ret = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, ext);
+
+
 	return ret;
 }
-

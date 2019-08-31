@@ -80,9 +80,7 @@ initPAN1326B(WarpUARTDeviceState volatile *  deviceStatePointer)
 	/*
 	 *	Shutdown the Module
 	 */
-	#ifndef	WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
-	#endif
 }
 
 void
