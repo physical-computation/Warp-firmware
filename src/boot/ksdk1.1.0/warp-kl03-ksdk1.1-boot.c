@@ -51,17 +51,12 @@
 #include "fsl_port_hal.h"
 #include "fsl_lpuart_driver.h"
 
-/*
- *	Define this here to activate Glaux-specific pin names etc.
- */
-#define WARP_BUILD_ENABLE_GLAUX_VARIANT
-
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
 /*
-*	Comment out the header file to disable devices
+*	Comment out the header file to disable devices and variants
 */
 //#include "devBMX055.h"
 //#include "devADXL362.h"
@@ -80,6 +75,7 @@
 //#include "devAS7262.h"
 //#include "devAS7263.h"
 #include "devRV8803C7.h"
+#include "glaux.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -1454,12 +1450,15 @@ main(void)
 
 	while (1)
 	{
-		printSensorDataBME680(false /* hexModeFlag */);
+		for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
+		{
+			printSensorDataBME680(false /* hexModeFlag */);
+		}
 
 		GPIO_DRV_SetPinOutput(kGlauxPinLED);
 		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
 		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */);
+		warpLowPowerSecondsSleep(kGlauxSleepSecondsBetweenSensorRepetitions, true /* forceAllPinsIntoLowPowerState */);
 
 		/*
 		 *	Go into very low leakage stop mode (VLLS0) for 10 seconds.
