@@ -146,7 +146,7 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 }
 
 WarpStatus
-readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *receiveData)
+readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  receiveData)
 {
 	/*
 	 *	Read 'nRegs' number of consecutive addresses from 'deviceStartRegister' into 'receiveData'
@@ -366,16 +366,16 @@ setRTCTimeRV8803C7(rtc_datetime_t *tm)
 }
 
 WarpStatus
-setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable)
+setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool interupt_enable)
 {
-	uint8_t	ext, flags, ctrl, ret;
+	uint8_t		ext, flags, ctrl, ret;
 
 	/*
-	 *	Set the countdown timer, and if it should cause the interupt pin of the RV8803 to activate
+	 *	Set the countdown timer and if it should cause the interupt pin of the RV8803 to activate
 	 */
 	if (countdown > 4095)
 	{
-		return 1;
+		return kWarpStatusBadDeviceCommand;
 	}
 
 	ret = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &ext);

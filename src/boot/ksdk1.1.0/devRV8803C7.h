@@ -39,19 +39,28 @@
 #define WARP_BUILD_ENABLE_DEVRV8803C7
 #endif
 
-typedef enum {TD_4kHZ=0, TD_64HZ=1, TD_1HZ=2, TD_60S=3} WarpRV8803ExtTD_t;
-typedef enum {FD_32kHZ=0, FD_1kHZ=4, FD_1HZ=8} WarpRV8803ExtFD_t;
+typedef enum
+{
+	kWarpRV8803ExtTD_4kHZ	= 0,
+	kWarpRV8803ExtTD_64HZ	= 1,
+	kWarpRV8803ExtTD_1HZ	= 2,
+	kWarpRV8803ExtTD_60S	= 3
+} WarpRV8803ExtTD;
 
-void initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer);
+typedef enum
+{
+	kWarpRV8803ExtFD_32kHZ	= 0,
+	kWarpRV8803ExtFD_1kHZ	= 4,
+	kWarpRV8803ExtFD_1HZ	= 8
+} WarpRV8803ExtFD;
 
-WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
-WarpStatus readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);
-
-WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload);
-WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]);
-
-WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm);
-WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable);
+void		initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+WarpStatus	readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
+WarpStatus	readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);
+WarpStatus	writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload);
+WarpStatus	writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]);
+WarpStatus	setRTCTimeRV8803C7(rtc_datetime_t *  tm);
+WarpStatus	setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool interupt_enable);
 
 /*
  *	TODO: Impalement other functions

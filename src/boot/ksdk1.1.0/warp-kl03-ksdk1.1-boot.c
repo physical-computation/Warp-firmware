@@ -51,9 +51,13 @@
 #include "fsl_port_hal.h"
 #include "fsl_lpuart_driver.h"
 
+/*
+ *	Glaux.h needs to come before bpio_pins.hexModeFlag
+ */
+#include "glaux.h"
+#include "warp.h"
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
-#include "warp.h"
 
 /*
 *	Comment out the header file to disable devices and variants
@@ -75,7 +79,6 @@
 //#include "devAS7262.h"
 //#include "devAS7263.h"
 #include "devRV8803C7.h"
-#include "glaux.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -572,7 +575,10 @@ lowPowerPinStates(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
 
-	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);
+	/*
+	 *	PTB5 is sacrificial for I2C_SDA, so disable
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
 
 
 
@@ -795,23 +801,27 @@ lowPowerPinStates(void)
 }
 #endif
 
-#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 void
 disableTPS82740A(void)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740A_CTLEN);
+#endif
 }
 
 void
 disableTPS82740B(void)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740B_CTLEN);
+#endif
 }
 
 
 void
 enableTPS82740A(uint16_t voltageMillivolts)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	setTPS82740CommonControlLines(voltageMillivolts);
 	GPIO_DRV_SetPinOutput(kWarpPinTPS82740A_CTLEN);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740B_CTLEN);
@@ -823,12 +833,14 @@ enableTPS82740A(uint16_t voltageMillivolts)
 	 *		IN = low selects the output of the TPS82740A:
 	 */
 	GPIO_DRV_ClearPinOutput(kWarpPinTS5A3154_IN);
+#endif
 }
 
 
 void
 enableTPS82740B(uint16_t voltageMillivolts)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	setTPS82740CommonControlLines(voltageMillivolts);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740A_CTLEN);
 	GPIO_DRV_SetPinOutput(kWarpPinTPS82740B_CTLEN);
@@ -840,12 +852,14 @@ enableTPS82740B(uint16_t voltageMillivolts)
 	 *		IN = low selects the output of the TPS82740A:
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinTS5A3154_IN);
+#endif
 }
 
 
 void	
 setTPS82740CommonControlLines(uint16_t voltageMillivolts)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	/*
 	 *	 From Manual:
 	 *
@@ -950,6 +964,8 @@ setTPS82740CommonControlLines(uint16_t voltageMillivolts)
 	 *	Vload ramp time of the TPS82740 is 800us max (datasheet, Section 8.5 / page 5)
 	 */
 	OSA_TimeDelay(gWarpSupplySettlingDelayMilliseconds);
+#endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
+
 }
 
 
@@ -957,6 +973,7 @@ setTPS82740CommonControlLines(uint16_t voltageMillivolts)
 void
 enableSssupply(uint16_t voltageMillivolts)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	if (voltageMillivolts >= 1800 && voltageMillivolts <= 2500)
 	{
 		enableTPS82740A(voltageMillivolts);
@@ -971,6 +988,7 @@ enableSssupply(uint16_t voltageMillivolts)
 		SEGGER_RTT_printf(0, RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_RED RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorInvalidVoltage RTT_CTRL_RESET "\n", voltageMillivolts);
 #endif
 	}
+#endif
 }
 
 
@@ -978,6 +996,7 @@ enableSssupply(uint16_t voltageMillivolts)
 void
 disableSssupply(void)
 {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	disableTPS82740A();
 	disableTPS82740B();
 
@@ -995,8 +1014,8 @@ disableSssupply(void)
 	 *	Vload ramp time of the TPS82740 is 800us max (datasheet, Section 8.5 / page 5)
 	 */
 	OSA_TimeDelay(gWarpSupplySettlingDelayMilliseconds);
-}
 #endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
+}
 
 
 void
@@ -1091,6 +1110,7 @@ dumpProcessorState(void)
 int
 main(void)
 {
+	WarpStatus				status;
 	uint8_t					key;
 	WarpSensorDevice			menuTargetSensor = kWarpSensorBMX055accel;
 	volatile WarpI2CDeviceState *		menuI2cDevice = NULL;
@@ -1283,7 +1303,6 @@ main(void)
 	 *	Note that it is lowPowerPinStates() that sets the pin mux mode,
 	 *	so until we call it pins are in their default state.
 	 */
-	SEGGER_RTT_WriteString(0, "Debug: not skipping lowPowerPinStates()...\n");
 	lowPowerPinStates();
 
 
@@ -1293,15 +1312,15 @@ main(void)
 	 */
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(2000);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(2000);
+	OSA_TimeDelay(200);
 	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(2000);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(2000);
+	OSA_TimeDelay(200);
 	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(2000);
+	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);	
 #else
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
@@ -1316,7 +1335,6 @@ main(void)
 	OSA_TimeDelay(200);
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);	
 #endif
-	SEGGER_RTT_WriteString(0, "Done boot LED strobe...\n");
 
 
 	/*
@@ -1381,14 +1399,18 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-	SEGGER_RTT_WriteString(0, "About to initRV8803C7()...\n");
 	initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
 	enableI2Cpins(menuI2cPullupValue);
-	SEGGER_RTT_WriteString(0, "Debug: not skipping setRTCCountdownRV8803C7()...\n");
-	setRTCCountdownRV8803C7(0 /* countdown */, TD_1HZ /* frequency */, false /* interupt_enable */);
-	SEGGER_RTT_WriteString(0, "Debug: not skipping disableI2Cpins()...\n");
+	status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "setRTCCountdownRV8803C7() failed...\n");
+	}
+	else
+	{
+		SEGGER_RTT_WriteString(0, "setRTCCountdownRV8803C7() succeeded.\n");
+	}
 	disableI2Cpins();
-	SEGGER_RTT_WriteString(0, "done setRTCCountdownRV8803C7()...\n");
 #endif
 
 	/*
@@ -1413,9 +1435,7 @@ main(void)
 	 *
 	 *	(There's no point in calling activateAllLowPowerSensorModes())
 	 */
-#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	disableSssupply();
-#endif
 
 
 
@@ -1436,15 +1456,18 @@ main(void)
 
 
 
-
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	enableI2Cpins(menuI2cPullupValue);
 	SEGGER_RTT_WriteString(0, "About to configureSensorBME680()...\n");
-	configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
+	status = configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
 				0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
 				0b00001000,	/*	Turn off heater							*/
 				0 		/*	i2cPullupValue: meaningless on Glaux revA			*/
 				);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "configureSensorBME680() failed...\n");
+	}
 
 	SEGGER_RTT_WriteString(0, "About to loop with printSensorDataBME680()...\n");
 
@@ -1453,18 +1476,22 @@ main(void)
 		for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 		{
 			printSensorDataBME680(false /* hexModeFlag */);
+			SEGGER_RTT_WriteString(0, " done.\n");
 		}
 
 		GPIO_DRV_SetPinOutput(kGlauxPinLED);
-		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
+		OSA_TimeDelay(200);
+		//warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
 		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-		warpLowPowerSecondsSleep(kGlauxSleepSecondsBetweenSensorRepetitions, true /* forceAllPinsIntoLowPowerState */);
+		OSA_TimeDelay(200);
+		//warpLowPowerSecondsSleep(kGlauxSleepSecondsBetweenSensorRepetitions, true /* forceAllPinsIntoLowPowerState */);
 
 		/*
 		 *	Go into very low leakage stop mode (VLLS0) for 10 seconds.
 		 *	The end of the VLLS0 sleep triggers a reset
 		 */
 		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 10 seconds (will reset afterwords)...\n");
+		OSA_TimeDelay(200);
 		warpSetLowPowerMode(kWarpPowerModeVLLS0, 10 /* sleep seconds */);		
 		SEGGER_RTT_WriteString(0, "Should not get here...");
 	}
@@ -1589,7 +1616,7 @@ main(void)
 
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
 				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V -- 3.6V\n");
-				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro			(0x00--0x3F): 2.4V -- 3.6V\n");
+				SEGGER_RTT_WriteString(0, "\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V -- 3.6V\n");
 				SEGGER_RTT_WriteString(0, "\r\t- '4' BMX055mag			(0x40--0x52): 2.4V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- '2' BMX055accel 		(0x00--0x3F): 2.4V -- 3.6V (compiled out) \n");

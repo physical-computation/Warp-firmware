@@ -48,13 +48,18 @@ setSleepRtcAlarm(uint32_t offsetSec)
 	}
 }
 
+/*
+ *	On Glaux, we use PTA0/IRQ0/LLWU_P7 (SWD_CLK) as the interrupt line
+ *	for the RV8803C7 RTC. The original version of this function for the
+ *	FRDMKL03 was using PTB0.
+ */
 void
 gpioDisableWakeUp(void)
 {
 #define BOARD_SW_LLWU_PIN            0
-#define BOARD_SW_LLWU_BASE           PORTB_BASE
-#define BOARD_SW_LLWU_IRQ_HANDLER    PORTB_IRQHandler
-#define BOARD_SW_LLWU_IRQ_NUM        PORTB_IRQn
+#define BOARD_SW_LLWU_BASE           PORTA_BASE
+#define BOARD_SW_LLWU_IRQ_HANDLER    PORTA_IRQHandler
+#define BOARD_SW_LLWU_IRQ_NUM        PORTA_IRQn
 	
 	// disables interrupt
 	PORT_HAL_SetPinIntMode(BOARD_SW_LLWU_BASE, BOARD_SW_LLWU_PIN, kPortIntDisabled);
@@ -263,9 +268,10 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 		{
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
 			/*
-			 *	program RV8803 external interrupt
+			 *	Program RV8803 external interrupt
 			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
+
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
@@ -273,6 +279,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			BW_RCM_RPFC_RSTFLTSS(RCM_BASE, false);
 #endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
+
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
 			 *	(soft) reset once their wakeup source fires. See, e.g., 
@@ -290,9 +297,10 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			 */
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
 			/*
-			 *	program RV8803 external interrupt
+			 *	Program RV8803 external interrupt
 			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
+
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms
@@ -317,9 +325,10 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			 */
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
 			/*
-			 *	program RV8803 external interrupt
+			 *	Program RV8803 external interrupt
 			 */
 			setRTCCountdownRV8803C7(sleepSeconds, TD_1HZ, true /* interupt_enable */);
+
 			/*
 			 *	Turn off reset filter while in VLLSx Mode for reliable detection,
 			 *	as the RV8803C7 interrupt self clears (in this mode) after 7ms

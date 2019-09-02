@@ -20,6 +20,9 @@
  *
  *	Currently, this excludes kWarpPinKL03_VDD_ADC which we configure in inputPins
  *
+ *	On Glaux, PTA3, PTA4, PTA5, PTA8, PTA12, PTB5, and PTB13 are
+ *	either sacrifical or input so we don't configure them as GPIO.
+ *
  */
 
 
@@ -46,6 +49,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = kWarpPinTPS82740_VSEL1,
 		.config.outputLogic = 1,
@@ -59,19 +63,26 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
+		.pinName = kWarpPinTPS82740_VSEL3,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
 		.pinName = kWarpPinTPS82740B_CTLEN,			/*	Was kWarpPinSPI_SCK_I2C_PULLUP_ENin Warp v2		*/
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
-		.pinName = kWarpPinSPI_SCK,				/*	Was kWarpPinTPS82740A_CTLEN in Warp v2			*/
+		.pinName = kWarpPinCLKOUT32K,
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
+#endif
 	{
-		.pinName = kWarpPinTPS82740_VSEL3,
+		.pinName = kWarpPinSPI_SCK,				/*	Was kWarpPinTPS82740A_CTLEN in Warp v2			*/
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
@@ -88,7 +99,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	{
 		.pinName = kWarpPinPAN1326_nSHUTD,			/*	Was kWarpPinUnusedPTB10 in Warp v2			*/
 		.config.outputLogic = 1,
@@ -101,13 +111,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-	{
-		.pinName = kWarpPinCLKOUT32K,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#endif
 	{
 		.pinName = kWarpPinADXL362_CS,				/*	Was kWarpPinADXL362_CS_PAN1326_nSHUTD in Warp v2	*/
 		.config.outputLogic = 1,
@@ -208,10 +211,11 @@ gpio_output_pin_user_config_t	outputPins[] = {
  *
  *	like the above.
  *
- *	PTB1 is tied to VBATT. Need to configure it as an input pin.
+ *	On Warp (but not Glaux), PTB1 is tied to VBATT. Need to configure it as an input pin.
  *
  */
 gpio_input_pin_user_config_t	inputPins[] = {
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = kWarpPinKL03_VDD_ADC,
 		.config.isPullEnable = true,
@@ -219,6 +223,7 @@ gpio_input_pin_user_config_t	inputPins[] = {
 		.config.isPassiveFilterEnabled = false,
 		.config.interrupt = kPortIntDisabled,
 	},
+#endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
 	}
