@@ -577,8 +577,12 @@ lowPowerPinStates(void)
 
 	/*
 	 *	Setup PTA5 as RTC_CLKIN (kPortMuxAsGpio is the "Alt1")
+	 *
+	 *	NOTE: Enabling this significantly increases current draw
+	 *	(from ~180uA to ~4mA) and we don't need the RTC on Glaux.
+	 *
 	 */
-//Causes hangs?	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
+	//PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
 
 	/*
 	 *	PTA6, PTA7, PTA8, and PTA9 on Glaux are SPI and sacrificial SPI.
@@ -615,7 +619,6 @@ lowPowerPinStates(void)
 	 *
 	 *	PTB0 is LED on Glaux. PTB1 is unused, and PTB2 is FLASH_!CS
 	 */
-//IS configure PTBO as PTB0/LLWU_P4 causing
 	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
@@ -1333,7 +1336,6 @@ main(void)
 	 *
 	 *	See "Clocks and Low Power modes with KSDK and Processor Expert" document (Low_Power_KSDK_PEx.pdf)
 	 */
-	SEGGER_RTT_WriteString(0, "About to set clock config\n\r");
 	CLOCK_SYS_Init(	g_defaultClockConfigurations,
 			CLOCK_CONFIG_NUM, /* The default value of this is defined in fsl_clock_MKL03Z4.h as 2 */
 			&clockCallbackTable,
@@ -1684,8 +1686,6 @@ main(void)
 
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	printBootSplash(menuSupplyVoltage, menuRegisterAddress, menuI2cPullupValue, &powerManagerCallbackStructure);
-OSA_TimeDelay(1000);
-
 
 	uint8_t	tmpRV8803RegisterByte;
 	enableI2Cpins(menuI2cPullupValue);
@@ -1775,7 +1775,6 @@ OSA_TimeDelay(1000);
 					0b00001000,	/*	payloadGas_0: Turn off heater							*/
 					0 		/*	i2cPullupValue: meaningless on Glaux revA			*/
 					);
-
 	if (status != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, "configureSensorBME680() failed...\n");
@@ -1815,8 +1814,8 @@ OSA_TimeDelay(1000);
 //		SEGGER_RTT_WriteString(0, "About to go into VLPS for 3 seconds...\n");
 //currently causes a hang:		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */, menuI2cPullupValue);
 
-		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 10 seconds (will reset afterwords)...\n");
-		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 10 /* sleep seconds */, menuI2cPullupValue);		
+		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 30 seconds (will reset afterwords)...\n");
+		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 30 /* sleep seconds */, menuI2cPullupValue);		
 		if (status != kWarpStatusOK)
 		{
 			SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
