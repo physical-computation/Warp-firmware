@@ -54,6 +54,61 @@ typedef enum
 	kWarpRV8803ExtFD_1HZ	= 8
 } WarpRV8803ExtFD;
 
+typedef enum
+{
+	kWarpRV8803RegSec			= 0x00,
+	kWarpRV8803RegMin			= 0x01,
+	kWarpRV8803RegHour			= 0x02,
+	kWarpRV8803RegWeekday			= 0x03,
+	kWarpRV8803RegDate			= 0x04,
+	kWarpRV8803RegMonth			= 0x05,
+	kWarpRV8803RegYear			= 0x06,
+	kWarpRV8803RegRAM			= 0x07,
+	kWarpRV8803RegMinAlarm			= 0x08,
+	kWarpRV8803RegHourAlarm			= 0x09,
+	kWarpRV8803RegWeekdayOrDateAlarm	= 0x0A,
+	kWarpRV8803RegTimerCounter0		= 0x0B,
+	kWarpRV8803RegTimerCounter1		= 0x0C,
+	kWarpRV8803RegExt			= 0x0D,
+	kWarpRV8803RegFlag			= 0x0E,
+	kWarpRV8803RegCtrl			= 0x0F,
+} WarpRV8803Reg;
+
+#define BIT(n) (uint8_t)1U << n
+
+typedef enum
+{
+	kWarpRV8803ExtClrTD			= 0xFC,
+	kWarpRV8803ExtClrFD			= 0xF3,
+} WarpRV8803ExtClr;
+
+typedef enum
+{
+	kWarpRV8803ExtTE			= BIT(4),
+	kWarpRV8803ExtUSEL			= BIT(5),
+	kWarpRV8803ExtWADA			= BIT(6),
+	kWarpRV8803ExtTEST			= BIT(7),
+} WarpRV8803ExtFlag;
+
+typedef enum
+{
+	kWarpRV8803FlagV1F			= BIT(0),
+	kWarpRV8803FlagV2F			= BIT(1),
+	kWarpRV8803FlagEVF			= BIT(2),
+	kWarpRV8803FlagAF			= BIT(3),
+	kWarpRV8803FlagTF			= BIT(4),
+	kWarpRV8803FlagUF			= BIT(5),
+} WarpRV8803FlagFlag;
+
+typedef enum
+{
+	kWarpRV8803CtrlRESET			= BIT(0),
+	kWarpRV8803CtrlEIE			= BIT(2),
+	kWarpRV8803CtrlAIE			= BIT(3),
+	kWarpRV8803CtrlTIE			= BIT(4),
+	kWarpRV8803CtrlUIE			= BIT(5),
+} WarpRV8803CtrlFlag;
+
 void		initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
 WarpStatus	readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);

@@ -60,8 +60,8 @@
 #include "SEGGER_RTT.h"
 
 /*
-*	Comment out the header file to disable devices and variants
-*/
+ *	Comment out the header file to disable devices and variants
+ */
 //#include "devBMX055.h"
 //#include "devADXL362.h"
 //#include "devMMA8451Q.h"
@@ -188,7 +188,7 @@ volatile uint32_t			gWarpSpiTimeoutMicroseconds	= 5;
 volatile uint32_t			gWarpMenuPrintDelayMilliseconds	= 10;
 volatile uint32_t			gWarpSupplySettlingDelayMilliseconds = 1;
 
-void					sleepUntilReset(void);
+void					sleepUntilReset(uint16_t pullupValue);
 void					lowPowerPinStates(void);
 void					disableTPS82740A(void);
 void					disableTPS82740B(void);
@@ -218,7 +218,7 @@ WarpStatus				writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandB
 WarpStatus				writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
 
 
-void					warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
+void					warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState, uint16_t pullupValue);
 
 
 
@@ -286,10 +286,46 @@ RTC_Seconds_IRQHandler(void)
 }
 
 /*
+ *	LLW_IRQHandler override. Since FRDM_KL03Z48M is not defined,
+ *	according to power_manager_demo.c, what we need is LLW_IRQHandler.
+ *	However, elsewhere in the power_manager_demo.c, the code assumes
+ *	FRDM_KL03Z48M _is_ defined (e.g., we need to use LLWU_IRQn, not
+ *	LLW_IRQn). Looking through the code base, we see in
+ *
+ *		ksdk1.1.0/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
+ *
+ *	that the startup initialization assembly requires LLWU_IRQHandler,
+ *	not LLW_IRQHandler. See power_manager_demo.c, circa line 216, if
+ *	you want to find out more about this dicsussion.
+ */
+void
+LLWU_IRQHandler(void)
+{
+	/*
+	 *	BOARD_* defines are defined in warp.h
+	 */
+	LLWU_HAL_ClearExternalPinWakeupFlag(LLWU_BASE, (llwu_wakeup_pin_t)BOARD_SW_LLWU_EXT_PIN);
+}
+
+/*
+ *	IRQ handler for the interrupt from RTC, which we wire up
+ *	to PTA0/IRQ0/LLWU_P7 in Glaux. BOARD_SW_LLWU_IRQ_HANDLER
+ *	is a synonym for PORTA_IRQHandler.
+ */
+void
+BOARD_SW_LLWU_IRQ_HANDLER(void)
+{
+	/*
+	 *	BOARD_* defines are defined in warp.h
+	 */
+	PORT_HAL_ClearPortIntFlag(BOARD_SW_LLWU_BASE);
+}
+
+/*
  *	Power manager user callback
  */
-power_manager_error_code_t callback0(power_manager_notify_struct_t *  notify,
-					power_manager_callback_data_t *  dataPtr)
+power_manager_error_code_t
+callback0(power_manager_notify_struct_t *  notify, power_manager_callback_data_t *  dataPtr)
 {
 	WarpPowerManagerCallbackStructure *		callbackUserData = (WarpPowerManagerCallbackStructure *) dataPtr;
 	power_manager_error_code_t			status = kPowerManagerError;
@@ -317,18 +353,18 @@ power_manager_error_code_t callback0(power_manager_notify_struct_t *  notify,
 
 
 void
-sleepUntilReset(void)
+sleepUntilReset(uint16_t pullupValue)
 {
 	while (1)
 	{
 #ifdef WARP_BUILD_ENABLE_DEVSI4705
 		GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
 #endif
-		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
+		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */, pullupValue);
 #ifdef WARP_BUILD_ENABLE_DEVSI4705
 		GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 #endif
-		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */);
+		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */, pullupValue);
 	}
 }
 
@@ -480,10 +516,10 @@ disableI2Cpins(void)
 
 
 	/*	Warp KL03_I2C0_SCL	--> PTB3	(GPIO)			*/
-	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 
 	/*	Warp KL03_I2C0_SDA	--> PTB4	(GPIO)			*/
-	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
 
 	/*
@@ -494,9 +530,10 @@ disableI2Cpins(void)
 	/*
 	 *	Drive the I2C pins low
 	 */
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA);
 	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL);
-
+#endif
 
 	CLOCK_SYS_DisableI2cClock(0);
 }
@@ -519,19 +556,21 @@ lowPowerPinStates(void)
 	 *			PORT A
 	 */
 	/*
-	 *	Leave PTA0/1/2 SWD pins in their default state (i.e., as SWD).
+	 *	Leave PTA0/1/2 SWD pins in their default state (i.e., as SWD / Alt3).
 	 *
 	 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
 	 */
-	/*
-	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAsGpio);
-	*/
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
 
 	/*
-	 *	PTA3 and PTA4 are the EXTAL/XTAL. They are also connected to the clock output
-	 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them. 
+	 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
+	 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them.
+	 *	We however have to configure PTA3 to Alt0 (kPortMuxAsGpio) to get the EXTAL0
+	 *	functionality.
+	 *
+	 *	NOTE:	kPortPinDisabled is the equivalent of `Alt0`
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
@@ -539,12 +578,23 @@ lowPowerPinStates(void)
 	/*
 	 *	Setup PTA5 as RTC_CLKIN (kPortMuxAsGpio is the "Alt1")
 	 */
-	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
+//Causes hangs?	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
 
-	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
+	/*
+	 *	PTA6, PTA7, PTA8, and PTA9 on Glaux are SPI and sacrificial SPI.
+	 *
+	 *	Section 2.6 of Kinetis Energy Savings – Tips and Tricks says
+	 *
+	 *		"Unused pins should be configured in the disabled state, mux(0),
+	 *		to prevent unwanted leakage (potentially caused by floating inputs)."
+	 *
+	 *	However, other documents advice to place pin as GPIO and drive low or high.
+	 *	For now, leave as GPIO. Filed issue #54 low-power pin states to investigate.
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortPinDisabled);
 
 
 
@@ -562,28 +612,30 @@ lowPowerPinStates(void)
 
 	/*
 	 *			PORT B
+	 *
+	 *	PTB0 is LED on Glaux. PTB1 is unused, and PTB2 is FLASH_!CS
 	 */
+//IS configure PTBO as PTB0/LLWU_P4 causing
 	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
 
 	/*
-	 *	PTB3 and PTB3 (I2C pins) are true open-drain
-	 *	and we purposefully leave them disabled since they have pull-ups.
+	 *	PTB3 and PTB4 (I2C pins) are true open-drain and we
+	 *	purposefully leave them disabled since they have pull-ups.
+	 *	PTB5 is sacrificial for I2C_SDA, so disable.
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
-
-
-	/*
-	 *	PTB5 is sacrificial for I2C_SDA, so disable
-	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
 
 
 
 	/*
-	 *	NOTE: The KL03 has no PTB8, PTB9, or PTB12. The WLCSP has no PTB6, PTB7, PTB10, or PTB11
+	 *	NOTE:
+	 *
+	 *	The KL03 has no PTB8, PTB9, or PTB12.  Additionally, the WLCSP package
+	 *	we in Glaux has no PTB6, PTB7, PTB10, or PTB11.
 	 */
 
 
@@ -604,14 +656,8 @@ lowPowerPinStates(void)
 	/*
 	 *	If we are in mode where we disable the ADC, then drive the pin high since it is tied to KL03_VDD
 	 */
-	GPIO_DRV_ClearPinOutput(kGlauxPinFlash_CS);
-	GPIO_DRV_ClearPinOutput(kGlauxPinUnusedPTB1);
+	GPIO_DRV_SetPinOutput(kGlauxPinFlash_CS);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA);
-	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL);
-	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI);
-	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO);
-	GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
 
 
 	return;
@@ -633,11 +679,9 @@ lowPowerPinStates(void)
 	/*
 	 *	For now, don't touch the PTA0/1/2 SWD pins. Revisit in the future.
 	 */
-	/*
-	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAsGpio);
-	*/
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
 
 	/*
 	 *	PTA3 and PTA4 are the EXTAL/XTAL
@@ -986,9 +1030,9 @@ enableSssupply(uint16_t voltageMillivolts)
 	{
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 		SEGGER_RTT_printf(0, RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_RED RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorInvalidVoltage RTT_CTRL_RESET "\n", voltageMillivolts);
-#endif
+#endif // WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 	}
-#endif
+#endif // WARP_BUILD_ENABLE_GLAUX_VARIANT
 }
 
 
@@ -1019,8 +1063,10 @@ disableSssupply(void)
 
 
 void
-warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState)
+warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState, uint16_t pullupValue)
 {
+	WarpStatus	status = kWarpStatusOK;
+
 	/*
 	 *	Set all pins into low-power states. We don't just disable all pins,
 	 *	as the various devices hanging off will be left in higher power draw
@@ -1031,8 +1077,17 @@ warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerSta
 		lowPowerPinStates();
 	}
 
-	warpSetLowPowerMode(kWarpPowerModeVLPR, 0);
-	warpSetLowPowerMode(kWarpPowerModeVLPS, sleepSeconds);
+	warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* Sleep Seconds */, pullupValue);
+	if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
+	{
+		SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */)() failed...\n");
+	}
+
+	status = warpSetLowPowerMode(kWarpPowerModeVLPS, sleepSeconds, pullupValue);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLPS, 0 /* sleep seconds : irrelevant here */)() failed...\n");
+	}
 }
 
 
@@ -1107,6 +1162,60 @@ dumpProcessorState(void)
 }
 
 
+void
+printBootSplash(uint16_t menuSupplyVoltage, uint8_t menuRegisterAddress, uint16_t menuI2cPullupValue, WarpPowerManagerCallbackStructure *  powerManagerCallbackStructure)
+{
+
+		/*
+		 *	We break up the prints with small delays to allow us to use small RTT print
+		 *	buffers without overrunning them when at max CPU speed.
+		 */
+		SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t      Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\tSupply=%dmV,\tDefault Target Read Register=0x%02x\n",
+									menuSupplyVoltage, menuRegisterAddress);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tI2C=%dkb/s,\tSPI=%dkb/s,\tUART=%dkb/s,\tI2C Pull-Up=%d\n\n",
+									gWarpI2cBaudRateKbps, gWarpSpiBaudRateKbps, gWarpUartBaudRateKbps, menuI2cPullupValue);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TSR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TSR);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tMCG_C1=0x%02x\t\t\tMCG_C2=0x%02x\t\tMCG_S=0x%02x\n", MCG_C1, MCG_C2, MCG_S);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tMCG_SC=0x%02x\t\t\tMCG_MC=0x%02x\t\tOSC_CR=0x%02x\n", MCG_SC, MCG_MC, OSC_CR);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tSMC_PMPROT=0x%02x\t\t\tSMC_PMCTRL=0x%02x\t\tSCB->SCR=0x%02x\n", SMC_PMPROT, SMC_PMCTRL, SCB->SCR);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_printf(0, "\r\tPMC_REGSC=0x%02x\t\t\tSIM_SCGC4=0x%02x\tRTC->TPR=0x%02x\n\n", PMC_REGSC, SIM_SCGC4, RTC->TPR);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+		SEGGER_RTT_printf(0, "\r\t%ds in RTC Handler to-date,\t%d Pmgr Errors\n", gWarpSleeptimeSeconds, powerManagerCallbackStructure->errorCount);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#else
+		SEGGER_RTT_WriteString(0, "\r\n\n\t\tWARNING: SEGGER_RTT_printf disabled in this firmware build.\n\t\tOnly showing output that does not require value formatting.\n\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#endif //WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+}
+
+
+
+void
+blinkLED(int pin)
+{
+	GPIO_DRV_SetPinOutput(pin);
+	OSA_TimeDelay(200);
+	GPIO_DRV_ClearPinOutput(pin);
+	OSA_TimeDelay(200);
+
+	return;
+}
+
+
+
 int
 main(void)
 {
@@ -1120,7 +1229,6 @@ main(void)
 
 
 	rtc_datetime_t				warpBootDate;
-
 	power_manager_user_config_t		warpPowerModeWaitConfig;
 	power_manager_user_config_t		warpPowerModeStopConfig;
 	power_manager_user_config_t		warpPowerModeVlpwConfig;
@@ -1130,6 +1238,9 @@ main(void)
 	power_manager_user_config_t		warpPowerModeVlls3Config;
 	power_manager_user_config_t		warpPowerModeRunConfig;
 
+	/*
+	 *	We use this as a template later below and change the .mode fields for the different other modes.
+	 */
 	const power_manager_user_config_t	warpPowerModeVlprConfig = {
 							.mode			= kPowerManagerVlpr,
 							.sleepOnExitValue	= false,
@@ -1138,7 +1249,7 @@ main(void)
 
 	power_manager_user_config_t const *	powerConfigs[] = {
 							/*
-							 *	NOTE: This order is depended on by POWER_SYS_SetMode()
+							 *	NOTE: POWER_SYS_SetMode() depends on this order
 							 *
 							 *	See KSDK13APIRM.pdf Section 55.5.3
 							 */
@@ -1172,6 +1283,7 @@ main(void)
 
 
 
+
 	/*
 	 *	Enable clock for I/O PORT A and PORT B
 	 */
@@ -1181,7 +1293,7 @@ main(void)
 
 
 	/*
-	 *	Setup board clock source.
+	 *	Set board crystal value (Warp revB and earlier).
 	 */
 	g_xtal0ClkFreq = 32768U;
 
@@ -1202,13 +1314,17 @@ main(void)
 	 */
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
-
+	/*
+	 *	WARNING: Do NOT reduce these delays during debugging, otherwise you
+	 *	could run into a situation where SWD is disabled too early and you
+	 *	lock-out the board.
+	 */
 	SEGGER_RTT_WriteString(0, "\n\n\n\rBooting Warp, in 3... ");
-	OSA_TimeDelay(200);
+	OSA_TimeDelay(1000);
 	SEGGER_RTT_WriteString(0, "2... ");
-	OSA_TimeDelay(200);
+	OSA_TimeDelay(1000);
 	SEGGER_RTT_WriteString(0, "1...\n\r");
-	OSA_TimeDelay(200);
+	OSA_TimeDelay(1000);
 
 
 
@@ -1217,8 +1333,9 @@ main(void)
 	 *
 	 *	See "Clocks and Low Power modes with KSDK and Processor Expert" document (Low_Power_KSDK_PEx.pdf)
 	 */
+	SEGGER_RTT_WriteString(0, "About to set clock config\n\r");
 	CLOCK_SYS_Init(	g_defaultClockConfigurations,
-			CLOCK_CONFIG_NUM,
+			CLOCK_CONFIG_NUM, /* The default value of this is defined in fsl_clock_MKL03Z4.h as 2 */
 			&clockCallbackTable,
 			ARRAY_SIZE(clockCallbackTable)
 			);
@@ -1227,11 +1344,115 @@ main(void)
 
 
 	/*
-	 *	Initialize RTC Driver
+	 *	For Glaux, configure EXT clock source. In Warp revB, the state of the relevant registers
+	 *	after configuration was:
+	 *
+	 *		SIM->SCGC6=0x20000001		RTC->SR=0x10		RTC->TSR=0x56871300
+	 *		MCG_C1=0x42			MCG_C2=0x00		MCG_S=0x04
+	 *		MCG_SC=0x00			MCG_MC=0x00		OSC_CR=0x00
+	 *		SMC_PMPROT=0x22			SMC_PMCTRL=0x40		SCB->SCR=0x00
+	 *		PMC_REGSC=0x00			SIM_SCGC4=0xF0000070	RTC->TPR=0x00
+	 *
+	 *	From Section 24.2.1 of the KL03 Sub-Family Reference Manual, Rev. 4:
+	 *
+	 *		MCG_C1 = 0x42	=>	Clock source is LIRC, LIRC is enabled, LIRC is disabled in Stop mode.
+	 *		MCG_C2 = 0x00	=>	External clock requested (instead of oscillator), LIRC is in 2 MHz mode
+	 *		MCG_S = 0x04	=>	LIRC clock is selected as the main clock source, and MCG_Lite works at LIRC2M or LIRC8M mode 
+	 *
+	 *	Getting to use EXT clock source:
+	 *	--------------------------------
+	 *	According to Section 24.3.1 Clock mode switching:
+	 *
+	 *		"When power on or out of reset, LIRC is selected as the main clock source.
+	 *		To select other clock sources, the user must perform the following steps...
+	 *		To enter EXT mode:
+	 *
+	 *			1. Configure MCG_C2[EREFS0] for external clock source selection.
+	 *			2. Write 10b to MCG_C1[CLKS] to select external clock source.
+	 *			3. Check MCG_S[CLKST] to confirm external clock source is selected."
+	 *
+	 */
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT	
+	/*
+	 *	We can twiddle the memory-mapped registers ourselves or use the CLOCK_SYS routines.
+	 *
+	 *	NOTE: Order is write C2 first, then write C1.
+	 */
+	/*
+	 *	Bit 2 (EREFS0) controls the mux that selects either the clock from the EXTAL pad
+	 *	or the OSC.
+	 *
+	 *	Bit 1 (IRCS) selects either the 2MHz mode or the 8MHz mode of the IRC. We have no
+	 *	choice but to select one of the two. We choose the 2MHz mode.
+	 */
+//	MCG_C2 = 0x00;
+
+	/*
+	 *	Bit 7-6 (CLKS) = `10` selects external clock as the main clock source. This is EXT mode.
+	 *
+	 *	Bit 1 (IRCLKEN) enables the internal reference clock.
+	 *
+	 *		NOTE: we also enable the internal reference clock as a failsafe.
+	 *		From Figure 24-1. (MCG_Lite block diagram), it seems the MCGLite
+	 *		might be able to seamlessly switch over to the LIRC if the external
+	 *		clock source were to fail.
+	 *
+	 *	Bit 0 (IREFSTEN) enables the internal reference clock in stop mode
+	 */
+//	MCG_C1 = 0x82;
+#if 0
+	SEGGER_RTT_WriteString(0, "About to set clock config again (Glaux)\n\r");
+
+	/*
+	 *	Alternative, using CLOCK_SYS_SetConfiguration:
+	 */
+	clock_manager_user_config_t	glauxExternalClockConfig =
+	{
+		.mcgliteConfig =
+		{
+			.mcglite_mode		= kMcgliteModeExt,		/*	Work in EXT mode.			*/
+			.irclkEnable		= true,				/*	MCGIRCLK enable.			*/
+			.irclkEnableInStop	= false,			/*	MCGIRCLK disable in STOP mode.		*/
+			.ircs			= kMcgliteLircSel2M,		/*	MCG_C2[IRCS]	: Select LIRC_2M.	*/
+			.fcrdiv			= kMcgliteLircDivBy1,		/*	MCG_SC[FCRDIV] : FCRDIV is 0.		*/
+			.lircDiv2		= kMcgliteLircDivBy1,		/*	MCG_MC[LIRC_DIV2] : LIRC_DIV2 is 0.	*/
+			.hircEnable		= false,			/*	HIRC disable.				*/
+		},
+
+		.simConfig =
+		{								/*	(See Figure 5.1 for more)		*/
+			.er32kSrc		= kClockEr32kSrcRtc,		/*	ERCLK32K selection, use RTC_CLKIN.	*/
+			.outdiv1		= 0U,
+			.outdiv4		= 1U,
+		},
+
+		.oscerConfig =
+		{
+			.Enable			= false,			/*	OSCERCLK disable.			*/
+			.EnableInStop		= false,			/*	OSCERCLK disable in STOP mode.		*/
+		}
+	};
+	/*
+	 *	Alternatively, using the fsl_clock routines. The following is based on the
+	 *	contents in CLOCK_SYS_UpdateConfiguration() which is the default way we were
+	 *	configuring the clock for RUN mode and on the default structure instances
+	 *	defined in fsl_clock_MKL03Z4.c
+	 */
+	OSA_EnterCritical(kCriticalDisableInt);
+	CLOCK_SYS_SetConfiguration(&glauxExternalClockConfig);
+	OSA_ExitCritical(kCriticalDisableInt);
+
+	SEGGER_RTT_WriteString(0, "Done setting clock config again (Glaux)\n\r");
+#endif // if 0
+#endif // WARP_BUILD_ENABLE_GLAUX_VARIANT
+
+
+	/*
+	 *	Initialize RTC Driver (not needed on Glaux, but we enable it anyway for now
+	 *	as that lets us use the current sleep routines). NOTE: We also don't seem to
+	 *	be able to go to VLPR mode unless we enable the RTC.
 	 */
 	RTC_DRV_Init(0);
-
-
 
 	/*
 	 *	Set initial date to 1st January 2016 00:00, and set date via RTC driver
@@ -1250,7 +1471,6 @@ main(void)
 	 *	Setup Power Manager Driver
 	 */
 	memset(&powerManagerCallbackStructure, 0, sizeof(WarpPowerManagerCallbackStructure));
-
 
 	warpPowerModeVlpwConfig = warpPowerModeVlprConfig;
 	warpPowerModeVlpwConfig.mode = kPowerManagerVlpw;
@@ -1281,13 +1501,15 @@ main(void)
 			sizeof(callbacks)/sizeof(power_manager_callback_user_config_t *)
 			);
 
-
-
 	/*
 	 *	Switch CPU to Very Low Power Run (VLPR) mode
 	 */
-	warpSetLowPowerMode(kWarpPowerModeVLPR, 0);
-
+	SEGGER_RTT_WriteString(0, "About to switch CPU to VLPR mode...\n\r");
+	status = warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* Sleep Seconds */, menuI2cPullupValue);
+	if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
+	{
+		SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLPR() failed...\n");
+	}
 
 
 	/*
@@ -1296,14 +1518,27 @@ main(void)
 	 *
 	 *	See also Section 30.3.3 GPIO Initialization of KSDK13APIRM.pdf
 	 */
+	SEGGER_RTT_WriteString(0, "About to GPIO_DRV_Init()...\n");
 	GPIO_DRV_Init(inputPins  /* input pins */, outputPins  /* output pins */);
+
+	/*
+	 *	Make sure the SWD pins, PTA0/1/2 SWD pins in their ALT3 state (i.e., as SWD).
+	 *
+	 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
 
 
 	/*
 	 *	Note that it is lowPowerPinStates() that sets the pin mux mode,
 	 *	so until we call it pins are in their default state.
 	 */
+	SEGGER_RTT_WriteString(0, "About to lowPowerPinStates()...\n");
 	lowPowerPinStates();
+//this currently causes a hang:	warpLowPowerSecondsSleep(5, false /* forceAllPinsIntoLowPowerState */, menuI2cPullupValue);
+//	SEGGER_RTT_WriteString(0, "done lowPowerPinStates() and sleep.\n");
 
 
 
@@ -1311,29 +1546,13 @@ main(void)
 	 *	Toggle LED3 (kWarpPinSI4705_nRST on Warp revB, kGlauxPinLED on Glaux)
 	 */
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
-	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(200);
-	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(200);
-	GPIO_DRV_SetPinOutput(kGlauxPinLED);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kGlauxPinLED);	
+	blinkLED(kGlauxPinLED);
+	blinkLED(kGlauxPinLED);
+	blinkLED(kGlauxPinLED);
 #else
-	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(200);
-	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(200);
-	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-	OSA_TimeDelay(200);
-	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);	
+	blinkLED(kWarpPinSI4705_nRST);
+	blinkLED(kWarpPinSI4705_nRST);
+	blinkLED(kWarpPinSI4705_nRST);
 #endif
 
 
@@ -1399,7 +1618,8 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-	initRV8803C7(0x32 /* i2cAddress */, &deviceRV8803C7State);
+	initRV8803C7(	0x32	/* i2cAddress */,	&deviceRV8803C7State	);
+
 	enableI2Cpins(menuI2cPullupValue);
 	status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 	if (status != kWarpStatusOK)
@@ -1441,14 +1661,20 @@ main(void)
 
 
 #ifdef WARP_BUILD_BOOT_TO_CSVSTREAM
+	printBootSplash(menuSupplyVoltage, menuRegisterAddress, menuI2cPullupValue, &powerManagerCallbackStructure);
+
 	/*
 	 *	Force to printAllSensors
 	 */
 	gWarpI2cBaudRateKbps = 300;
-	warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+	status = warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */, menuI2cPullupValue);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */)() failed...\n");
+	}
 	enableSssupply(3000);
 	enableI2Cpins(menuI2cPullupValue);
-	printAllSensors(false /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, menuI2cPullupValue);
+	printAllSensors(true /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, menuI2cPullupValue);
 	/*
 	 *	Notreached
 	 */
@@ -1457,42 +1683,144 @@ main(void)
 
 
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	printBootSplash(menuSupplyVoltage, menuRegisterAddress, menuI2cPullupValue, &powerManagerCallbackStructure);
+OSA_TimeDelay(1000);
+
+
+	uint8_t	tmpRV8803RegisterByte;
 	enableI2Cpins(menuI2cPullupValue);
-	SEGGER_RTT_WriteString(0, "About to configureSensorBME680()...\n");
-	status = configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
-				0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-				0b00001000,	/*	Turn off heater							*/
-				0 		/*	i2cPullupValue: meaningless on Glaux revA			*/
-				);
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegSec = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegMin = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegHour = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+
+
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegExt = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegFlag = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte) failed\n");
+	}
+	else
+	{
+		SEGGER_RTT_printf(0, "kWarpRV8803RegCtrl = [0x%X]\n", tmpRV8803RegisterByte);
+	}
+/*
+	kWarpRV8803RegSec			= 0x00,
+	kWarpRV8803RegMin			= 0x01,
+	kWarpRV8803RegHour			= 0x02,
+	kWarpRV8803RegWeekday			= 0x03,
+	kWarpRV8803RegDate			= 0x04,
+	kWarpRV8803RegMonth			= 0x05,
+	kWarpRV8803RegYear			= 0x06,
+	kWarpRV8803RegRAM			= 0x07,
+	kWarpRV8803RegMinAlarm			= 0x08,
+	kWarpRV8803RegHourAlarm			= 0x09,
+	kWarpRV8803RegWeekdayOrDateAlarm	= 0x0A,
+	kWarpRV8803RegTimerCounter0		= 0x0B,
+	kWarpRV8803RegTimerCounter1		= 0x0C,
+	kWarpRV8803RegExt			= 0x0D,
+	kWarpRV8803RegFlag			= 0x0E,
+	kWarpRV8803RegCtrl			= 0x0F,
+*/
+
+	SEGGER_RTT_WriteString(0, "About to configureSensorBME680() for measurement...\n");
+	status = configureSensorBME680(	0b00000001,	/*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x				*/
+					0b00100100,	/*	payloadCtrl_Meas: Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
+					0b00001000,	/*	payloadGas_0: Turn off heater							*/
+					0 		/*	i2cPullupValue: meaningless on Glaux revA			*/
+					);
+
 	if (status != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, "configureSensorBME680() failed...\n");
 	}
 
-	SEGGER_RTT_WriteString(0, "About to loop with printSensorDataBME680()...\n");
+	disableI2Cpins();
 
+	SEGGER_RTT_WriteString(0, "About to loop with printSensorDataBME680()...\n");
 	while (1)
 	{
+		blinkLED(kGlauxPinLED);
+		enableI2Cpins(menuI2cPullupValue);
 		for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 		{
 			printSensorDataBME680(false /* hexModeFlag */);
 			SEGGER_RTT_WriteString(0, " done.\n");
 		}
 
-		GPIO_DRV_SetPinOutput(kGlauxPinLED);
-		OSA_TimeDelay(200);
-		//warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
-		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-		OSA_TimeDelay(200);
-		//warpLowPowerSecondsSleep(kGlauxSleepSecondsBetweenSensorRepetitions, true /* forceAllPinsIntoLowPowerState */);
+		SEGGER_RTT_WriteString(0, "About to configureSensorBME680() for sleep...\n");
+		status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
+						0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
+						0b00001000,	/*	payloadGas_0: Turn off heater						*/
+						0 		/*	i2cPullupValue: meaningless on Glaux revA				*/
+					);
+		if (status != kWarpStatusOK)
+		{
+			SEGGER_RTT_WriteString(0, "configureSensorBME680() failed...\n");
+		}
+		disableI2Cpins();
+		blinkLED(kGlauxPinLED);
+
 
 		/*
 		 *	Go into very low leakage stop mode (VLLS0) for 10 seconds.
 		 *	The end of the VLLS0 sleep triggers a reset
 		 */
+//		SEGGER_RTT_WriteString(0, "About to go into VLPS for 3 seconds...\n");
+//currently causes a hang:		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */, menuI2cPullupValue);
+
 		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 10 seconds (will reset afterwords)...\n");
-		OSA_TimeDelay(200);
-		warpSetLowPowerMode(kWarpPowerModeVLLS0, 10 /* sleep seconds */);		
+		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 10 /* sleep seconds */, menuI2cPullupValue);		
+		if (status != kWarpStatusOK)
+		{
+			SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
+		}
 		SEGGER_RTT_WriteString(0, "Should not get here...");
 	}
 #endif
@@ -1504,40 +1832,7 @@ main(void)
 		 *	want to use menu to progressiveley change the machine state with various
 		 *	commands.
 		 */
-
-		/*
-		 *	We break up the prints with small delays to allow us to use small RTT print
-		 *	buffers without overrunning them when at max CPU speed.
-		 */
-		SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t      Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
-#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-		SEGGER_RTT_printf(0, "\r\tSupply=%dmV,\tDefault Target Read Register=0x%02x\n",
-								menuSupplyVoltage, menuRegisterAddress);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tI2C=%dkb/s,\tSPI=%dkb/s,\tUART=%dkb/s,\tI2C Pull-Up=%d\n\n",
-								gWarpI2cBaudRateKbps, gWarpSpiBaudRateKbps, gWarpUartBaudRateKbps, menuI2cPullupValue);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TSR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TSR);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tMCG_C1=0x%02x\t\t\tMCG_C2=0x%02x\t\tMCG_S=0x%02x\n", MCG_C1, MCG_C2, MCG_S);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tMCG_SC=0x%02x\t\t\tMCG_MC=0x%02x\t\tOSC_CR=0x%02x\n", MCG_SC, MCG_MC, OSC_CR);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tSMC_PMPROT=0x%02x\t\t\tSMC_PMCTRL=0x%02x\t\tSCB->SCR=0x%02x\n", SMC_PMPROT, SMC_PMCTRL, SCB->SCR);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_printf(0, "\r\tPMC_REGSC=0x%02x\t\t\tSIM_SCGC4=0x%02x\tRTC->TPR=0x%02x\n\n", PMC_REGSC, SIM_SCGC4, RTC->TPR);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
-		SEGGER_RTT_printf(0, "\r\t%ds in RTC Handler to-date,\t%d Pmgr Errors\n", gWarpSleeptimeSeconds, powerManagerCallbackStructure.errorCount);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-#else
-		SEGGER_RTT_WriteString(0, "\r\n\n\t\tWARNING: SEGGER_RTT_printf disabled in this firmware build.\n\t\tOnly showing output that does not require value formatting.\n\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-#endif
+		printBootSplash(menuSupplyVoltage, menuRegisterAddress, menuI2cPullupValue, &powerManagerCallbackStructure);
 
 		SEGGER_RTT_WriteString(0, "\rSelect:\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
@@ -2141,7 +2436,7 @@ main(void)
 			case 'k':
 			{
 				SEGGER_RTT_WriteString(0, "\r\n\tSleeping until system reset...\n");
-				sleepUntilReset();
+				sleepUntilReset(menuI2cPullupValue);
 
 				break;
 			}
@@ -2212,7 +2507,12 @@ main(void)
 			 */
 			case 'p':
 			{
-				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
+				status = warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */, menuI2cPullupValue);
+				if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
+				{
+					SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */)() failed...\n");
+				}
+
 				break;
 			}
 
@@ -2221,7 +2521,12 @@ main(void)
 			 */
 			case 'r':
 			{
-				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */, menuI2cPullupValue);
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */)() failed...\n");
+				}
+
 				break;
 			}
 
@@ -2265,7 +2570,12 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins\n");
 				enableI2Cpins(menuI2cPullupValue);
 				SEGGER_RTT_WriteString(0, "\r\n\tSleeping for 3 seconds, then resetting\n");
-				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */);
+				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */, menuI2cPullupValue);
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds : irrelevant here */)() failed...\n");
+				}
+
 				SEGGER_RTT_WriteString(0, "\r\n\tThis should never happen...\n");
 			}
 #endif
@@ -2371,9 +2681,9 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					);
 	#endif
 	#ifdef WARP_BUILD_ENABLE_DEVBME680
-	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
-							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-							0b00001000,	/*	Turn off heater							*/
+	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x				*/
+							0b00100100,	/*	payloadCtrl_Meas: Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
+							0b00001000,	/*	payloadGas_0: Turn off heater							*/
 							i2cPullupValue
 					);
 

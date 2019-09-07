@@ -3,6 +3,22 @@
 #define	min(x,y)	((x) < (y) ? (x) : (y))
 #define	USED(x)		(void)(x)
 
+/*
+ *	On Glaux, we use PTA0/IRQ0/LLWU_P7 (SWD_CLK) as the interrupt line
+ *	for the RV8803C7 RTC. The original version of this function for the
+ *	FRDMKL03 was using PTB0.
+ *
+ *	The following taken from KSDK_1.1.0//boards/frdmkl03z/board.h. We
+ *	don't include that whole file verbatim since we have a custom board.
+ */
+#define BOARD_SW_HAS_LLWU_PIN		1
+#define BOARD_SW_LLWU_EXT_PIN		7
+#define BOARD_SW_LLWU_PIN		0
+#define BOARD_SW_LLWU_BASE		PORTA_BASE
+#define BOARD_SW_LLWU_IRQ_HANDLER	PORTA_IRQHandler
+#define BOARD_SW_LLWU_IRQ_NUM		PORTA_IRQn
+
+
 typedef enum
 {
 	kWarpTypeMaskTemperature	= (1 <<  0),
@@ -340,7 +356,7 @@ typedef struct
 	uint8_t		outputBuffer[kWarpThermalChamberMMA8451QOutputBufferSize];
 } WarpThermalChamberKL03MemoryFill;
 
-WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
+WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pullupValue);
 void		enableI2Cpins(uint16_t pullupValue);
 void		disableI2Cpins(void);
 void		enableSPIpins(void);

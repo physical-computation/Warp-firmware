@@ -23,14 +23,15 @@
  *	On Glaux, PTA3, PTA4, PTA5, PTA8, PTA12, PTB5, and PTB13 are
  *	either sacrifical or input so we don't configure them as GPIO.
  *
+ *	NOTE: The semantics is that pins that are excluded are disabled (TODO: double check).
+ *
  */
-
-
 
 gpio_output_pin_user_config_t	outputPins[] = {
 	/*
 	 *	Set unused pins as outputs
 	 */
+#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = kWarpPinUnusedPTA0,				/*	Was kWarpPinLED1_TS5A3154_IN in Warp v2			*/
 		.config.outputLogic = 1,
@@ -49,7 +50,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-#ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = kWarpPinTPS82740_VSEL1,
 		.config.outputLogic = 1,
@@ -212,7 +212,10 @@ gpio_output_pin_user_config_t	outputPins[] = {
  *	like the above.
  *
  *	On Warp (but not Glaux), PTB1 is tied to VBATT. Need to configure it as an input pin.
+ *	On Glaux, PTA0 (SWD_CLK) is also used as the RTC interrupt line since it is also the
+ *	LLWU_P7 source for the low-leakage wakeup unit.
  *
+ *	NOTE: The semantics is that pins that are excluded are disabled (TODO: double check).
  */
 gpio_input_pin_user_config_t	inputPins[] = {
 #ifndef WARP_BUILD_ENABLE_GLAUX_VARIANT
@@ -223,7 +226,54 @@ gpio_input_pin_user_config_t	inputPins[] = {
 		.config.isPassiveFilterEnabled = false,
 		.config.interrupt = kPortIntDisabled,
 	},
+#else
+	{
+		.pinName = kWarpPinUnusedPTA0,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntEnabled,
+	},
+	{
+		.pinName = kWarpPinEXTAL0,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled,
+	},
+	{
+		.pinName = kWarpPinXTAL0,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled,
+	},
+	{
+		.pinName = kWarpPinRTC_CLKIN,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled,
+	},
 #endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
+	{
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
+
+/*
+ *	This array is used to configure only the pins needed for LLWU wakeup. See AN4503 Section 3.1.6.
+ *
+ *	NOTE: The semantics is that pins that are excluded are disabled (TODO: double check).
+ */
+gpio_input_pin_user_config_t	glauxWakeupPins[] = {
+	{
+		.pinName = kWarpPinUnusedPTA0,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled,
+	},
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
 	}

@@ -52,7 +52,7 @@
  
  */
 
-enum _gpio_pins 
+enum _gpio_pins
 {
 	kWarpPinUnusedPTA0			= GPIO_MAKE_PIN(HW_GPIOA, 0),		/*	PTA0: Reserved for SWD CLK			(was LED1/TS5A3154_IN in Warp v2)			*/
 	kWarpPinUnusedPTA1			= GPIO_MAKE_PIN(HW_GPIOA, 1),		/*	PTA1: Reserved for SWD RESET_B			(was LED2/TS5A3154_nEN in Warp v2)			*/
@@ -61,7 +61,11 @@ enum _gpio_pins
 	kWarpPinEXTAL0				= GPIO_MAKE_PIN(HW_GPIOA, 3),		/*	PTA3: EXTAL0												*/
 	kWarpPinXTAL0				= GPIO_MAKE_PIN(HW_GPIOA, 4),		/*	PTA4: XTAL0												*/
 	
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	kWarpPinRTC_CLKIN			= GPIO_MAKE_PIN(HW_GPIOA, 5),		/*	Warp TPS82740_VSEL1	--> PTA5									*/
+#else
 	kWarpPinTPS82740_VSEL1			= GPIO_MAKE_PIN(HW_GPIOA, 5),		/*	Warp TPS82740_VSEL1	--> PTA5									*/
+#endif
 	kWarpPinTPS82740_VSEL2			= GPIO_MAKE_PIN(HW_GPIOA, 8),		/*	Warp TPS82740_VSEL2	--> PTA8									*/
 	kWarpPinTPS82740B_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 12),		/*	Warp kWarpPinTPS82740B_CTLEN --> PTA12 		(was kWarpPinTPS82675_EN in Warp v2)			*/
 
@@ -114,5 +118,5 @@ enum _gpio_pins
 
 extern gpio_input_pin_user_config_t	inputPins[];
 extern gpio_output_pin_user_config_t	outputPins[];
-
+extern gpio_input_pin_user_config_t	glauxWakeupPins[];
 #endif /* __FSL_GPIO_PINS_H__ */
