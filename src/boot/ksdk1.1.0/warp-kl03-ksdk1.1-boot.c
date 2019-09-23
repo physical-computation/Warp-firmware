@@ -75,6 +75,7 @@
 //#include "devAS7262.h"
 //#include "devAS7263.h"
 //#include "devRV8803C7.h"
+#include "devISL23415.h"
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -93,6 +94,10 @@
 
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 volatile WarpSPIDeviceState			deviceADXL362State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+volatile WarpSPIDeviceState			deviceISL23415State;
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
@@ -1305,7 +1310,9 @@ main(void)
 	initPAN1326B(&devicePAN1326BState);
 #endif
 
-
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+	initISL23415(&deviceISL23415State);
+#endif
 
 	/*
 	 *	Make sure SCALED_SENSOR_SUPPLY is off.
@@ -1773,6 +1780,30 @@ main(void)
 
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 				SEGGER_RTT_printf(0, "\r\n\tSPI baud rate: %d kb/s", gWarpSpiBaudRateKbps);
+#endif
+
+				break;
+			}
+
+			/*
+			 *	read ISL23415 value
+			 */
+			case 'P':
+			{
+				SEGGER_RTT_WriteString(0, "\r\n\tRead ISL23415 value ");
+
+				readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
+
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+				SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 ACR bytes: 0: 0x%X, 1: 0x%X, 2: 0x%X, 3: 0x%X", 
+					deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3]);
+#endif
+
+readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
+
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+				SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%X, 1: 0x%X, 2: 0x%X, 3: 0x%X", 
+					deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3]);
 #endif
 
 				break;
