@@ -1788,6 +1788,7 @@ main(void)
 			/*
 			 *	read ISL23415 value
 			 */
+#ifdef WARP_BUILD_ENABLE_DEVISL23415			
 			case 'P':
 			{
 				SEGGER_RTT_WriteString(0, "\r\n\tRead ISL23415 value ");
@@ -1808,7 +1809,7 @@ readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
 
 				break;
 			}
-
+#endif
 			/*
 			 *	Change default UART baud rate
 			 */
