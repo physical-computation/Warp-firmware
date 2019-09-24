@@ -88,7 +88,7 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 	if (deviceRegister == kWarpISL23415RegACR) {
 		deviceISL23415State.spiSourceBuffer[0] = 0b00100000; /* ACR READ */
 	} else if (deviceRegister == kWarpISL23415RegWR) {
-		deviceISL23415State.spiSourceBuffer[0] = 0b10000000; /* WR0 READ */
+		deviceISL23415State.spiSourceBuffer[0] = 0b10000001; /* WR0 READ */
 	} else {
 		/* FIXME */
 	}
@@ -97,19 +97,21 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 	deviceISL23415State.spiSourceBuffer[2] = 0x00;
 	deviceISL23415State.spiSourceBuffer[3] = 0x00;
 
-	deviceISL23415State.spiSinkBuffer[0] = 0x00;
-	deviceISL23415State.spiSinkBuffer[1] = 0x00;
-	deviceISL23415State.spiSinkBuffer[2] = 0x00;
-	deviceISL23415State.spiSinkBuffer[3] = 0x00;
+	deviceISL23415State.spiSinkBuffer[0] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[1] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[2] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[3] = 0xFF;
 
 	/*
 	 *	Drive /CS low.
 	 *
 	 *	Make sure there is a high-to-low transition by first driving high, delay, then drive low.
 	 */
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
-	OSA_TimeDelay(50);
+	
+	
 	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	OSA_TimeDelay(50);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
@@ -140,6 +142,8 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 	// GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
 	// //OSA_TimeDelay(50);
 	// //GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	OSA_TimeDelay(50);
+	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
 
 	// deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(0 /* master instance */, 	
 	// 				NULL /* spi_master_user_config_t */,
