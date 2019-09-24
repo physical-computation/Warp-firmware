@@ -1344,7 +1344,28 @@ main(void)
 #endif
 
 
+	SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
+	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 6  Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+	
+	readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
 
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+	SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 ACR bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", 
+		deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+#endif
+
+	readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
+
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+	SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", 
+		deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+#endif
+
+	// OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+	// SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou out Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+	// OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 	while (1)
 	{
@@ -1426,6 +1447,11 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+		SEGGER_RTT_WriteString(0, "\r- 'P': communicate with ISL23415.\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#endif
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -1793,14 +1819,14 @@ main(void)
 			{
 				SEGGER_RTT_WriteString(0, "\r\n\tRead ISL23415 value ");
 
-				readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
+				//readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
 
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 				SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 ACR bytes: 0: 0x%X, 1: 0x%X, 2: 0x%X, 3: 0x%X", 
 					deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3]);
 #endif
 
-readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
+				//readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
 
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 				SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%X, 1: 0x%X, 2: 0x%X, 3: 0x%X", 
