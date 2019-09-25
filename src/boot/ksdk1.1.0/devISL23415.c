@@ -80,39 +80,44 @@ initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) {
 
 WarpStatus	
 readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
-	//return writeSensorRegisterADXL362(0x0B /* command == read register */, deviceRegister, 0x00 /* writeValue */, numberOfBytes);
+	/* two ISL23415 configured in Daisy Chain Configuration */
+
 	/*
-	 *	Populate the shift-out register with the read-register command,
+	 *	XXX Populate the shift-out register with the read-register command,
 	 *	followed by the register to be read, followed by a zero byte FIXME.
 	 */
 	if (deviceRegister == kWarpISL23415RegACR) {
-		deviceISL23415State.spiSourceBuffer[0] = 0b00100000; /* ACR READ */
+		//deviceISL23415State.spiSourceBuffer[0] = 0b00100000; /* ACR READ */
+		deviceISL23415State.spiSourceBuffer[0] = 0b10010000; /* ACR READ of DCP1 */
+		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
+		deviceISL23415State.spiSourceBuffer[2] = 0b10010000; /* ACR READ of DCP0 */
+		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
+
 	} else if (deviceRegister == kWarpISL23415RegWR) {
-		deviceISL23415State.spiSourceBuffer[0] = 0b10000001; /* WR0 READ */
+		deviceISL23415State.spiSourceBuffer[0] = 0b10000000; /* WR0 READ of DCP1 */
+		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
+		deviceISL23415State.spiSourceBuffer[2] = 0b10000000; /* WR0 READ of DCP0 */
+		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
 	} else {
 		/* FIXME */
 	}
-	
-	deviceISL23415State.spiSourceBuffer[1] = 0x00;
-	deviceISL23415State.spiSourceBuffer[2] = 0x00;
-	deviceISL23415State.spiSourceBuffer[3] = 0x00;
 
 	deviceISL23415State.spiSinkBuffer[0] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[1] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[2] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[3] = 0xFF;
 
+	enableSPIpins();
 	/*
 	 *	Drive /CS low.
 	 *
 	 *	Make sure there is a high-to-low transition by first driving high, delay, then drive low.
 	 */
 	
-	
-	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
-	OSA_TimeDelay(50);
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
-
+	OSA_TimeDelay(50);
+	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	
 	/*
 	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
 	 *
@@ -125,7 +130,7 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 	 *	the '0' magic number and place this in a Warp-HWREV0 header
 	 *	file.
 	 */
-	enableSPIpins();
+	
 	deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(
 					0 /* master instance */, 	
 					NULL /* spi_master_user_config_t */,
@@ -134,23 +139,48 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 					numberOfBytes /* transfer size */,
 					gWarpSpiTimeoutMicroseconds);
 
-	// /*
-	//  *	Drive /CS up.
-	//  *
-	//  *	Make sure there is a high-to-low transition by first driving high, delay, then drive low.
-	//  */
-	// GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
-	// //OSA_TimeDelay(50);
-	// //GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	/* Drive /CS up. */
+	OSA_TimeDelay(50);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+
+	deviceISL23415State.spiSourceBuffer[0] = 0x00; /* NOP */
+	deviceISL23415State.spiSourceBuffer[1] = 0x00; /* NOP */
+	deviceISL23415State.spiSourceBuffer[2] = 0x00; /* NOP */
+	deviceISL23415State.spiSourceBuffer[3] = 0x00; /* NOP */
+
+	deviceISL23415State.spiSinkBuffer[0] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[1] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[2] = 0xFF;
+	deviceISL23415State.spiSinkBuffer[3] = 0xFF;
+
+	/* Drive /CS down. */
 	OSA_TimeDelay(50);
 	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
-
-	// deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(0 /* master instance */, 	
-	// 				NULL /* spi_master_user_config_t */,
-	// 				(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
-	// 				(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
-	// 				numberOfBytes /* transfer size */,
-	// 				gWarpSpiTimeoutMicroseconds);
+	
+	/*
+	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
+	 *
+	 *	Providing a device structure here is optional since it 
+	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
+	 *	so we pass in NULL.
+	 *
+	 *	TODO: the "master instance" is always 0 for the KL03 since
+	 *	there is only one SPI peripheral. We however should remove
+	 *	the '0' magic number and place this in a Warp-HWREV0 header
+	 *	file.
+	 */
+	
+	deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(
+					0 /* master instance */, 	
+					NULL /* spi_master_user_config_t */,
+					(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
+					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
+					numberOfBytes /* transfer size */,
+					gWarpSpiTimeoutMicroseconds);
+	
+	/* Drive /CS up. */
+	OSA_TimeDelay(50);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
 
 	disableSPIpins();	
 
@@ -165,17 +195,19 @@ writeDeviceRegisterISL23415(uint8_t command, uint8_t deviceRegister, uint8_t wri
 	 *	followed by the register to be read, followed by a zero byte XXX.
 	 */
 	if (deviceRegister == kWarpISL23415RegACR) {
-		deviceISL23415State.spiSourceBuffer[0] = 0b01100000; /* ACR WRITE */
+		deviceISL23415State.spiSourceBuffer[0] = 0b01100000; /* ACR WRITE of DCP 1 */
+		deviceISL23415State.spiSourceBuffer[1] = 0x40;//writeValue;
+		deviceISL23415State.spiSourceBuffer[2] = 0b01100000; /* ACR WRITE of DCP 0 */
+		deviceISL23415State.spiSourceBuffer[3] = 0x40;
 	} else if (deviceRegister == kWarpISL23415RegWR) {
-		deviceISL23415State.spiSourceBuffer[0] = 0b11000000; /* WR0 WRITE */
+		deviceISL23415State.spiSourceBuffer[0] = 0b11000000; /* WR0 WRITE of DCP 1 */
+		deviceISL23415State.spiSourceBuffer[1] = 0x90;//writeValue;
+		deviceISL23415State.spiSourceBuffer[2] = 0b11000000; /* WR0 WRITE of DCP 0 */
+		deviceISL23415State.spiSourceBuffer[3] = 0x70;
 	} else {
 		/* FIXME */
 	}
 	
-	deviceISL23415State.spiSourceBuffer[1] = writeValue;
-	deviceISL23415State.spiSourceBuffer[2] = 0x00;
-	deviceISL23415State.spiSourceBuffer[3] = 0x00;
-
 	deviceISL23415State.spiSinkBuffer[0] = 0x00;
 	deviceISL23415State.spiSinkBuffer[1] = 0x00;
 	deviceISL23415State.spiSinkBuffer[2] = 0x00;
@@ -209,6 +241,11 @@ writeDeviceRegisterISL23415(uint8_t command, uint8_t deviceRegister, uint8_t wri
 					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
 					numberOfBytes /* transfer size */,
 					gWarpSpiTimeoutMicroseconds);
+
+	/* Drive /CS up. */
+	OSA_TimeDelay(50);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+
 	disableSPIpins();
 
 	return kWarpStatusOK;

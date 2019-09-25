@@ -1346,22 +1346,46 @@ main(void)
 
 	SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 6  Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 10 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	
-	readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
+	for (uint8_t i=0; i < 4; i++) {
+		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
 
-#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-	SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 ACR bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", 
-		deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
-#endif
+	#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\n\tRead %u ISL23415 ACR bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", i,
+			deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+	#endif
 
-	readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
+		readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
 
-#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-	SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", 
-		deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
-#endif
+	#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u\n", 
+			deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+	#endif
+	
+		OSA_TimeDelay(2000);
+	}
+
+	writeDeviceRegisterISL23415(0x00, kWarpISL23415RegWR, 0xFF, 4);
+
+	for (uint8_t i=0; i < 4; i++) {
+		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
+
+	#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\n\tRead %u ISL23415 ACR bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u", i,
+			deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+	#endif
+
+		readDeviceRegisterISL23415(kWarpISL23415RegWR, 4);
+
+	#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\n\tRead ISL23415 WR0 bytes: 0: 0x%02X, 1: 0x%02X, 2: 0x%02X, 3: 0x%02X, Status: %u\n", 
+			deviceISL23415State.spiSinkBuffer[0], deviceISL23415State.spiSinkBuffer[1], deviceISL23415State.spiSinkBuffer[2], deviceISL23415State.spiSinkBuffer[3], deviceISL23415State.ksdk_spi_status);
+	#endif
+	
+		OSA_TimeDelay(2000);
+	}
 
 	// OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	// SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou out Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
