@@ -189,21 +189,21 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
 }
 
 WarpStatus	
-writeDeviceRegisterISL23415(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes) {
+writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int numberOfBytes) {
 	/*
 	 *	Populate the shift-out register with the read-register command,
 	 *	followed by the register to be read, followed by a zero byte XXX.
 	 */
 	if (deviceRegister == kWarpISL23415RegACR) {
 		deviceISL23415State.spiSourceBuffer[0] = 0b01100000; /* ACR WRITE of DCP 1 */
-		deviceISL23415State.spiSourceBuffer[1] = 0x40;//writeValue;
+		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
 		deviceISL23415State.spiSourceBuffer[2] = 0b01100000; /* ACR WRITE of DCP 0 */
-		deviceISL23415State.spiSourceBuffer[3] = 0x40;
+		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
 	} else if (deviceRegister == kWarpISL23415RegWR) {
 		deviceISL23415State.spiSourceBuffer[0] = 0b11000000; /* WR0 WRITE of DCP 1 */
-		deviceISL23415State.spiSourceBuffer[1] = 0x90;//writeValue;
+		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
 		deviceISL23415State.spiSourceBuffer[2] = 0b11000000; /* WR0 WRITE of DCP 0 */
-		deviceISL23415State.spiSourceBuffer[3] = 0x70;
+		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
 	} else {
 		/* FIXME */
 	}

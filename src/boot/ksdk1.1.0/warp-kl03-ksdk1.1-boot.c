@@ -1346,7 +1346,7 @@ main(void)
 
 	SEGGER_RTT_WriteString(0, "\r\n\n\n\n[ *\t\t\t\tW\ta\tr\tp\t(rev. b)\t\t\t* ]\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 10 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 11 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	
 	for (uint8_t i=0; i < 4; i++) {
@@ -1367,7 +1367,8 @@ main(void)
 		OSA_TimeDelay(2000);
 	}
 
-	writeDeviceRegisterISL23415(0x00, kWarpISL23415RegWR, 0xFF, 4);
+	uint8_t valuesDPC[2] = {0x81, 0x79};
+	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDPC, 4);
 
 	for (uint8_t i=0; i < 4; i++) {
 		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
