@@ -1815,7 +1815,7 @@ main(void)
 //currently causes a hang:		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */, menuI2cPullupValue);
 
 		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 60 seconds (will reset afterwords)...\n");
-		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 60 /* sleep seconds */, menuI2cPullupValue);		
+		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 60/* sleep seconds */, menuI2cPullupValue);		
 		if (status != kWarpStatusOK)
 		{
 			SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
