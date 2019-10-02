@@ -341,7 +341,7 @@ typedef struct
 } WarpThermalChamberKL03MemoryFill;
 
 WarpStatus	warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
-void		enableI2Cpins(uint16_t pullupValue);
+void		enableI2Cpins(uint8_t pullupValue);
 void		disableI2Cpins(void);
 void		enableSPIpins(void);
 void		disableSPIpins(void);

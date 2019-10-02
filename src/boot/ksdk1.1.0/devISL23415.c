@@ -70,10 +70,8 @@ extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
  */
 void		
 initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) {
-	deviceStatePointer->signalType	= (	kWarpTypeMaskAccelerationX |
-					kWarpTypeMaskAccelerationY |
-					kWarpTypeMaskAccelerationZ |
-					kWarpTypeMaskTemperature
+	deviceStatePointer->signalType	= (
+					kWarpTypeMaskMax
 				); /* FIXME */
 	return;
 }

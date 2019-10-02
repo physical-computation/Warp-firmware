@@ -39,6 +39,8 @@
 #define WARP_BUILD_ENABLE_DEVISL23415
 #endif
 
+//#define WARP_BUILD_ENABLE_DEVISL23415_DEBUG
+
 typedef enum
 {
 	kWarpISL23415RegACR			= 0x00,
