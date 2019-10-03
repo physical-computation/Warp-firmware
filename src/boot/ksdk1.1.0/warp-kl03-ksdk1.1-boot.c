@@ -475,7 +475,7 @@ enableI2Cpins(uint8_t pullupValue)
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
 
-	//configureI2Cpins(pullupValue);
+	configureI2Cpins(pullupValue);
 }
 
 
@@ -496,7 +496,7 @@ disableI2Cpins(void)
 	/*
 	 *	Reset DCP configuration
 	 */
-	//configureI2Cpins(0x80); /* Defaults DCP configuration ISL datasheet FN7780 Rev 2.00 - page 14 */
+	configureI2Cpins(0x80); /* Defaults DCP configuration ISL datasheet FN7780 Rev 2.00 - page 14 */
 
 	/*
 	 *	Drive the I2C pins low
@@ -1243,7 +1243,6 @@ main(void)
 
 #ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
 	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
-	SEGGER_RTT_WriteString(0, "initMMA8451Q done\n");
 #endif	
 
 #ifdef WARP_BUILD_ENABLE_DEVLPS25H
@@ -1393,7 +1392,8 @@ main(void)
 	}
 #endif
 
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou V2 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+#ifdef WARP_BUILD_ENABLE_DEVISL23415_SENSOR_COMM_DEMO
+	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou V7 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	SEGGER_RTT_WriteString(0, "\r\n\tRead deviceMMA8451Q register 0x17 value ");
 
@@ -1401,51 +1401,36 @@ main(void)
 		*	I2C MMA8451Q initialization
 		*/
 	WarpStatus i2cReadStatus = kWarpStatusOK, i2cWriteStatus = kWarpStatusOK;
-
+	menuSupplyVoltage = 3300;
+	enableSssupply(menuSupplyVoltage);
+	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	enableI2Cpins(0x80);
-
+	
 	i2cWriteStatus = configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
 					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 					menuI2cPullupValue
 					);
 	
 	
-	// i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-	// 						1 /* 1 byte */);
+	i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
+							1 /* 1 byte */);
 
-	// SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
+	SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
 
-	// i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
-	// 						0x17 /* payload: Disable FIFO */,
-	// 						0);
+	i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
+							0x81 /* payload: Disable FIFO */,
+							0);
 
-	// SEGGER_RTT_printf(0, "\r\n\tWrote 0x17"); 
+	SEGGER_RTT_printf(0, "\r\n\tWrote to 0x17 value 0x81"); 
 
-	// i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-	// 						1 /* 1 byte */);
+	i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
+							1 /* 1 byte */);
 
-	// SEGGER_RTT_printf(0, "\r\n\tRead second 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
+	SEGGER_RTT_printf(0, "\r\n\tRead second 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
 
 	if(i2cWriteStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-		// for(int errorLED = 0; errorLED < 5; errorLED++)
-		// {
-		// 	/*
-		// 	 *	Error when writing to I2C device
-		// 	 *	LED pattern : All On -> All off -> Red
-		// 	 */
-		// 	GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-		// 	GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Blue);
-		// 	GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Green);
-		// 	OSA_TimeDelay(100);
-		// 	GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Red);
-		// 	GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Blue);
-		// 	GPIO_DRV_SetPinOutput(kWarpPinFRDMKL03LED_Green);
-		// 	OSA_TimeDelay(100);
-		// 	GPIO_DRV_ClearPinOutput(kWarpPinFRDMKL03LED_Red);
-		// 	OSA_TimeDelay(1000);
-		// }
 	}
 
 	if(i2cReadStatus != kWarpStatusOK)
@@ -1454,6 +1439,8 @@ main(void)
 	}
 
 	disableI2Cpins();
+	disableSssupply();
+#endif
 
 	while (1)
 	{
@@ -1566,7 +1553,7 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		key = SEGGER_RTT_WaitKey();
-
+		
 		switch (key)
 		{
 			/*
@@ -2637,7 +2624,6 @@ main(void)
 			case 'z':
 			{
 				bool		hexModeFlag;
-
 
 				SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
 				enableI2Cpins(menuI2cPullupValue);
