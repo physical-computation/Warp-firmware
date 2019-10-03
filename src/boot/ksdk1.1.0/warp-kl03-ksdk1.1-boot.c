@@ -1393,49 +1393,52 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVISL23415_SENSOR_COMM_DEMO
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou V7 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
+	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou V1 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-	SEGGER_RTT_WriteString(0, "\r\n\tRead deviceMMA8451Q register 0x17 value ");
+	SEGGER_RTT_WriteString(0, "\r\n\rUsing deviceMMA8451Q register 0x17 value ");
 
-	/*	
-		*	I2C MMA8451Q initialization
-		*/
 	WarpStatus i2cReadStatus = kWarpStatusOK, i2cWriteStatus = kWarpStatusOK;
 	menuSupplyVoltage = 3300;
 	enableSssupply(menuSupplyVoltage);
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	enableI2Cpins(0x80);
-	
+
+	/*	
+	*	I2C MMA8451Q initialization
+	*/	
 	i2cWriteStatus = configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
 					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 					menuI2cPullupValue
 					);
 	
 	
-	i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-							1 /* 1 byte */);
+	// i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
+	// 						1 /* 1 byte */);
 
-	SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
+	// SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
 
-	i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
-							0x81 /* payload: Disable FIFO */,
+	for (uint8_t writeValue=0x00; writeValue<0xFF; writeValue++) {
+		i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
+							writeValue /* payload: Disable FIFO */,
 							0);
 
-	SEGGER_RTT_printf(0, "\r\n\tWrote to 0x17 value 0x81"); 
+		if(i2cWriteStatus != kWarpStatusOK)
+		{
+			SEGGER_RTT_printf(0, "\nError when writing to I2C device");
+		}	
+		
+		i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
+								1 /* 1 byte */);
 
-	i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-							1 /* 1 byte */);
+		if(i2cReadStatus != kWarpStatusOK)
+		{
+			SEGGER_RTT_printf(0, "\nError when reading from I2C device");
+		}
+		
+		SEGGER_RTT_printf(0, "\r\n\tWrote value 0x%02X, read value 0x%02X, Diff = 0x%02X", 
+			writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0])); 
 
-	SEGGER_RTT_printf(0, "\r\n\tRead second 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
-
-	if(i2cWriteStatus != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-	}
-
-	if(i2cReadStatus != kWarpStatusOK)
-	{
-		SEGGER_RTT_printf(0, "\nError when reading from I2C device");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	}
 
 	disableI2Cpins();
