@@ -1398,7 +1398,7 @@ main(void)
 	SEGGER_RTT_WriteString(0, "\r\n\rUsing deviceMMA8451Q register 0x17 value ");
 
 	WarpStatus i2cReadStatus = kWarpStatusOK, i2cWriteStatus = kWarpStatusOK;
-	menuSupplyVoltage = 3300;
+	menuSupplyVoltage = 1800; //3300;
 	enableSssupply(menuSupplyVoltage);
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	enableI2Cpins(0x80);
@@ -1416,29 +1416,50 @@ main(void)
 	// 						1 /* 1 byte */);
 
 	// SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
+	
+	SEGGER_RTT_printf(0, "\r\n\tmenuSupplyVoltage %d", menuSupplyVoltage);
+	SEGGER_RTT_WriteString(0, "\ndgWarpI2cBaudRateKbps, cpValue, writeValue, readValue, diff");
 
-	for (uint8_t writeValue=0x00; writeValue<0xFF; writeValue++) {
-		i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
-							writeValue /* payload: Disable FIFO */,
-							0);
+	for (gWarpI2cBaudRateKbps=100; gWarpI2cBaudRateKbps<=2000; gWarpI2cBaudRateKbps+=100) {
 
-		if(i2cWriteStatus != kWarpStatusOK)
-		{
-			SEGGER_RTT_printf(0, "\nError when writing to I2C device");
-		}	
-		
-		i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-								1 /* 1 byte */);
+		uint8_t dcpValue=0x08;
+		while (dcpValue > 0x00) {
+		//for (uint8_t dcpValue=0x08; dcpValue<=0xFF; dcpValue+=0x08) {
 
-		if(i2cReadStatus != kWarpStatusOK)
-		{
-			SEGGER_RTT_printf(0, "\nError when reading from I2C device");
+			configureI2Cpins(dcpValue);
+			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+			for (uint8_t writeValue=0x00; writeValue<0xFF; writeValue++) {
+				i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
+									writeValue /* payload: Disable FIFO */,
+									0);
+
+				if(i2cWriteStatus != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, "\nError when writing to I2C device");
+				}	
+				
+				/* FIXME!!! Restore to original condition */	
+
+				i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
+										1 /* 1 byte */);
+
+				if(i2cReadStatus != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, "\nError when reading from I2C device");
+				}
+				
+				//SEGGER_RTT_printf(0, "\r\n\tWrote value 0x%02X, read value 0x%02X, Diff = 0x%02X", 
+				//	writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0]));
+
+				SEGGER_RTT_printf(0, "\r\n%u, 0x%02X, 0x%02X, 0x%02X, 0x%02X", 
+					gWarpI2cBaudRateKbps, dcpValue, writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0]));	 
+
+				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			}
+
+			dcpValue+=0x08;
 		}
-		
-		SEGGER_RTT_printf(0, "\r\n\tWrote value 0x%02X, read value 0x%02X, Diff = 0x%02X", 
-			writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0])); 
-
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	}
 
 	disableI2Cpins();
