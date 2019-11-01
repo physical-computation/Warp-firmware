@@ -55,7 +55,7 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-#define WARP_FRDMKL03
+//#define WARP_FRDMKL03
 
 /*
 *	Comment out the header file to disable devices
