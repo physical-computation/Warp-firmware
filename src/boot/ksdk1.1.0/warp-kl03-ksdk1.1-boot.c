@@ -55,26 +55,32 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
+//#define WARP_FRDMKL03
+
 /*
 *	Comment out the header file to disable devices
 */
-#include "devBMX055.h"
-//#include "devADXL362.h"
-#include "devMMA8451Q.h"
-//#include "devLPS25H.h"
-#include "devHDC1000.h"
-#include "devMAG3110.h"
-//#include "devSI7021.h"
-#include "devL3GD20H.h"
-#include "devBME680.h"
+#ifndef WARP_FRDMKL03
+#	include "devBMX055.h"
+#	include "devMMA8451Q.h"
+#	include "devHDC1000.h"
+#	include "devMAG3110.h"
+#	include "devL3GD20H.h"
+#	include "devBME680.h"
+#	include "devCCS811.h"
+#	include "devAMG8834.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
-#include "devCCS811.h"
-#include "devAMG8834.h"
+//#include "devSI7021.h"
+//#include "devLPS25H.h"
+//#include "devADXL362.h"
 //#include "devPAN1326.h"
 //#include "devAS7262.h"
 //#include "devAS7263.h"
 //#include "devRV8803C7.h"
+#else
+#	include "devMMA8451Q.h"
+#endif
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -605,15 +611,12 @@ lowPowerPinStates(void)
 	{
 		GPIO_DRV_SetPinOutput(kWarpPinKL03_VDD_ADC);
 	}
-#ifdef WARP_FRDMKL03
-	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
-#else
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 #ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 #endif
 #endif
-#endif
+
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740A_CTLEN);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740B_CTLEN);
 	GPIO_DRV_ClearPinOutput(kWarpPinTPS82740_VSEL1);
@@ -3635,23 +3638,14 @@ activateAllLowPowerSensorModes(bool verbose)
 
 
 
-#ifdef WARP_FRDMKL03
-	/*
-	 *	PAN1323.
-	 *
-	 *	For now, simply hold its reset line low.
-	 */
-	GPIO_DRV_ClearPinOutput(kWarpPinPAN1323_nSHUTD);
-#else
 	/*
 	 *	PAN1326.
 	 *
 	 *	For now, simply hold its reset line low.
 	 */
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 #ifdef WARP_BUILD_ENABLE_DEVPAN1326
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
-#endif
 #endif
 #endif
 }

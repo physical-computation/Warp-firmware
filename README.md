@@ -1,4 +1,6 @@
-# Baseline firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) platform
+# Baseline firmware for the [Warp](https://github.com/physical-computation/Warp-hardware) family of hardware platforms
+This is the firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) and its publicly available and unpublished derivatives. This firmware also runs on the Freescale/NXP FRDM KL03 evaluation board which we use for teaching at the University of Cambridge. When running on platforms other than Warp, only the sensors available in the corresponding hardware platform are accessible.
+
 **Prerequisites:** You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., via `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
 
 ## 1.  Compiling the Warp firmware
@@ -27,16 +29,18 @@ In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes
 
 	JLinkRTTClient
 
+## 2. Using the Warp firmware on the FRDM KL03
+The SEGGER firmware allows you to use SEGGER’s JLink software to load your own firmware to the board, even without using their specialized JLink programming cables. You can find the SEGGER firmware at the SEGGER Page for [OpenSDA firmware](https://www.segger.com/products/debug-probes/j-link/models/other-j-links/opensda-sda-v2/).
 
 
-## 2.  Editing the firmware
+## 3.  Editing the firmware
 The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c` and the per-sensor drivers in `src/boot/ksdk1.1.0/dev*.[c,h]`.
 
 The firmware builds on the Kinetis SDK. You can find more documentation on the Kinetis SDK in the document [doc/Kinetis SDK v.1.1 API Reference Manual.pdf](https://github.com/physical-computation/Warp-firmware/blob/master/doc/Kinetis%20SDK%20v.1.1%20API%20Reference%20Manual.pdf).
 
 The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [src/boot/ksdk1.1.0/README.md](src/boot/ksdk1.1.0/README.md).
 
-## 3.  Interacting with the boot menu
+## 4.  Interacting with the boot menu
 When the firmware boots, you will be dropped into a menu with a rich set of commands. The Warp boot menu allows you to conduct most of the experiments you will likely need without modifying the firmware:
 ````
 [ *				W	a	r	p	(rev. b)			* ]
@@ -112,7 +116,7 @@ This will perpetually stream data from the 90+ sensor dimensions at a rate of ab
 -	`n` (turn on the sensor supply regulators).
 -	`z` (start to stream data from all sensors that can run at the chosen voltage and baud rate).
 
-## 4.  To update your fork
+## 5.  To update your fork
 From your local clone:
 
 	git remote add upstream https://github.com/physical-computation/Warp-firmware.git
