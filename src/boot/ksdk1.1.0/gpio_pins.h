@@ -62,37 +62,20 @@ enum _gpio_pins
 	kWarpPinTS5A3154_IN			= GPIO_MAKE_PIN(HW_GPIOB, 6),		/*	Warp TS5A3154_IN	--> PTB6		(was unused in Warp v2)					*/
 	kWarpPinSI4705_nRST			= GPIO_MAKE_PIN(HW_GPIOB, 7),		/*	Warp SI4705_nRST	--> PTB7		(was unused in Warp v2)					*/
 
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-	kWarpPinFRDMKL03LED_Red			= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	PTB10: LED_Red												*/
-	kWarpPinFRDMKL03LED_Green		= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	PTB11: LED_Green											*/
-	kWarpPinFRDMKL03LED_Blue		= GPIO_MAKE_PIN(HW_GPIOB, 13),		/*	PTB13: LED_Blue												*/
-#else
 	kWarpPinPAN1326_nSHUTD			= GPIO_MAKE_PIN(HW_GPIOB, 10),		/*	Warp PAN1326_nSHUTD	--> PTB10		(was unused in Warp v2)					*/
 	kWarpPinISL23415_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 11),		/*	Warp ISL23415_nCS	--> PTB11		(was TPS82675_MODE in Warp v2)				*/
 	kWarpPinCLKOUT32K			= GPIO_MAKE_PIN(HW_GPIOB, 13),		/*	Warp KL03_CLKOUT32K	--> PTB13									*/
-#endif
 
-
-#ifdef WARP_FRDMKL03
-	kWarpPinUnusedPTB2			= GPIO_MAKE_PIN(HW_GPIOB, 2),		/*	PTB2: unused												*/
-	kWarpPinPAN1323_nSHUTD			= GPIO_MAKE_PIN(HW_GPIOB, 3),		/*	For FRDM<->PAN1323ETU	--> PTB3									*/
-	kWarpPinUnusedPTB4			= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	PTB4: unused												*/
-	kWarpPinUnusedPTA6			= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	PTA6: unused												*/
-	kWarpPinUnusedPTA7			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	PTA7: unused												*/
-	kWarpPinUnusedPTA9			= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	PTA9: unused												*/
-#else
 	kWarpPinADXL362_CS			= GPIO_MAKE_PIN(HW_GPIOB, 2),		/*	Warp ADXL362_CS		--> PTB2		(was kWarpPinADXL362_CS_PAN1326_nSHUTD in Warp v2)	*/
 	kWarpPinI2C0_SCL			= GPIO_MAKE_PIN(HW_GPIOB, 3),		/*	Warp KL03_I2C0_SCL	--> PTB3									*/
 	kWarpPinI2C0_SDA			= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	Warp KL03_I2C0_SDA	--> PTB4									*/
 	kWarpPinSPI_MISO			= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp KL03_SPI_MISO	--> PTA6									*/
 	kWarpPinSPI_MOSI			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	Warp KL03_SPI_MOSI	--> PTA7									*/
 	kWarpPinTPS82740A_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinTPS82740A_CTLEN --> PTA9		(was kWarpPinSPI_SCK_I2C_PULLUP_EN in Warp v2)		*/	
-
-	kWarpPinLPUART_HCI_TX 		= GPIO_MAKE_PIN(HW_GPIOB, 3), 		/*	Warp KL03_LPUART_TX	--> PTB3									*/
-	kWarpPinLPUART_HCI_RX 		= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	Warp KL03_LPUART_RX	--> PTB4									*/
-	kWarpPinPAN1326_HCI_RTS 	= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp kWarpPinPAN1326_HCI_RTS --> PTA6							*/
-	kWarpPinPAN1326_HCI_CTS 	= GPIO_MAKE_PIN(HW_GPIOA, 7)		/*	Warp kWarpPinPAN1326_HCI_CTS	--> PTA7						*/
-#endif
+	kWarpPinLPUART_HCI_TX 			= GPIO_MAKE_PIN(HW_GPIOB, 3), 		/*	Warp KL03_LPUART_TX	--> PTB3									*/
+	kWarpPinLPUART_HCI_RX 			= GPIO_MAKE_PIN(HW_GPIOB, 4),		/*	Warp KL03_LPUART_RX	--> PTB4									*/
+	kWarpPinPAN1326_HCI_RTS 		= GPIO_MAKE_PIN(HW_GPIOA, 6),		/*	Warp kWarpPinPAN1326_HCI_RTS --> PTA6							*/
+	kWarpPinPAN1326_HCI_CTS 		= GPIO_MAKE_PIN(HW_GPIOA, 7)		/*	Warp kWarpPinPAN1326_HCI_CTS	--> PTA7						*/
 };
 
 extern gpio_input_pin_user_config_t	inputPins[];
