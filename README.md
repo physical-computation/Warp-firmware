@@ -29,8 +29,53 @@ In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes
 
 	JLinkRTTClient
 
-## 2. Using the Warp firmware on the FRDM KL03
+## 2. Using the Warp firmware on the Freescale FRDMKL03 Board
 The SEGGER firmware allows you to use SEGGER’s JLink software to load your own firmware to the board, even without using their specialized JLink programming cables. You can find the SEGGER firmware at the SEGGER Page for [OpenSDA firmware](https://www.segger.com/products/debug-probes/j-link/models/other-j-links/opensda-sda-v2/).
+
+To build the Warp firmware for the FRDM KL03, you will need to uncomment the `#define WARP_FRDMKL03` define in `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`. When building for the FRDMKL03 board, you can also disable drivers for sensors that are not on the FRDMKL03 (i.e., disable all sensors except the MMA8451Q). The full set of diffs is:
+```diff
+diff --git a/src/boot/ksdk1.1.0/CMakeLists.txt b/src/boot/ksdk1.1.0/CMakeLists.txt
+index 5cd6996..197e0a5 100755
+--- a/src/boot/ksdk1.1.0/CMakeLists.txt
++++ b/src/boot/ksdk1.1.0/CMakeLists.txt
+@@ -89,19 +89,19 @@ ADD_EXECUTABLE(Warp
+     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S"
+     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-boot.c"
+     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-powermodes.c"
+-    "${ProjDirPath}/../../src/devBMX055.c"
++#    "${ProjDirPath}/../../src/devBMX055.c"
+ #    "${ProjDirPath}/../../src/devADXL362.c"
+     "${ProjDirPath}/../../src/devMMA8451Q.c"
+ #    "${ProjDirPath}/../../src/devLPS25H.c"
+-    "${ProjDirPath}/../../src/devHDC1000.c"
+-    "${ProjDirPath}/../../src/devMAG3110.c"
++#    "${ProjDirPath}/../../src/devHDC1000.c"
++#    "${ProjDirPath}/../../src/devMAG3110.c"
+ #    "${ProjDirPath}/../../src/devSI7021.c"
+-    "${ProjDirPath}/../../src/devL3GD20H.c"
+-    "${ProjDirPath}/../../src/devBME680.c"
++#    "${ProjDirPath}/../../src/devL3GD20H.c"
++#    "${ProjDirPath}/../../src/devBME680.c"
+ #    "${ProjDirPath}/../../src/devTCS34725.c"
+ #    "${ProjDirPath}/../../src/devSI4705.c"
+-    "${ProjDirPath}/../../src/devCCS811.c"
+-    "${ProjDirPath}/../../src/devAMG8834.c"
++#    "${ProjDirPath}/../../src/devCCS811.c"
++#    "${ProjDirPath}/../../src/devAMG8834.c"
+ #    "${ProjDirPath}/../../src/devRV8803C7.c"
+ #    "${ProjDirPath}/../../src/devPAN1326.c"
+ #    "${ProjDirPath}/../../src/devAS7262.c"
+diff --git a/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c b/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
+index 87a27e1..42ce458 100755
+--- a/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
++++ b/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
+@@ -55,7 +55,7 @@
+ #include "SEGGER_RTT.h"
+ #include "warp.h"
+ 
+-//#define WARP_FRDMKL03
++#define WARP_FRDMKL03
+```
 
 
 ## 3.  Editing the firmware
@@ -96,6 +141,10 @@ You can probe around the menu to figure out what to do. In brief, you will likel
 *NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>. If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
 
 ### Example 1: Dump all registers for a single sensor
+-	`b` (set the I2C baud rate to `0300` for 300 kb/s).
+-	`g` (set sensor supply voltage to `3000` for 3000mV sensor supply voltage).
+-	`n` (turn on the sensor supply regulators).
+-	`j` (submenu for initiating a fixed number of repeated reads from a sensor):
 ````
 Enter selection> j
 
@@ -139,7 +188,16 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
   year = 2018,
 }
 ```
-
+and 
+```
+@ARTICLE{10.1109/MM.2019.2951004,
+  author = {Stanley-Marbell, Phillip and Rinard, Martin},
+  title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+  doi = {10.1109/MM.2019.2951004},
+  journal = {IEEE Micro},
+  year = 2019,
+}
+```
 ### Acknowledgements
 This research is supported by an Alan Turing Institute award TU/B/000096 under EPSRC grant EP/N510129/1, by Royal Society grant RG170136, and by EPSRC grants EP/P001246/1 and EP/R022534/1.
 
