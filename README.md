@@ -126,6 +126,12 @@ Select:
 - 'z': dump all sensors data.
 Enter selection> 
 ````
+### Double echo characters
+By default on Unix, you will likely see characters you enter shown twice. To avoid this, do the following:
+- Make sure you are running `bash` (and not `csh`)
+- Execute `stty -echo` at the command line in the terminal window in which you will run the `JLinkRTTClient`.
+
+### Introduction to using the menu
 You can probe around the menu to figure out what to do. In brief, you will likely want:
 
 1. Menu item `b` to set the I2C baud rate.
@@ -138,7 +144,7 @@ You can probe around the menu to figure out what to do. In brief, you will likel
 
 5. Menu item `z` to repeatedly read from all the sensors whose drivers are compiled into the build.
 
-*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>. If using the JLinkRTTClient, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
+*NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>. If using the `JLinkRTTClient`, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
 
 ### Example 1: Dump all registers for a single sensor
 -	`b` (set the I2C baud rate to `0300` for 300 kb/s).
@@ -176,26 +182,26 @@ From your local clone:
 
 ### If you use Warp in your research, please cite it as:
 Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
-
 **BibTeX:**
 ```
 @ARTICLE{1804.09241,
-  author = {Stanley-Marbell, Phillip and Rinard, Martin},
-  title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-  journal = {ArXiv e-prints},
-  archivePrefix = {arXiv},
-  eprint = {1804.09241},
-  year = 2018,
+ author = {Stanley-Marbell, Phillip and Rinard, Martin},
+ title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+ journal = {ArXiv e-prints},
+ archivePrefix = {arXiv},
+ eprint = {1804.09241},
+ year = 2018,
 }
 ```
-and 
+Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”.IEEE Micro (2019), doi 10.1109/MM.2019.2951004.
+**BibTeX:**
 ```
 @ARTICLE{10.1109/MM.2019.2951004,
-  author = {Stanley-Marbell, Phillip and Rinard, Martin},
-  title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-  doi = {10.1109/MM.2019.2951004},
-  journal = {IEEE Micro},
-  year = 2019,
+ author = {Stanley-Marbell, Phillip and Rinard, Martin},
+ title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+ doi = {10.1109/MM.2019.2951004},
+ journal = {IEEE Micro},
+ year = 2019,
 }
 ```
 ### Acknowledgements
@@ -203,4 +209,4 @@ This research is supported by an Alan Turing Institute award TU/B/000096 under E
 
 ----
 ### Notes
-<sup>1</sup>&nbsp; On some Unix platforms, the `JLinkRTTClient` has a double echo of characters you type in. You can prevent this by configuring your terminal program to not echo the characters you type. Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior but you will then need a carriage return (&crarr;) for your input to be sent to the board. Also see [Python SEGGER RTT library from Square, Inc.](https://github.com/square/pylink/blob/master/examples/rtt.py) (thanks to [Thomas Garry](https://github.com/tidge27) for the pointer).
+<sup>1</sup>&nbsp; On some Unix platforms, the `JLinkRTTClient` has a double echo of characters you type in. You can prevent this by configuring your terminal program to not echo the characters you type. To achieve this on `bash`, use `stty -echo` from the terminal. Alternatively, rather than using the `JLinkRTTClient`, you can use a `telnet` program: `telnet localhost 19021`. This avoids the JLink RTT Client's "double echo" behavior but you will then need a carriage return (&crarr;) for your input to be sent to the board. Also see [Python SEGGER RTT library from Square, Inc.](https://github.com/square/pylink/blob/master/examples/rtt.py) (thanks to [Thomas Garry](https://github.com/tidge27) for the pointer).
