@@ -23,7 +23,7 @@ This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds
 
 > **NOTE:** If you run into a compile error such as `/usr/lib/gcc/arm-none-eabi/6.3.1/../../../arm-none-eabi/bin/ld: region
 m_data overflowed by 112 bytes`, the error is that the firmware image size exceeded the KL03 memory size. Some arm-gcc cross compilers, particularly on Linux, generate firmware images that are quite large. Easiest fixes are either:
-
+>
 > - Comment out some of the driver includes in the list between lines 64 and 71 (these trigger the instantiation of various driver data structures which take up memory)
 >
 > or
