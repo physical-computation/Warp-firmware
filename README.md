@@ -21,6 +21,17 @@ Third, you should be able to build the Warp firmware by
 
 This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `Warp/src/boot/ksdk1.1.0/`, not the files in the build location, since the latter are overwritten during each build._
 
+> **NOTE:** If you run into a compile error such as `/usr/lib/gcc/arm-none-eabi/6.3.1/../../../arm-none-eabi/bin/ld: region
+m_data overflowed by 112 bytes`, the error is that the firmware image size exceeded the KL03 memory size. Some arm-gcc cross compilers, particularly on Linux, generate firmware images that are quite large. Easiest fixes are either:
+
+> - Comment out some of the driver includes in the list between lines 64 and 71 (these trigger the instantiation of various driver data structures which take up memory)
+>
+> or
+>
+> - Modify src/boot/ksdk1.1.0/CMakeLists.txt and reduce the default stack size, e.g., by changing all occurrences of "__stack_size__=0x300” to, e.g., "__stack_size__=0x100"
+
+
+
 Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
 
 	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
