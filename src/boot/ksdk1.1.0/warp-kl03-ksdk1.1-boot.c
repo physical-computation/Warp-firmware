@@ -1424,8 +1424,8 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-        SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");  // MODIFIED HERE
-        OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);     // MODIFIED HERE
+        SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");  /* MODIFIED HERE */
+        OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);     /* MODIFIED HERE */
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -2070,7 +2070,7 @@ main(void)
 				break;
 			}
                 
-            case 'q': // MAX11300 CONFIGURATION
+            case 'q': /* MAX11300 CONFIGURATION */
             {
             SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
             devMAX11300();

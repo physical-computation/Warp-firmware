@@ -1,3 +1,40 @@
+/*
+    Authored 2019-2020, Giorgio Mallia.
+
+    All rights reserved.
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+    *    Redistributions of source code must retain the above
+        copyright notice, this list of conditions and the following
+        disclaimer.
+
+    *    Redistributions in binary form must reproduce the above
+        copyright notice, this list of conditions and the following
+        disclaimer in the documentation and/or other materials
+        provided with the distribution.
+
+    *    Neither the name of the author nor the names of its
+        contributors may be used to endorse or promote products
+        derived from this software without specific prior written
+        permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #include <stdint.h>
 
 #include "fsl_spi_master_driver.h"
@@ -26,7 +63,7 @@ enum
 };
 
 
-int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) // W_R = 0/1 (Write/Read)
+int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) /* W_R = 0/1 (Write/Read) */
 {
     spi_status_t status;
     
@@ -35,6 +72,7 @@ int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) // W_R
      *
      *    Make sure there is a high-to-low transition by first driving high, delay, then drive low.
      */
+    
     GPIO_DRV_SetPinOutput(kMAX11300PinCSn);
     OSA_TimeDelay(10);
     GPIO_DRV_ClearPinOutput(kMAX11300PinCSn);
@@ -57,22 +95,23 @@ int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) // W_R
     /*
      *    Drive /CS high
      */
+    
     GPIO_DRV_SetPinOutput(kMAX11300PinCSn);
 
     return status;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 void read_ID(void){
     SEGGER_RTT_printf(0, "\r\t Address (R/W): 0x%x Commands: 0x%x 0x%x \n", payloadBytes[0], payloadBytes[1], payloadBytes[2]);
     OSA_TimeDelay(10);
-    writeCommand(0x00, 0x0000, 1); // READ DEVICE ID //0x00 (1) [Read]
+    writeCommand(0x00, 0x0000, 1); /* READ DEVICE ID: 0x00 (1) [Read] */
     SEGGER_RTT_printf(0, "\r\t Bytes Received: 0x%x 0x%x 0x%x \n", inBuffer[0], inBuffer[1], inBuffer[2]);
     OSA_TimeDelay(10);
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 int read_1_digit(int Lower_limit, int Higher_limit){
     int number = -1;
@@ -82,7 +121,7 @@ int read_1_digit(int Lower_limit, int Higher_limit){
     return number;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 int read_2_digits(int Lower_limit, int Higher_limit){
     int Digit1 = 0;
@@ -96,7 +135,7 @@ int read_2_digits(int Lower_limit, int Higher_limit){
     return number;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 int read_4_digits(int Lower_limit, int Higher_limit){
     int Digit1 = 0;
@@ -114,7 +153,7 @@ int read_4_digits(int Lower_limit, int Higher_limit){
     return number;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 int read_5_digits(int Lower_limit, int Higher_limit){
     int Digit1 = 0;
@@ -134,7 +173,7 @@ int read_5_digits(int Lower_limit, int Higher_limit){
     return number;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 uint16_t assemble_Command(bool D[16]){
     uint16_t Command = 0;
@@ -144,7 +183,7 @@ uint16_t assemble_Command(bool D[16]){
     return Command;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 void SPI_Scope(void){
     SEGGER_RTT_printf(0, "\r\t Address (R/W): 0x%x Commands: 0x%x 0x%x \n", payloadBytes[0], payloadBytes[1], payloadBytes[2]);
@@ -153,7 +192,7 @@ void SPI_Scope(void){
     OSA_TimeDelay(10);
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 uint16_t Assemble_DAC_DAT(int Data){
     
@@ -170,7 +209,7 @@ uint16_t Assemble_DAC_DAT(int Data){
     return S_Command;
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 uint16_t Assemble_CONF(bool FUNCPRM[12], bool FUNCid[13][4], int FUNC){
     
@@ -197,7 +236,7 @@ uint16_t Assemble_CONF(bool FUNCPRM[12], bool FUNCid[13][4], int FUNC){
 }
 
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 int read_1_char(char input[10]){
     
@@ -229,8 +268,7 @@ int read_1_char(char input[10]){
     
 }
 
-//       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-
+/*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 
 int devMAX11300(void){
@@ -240,6 +278,7 @@ int devMAX11300(void){
      *
      *    Re-configure SPI to be on PTA8 and PTA9 for MOSI and SCK respectively.
      */
+    
     PORT_HAL_SetMuxMode(PORTA_BASE, 6u, kPortMuxAlt3);
     PORT_HAL_SetMuxMode(PORTA_BASE, 8u, kPortMuxAlt3);
     PORT_HAL_SetMuxMode(PORTA_BASE, 9u, kPortMuxAlt3);
@@ -251,12 +290,13 @@ int devMAX11300(void){
      *
      *    Reconfigure to use as GPIO.
      */
+    
     PORT_HAL_SetMuxMode(PORTB_BASE, 13u, kPortMuxAsGpio);
     
     
-    //  Address     R/W    Description       B15     B14     B13     B12     B11     B10     B9      B8      B7      B6      B5      B4      B3      B2      B1      B0
-    //  0X00        R      DEVICE ID         -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-    //  0X10        R/W    DEVICE CONTROL    RESET   BRST    LPEN    RS_C    TMPP    TMPC2   TMPC1   TMPC0   THSHD   DACREF  ADCc1   ADCc0   DACL1   DACL0   ADCL1   ADCL0
+    /*  Address     R/W    Description       B15     B14     B13     B12     B11     B10     B9      B8      B7      B6      B5      B4      B3      B2      B1      B0      */
+    /*  0X00        R      DEVICE ID         -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       */
+    /*  0X10        R/W    DEVICE CONTROL    RESET   BRST    LPEN    RS_C    TMPP    TMPC2   TMPC1   TMPC0   THSHD   DACREF  ADCc1   ADCc0   DACL1   DACL0   ADCL1   ADCL0   */
     
 
     int RESET   = 0;
@@ -288,23 +328,23 @@ int devMAX11300(void){
     int DAC_DAT = 0;
     
     
-    bool FUNCid_XXXX [13][4] = {    {0, 0, 0, 0}, // 0:   High impedance port
+    bool FUNCid_XXXX [13][4] = {    {0, 0, 0, 0}, /* 0:   High impedance port */
                                     {0, 0, 0, 1},
                                     {0, 0, 1, 0},
                                     {0, 0, 1, 1},
                                     {0, 1, 0, 0},
-                                    {0, 1, 0, 1}, // 5:   Analog output for DAC
+                                    {0, 1, 0, 1}, /* 5:   Analog output for DAC */
                                     {0, 1, 1, 0},
-                                    {0, 1, 1, 1}, // 7:   Positive analog input to single-ended ADC
+                                    {0, 1, 1, 1}, /* 7:   Positive analog input to single-ended ADC */
                                     {1, 0, 0, 0},
                                     {1, 0, 0, 1},
                                     {1, 0, 1, 0},
                                     {1, 0, 1, 1},
-                                    {1, 1, 0, 0}}; // 12: Analog switch
+                                    {1, 1, 0, 0}}; /* 12: Analog switch */
     
     
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-    
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     uint16_t   S_Command1       = 0;
     uint16_t   S_Command2       = 0;
     uint16_t   S_Command3       = 0;
@@ -319,8 +359,8 @@ int devMAX11300(void){
     uint8_t DAC_DataPorts[20] = {0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73};
     uint8_t PORT_Config_Addr[20] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33};
         
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-        
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     SEGGER_RTT_WriteString(0, "\r\t Configuration starts \n");
     OSA_TimeDelay(10);
 
@@ -337,13 +377,13 @@ int devMAX11300(void){
         SEGGER_RTT_WriteString(0, "\r\t Manual Configutation Selected \n");
         OSA_TimeDelay(10);
 
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
         SEGGER_RTT_WriteString(0, "\r\t Serial interface burst-mode selection (0/1): \n");
         OSA_TimeDelay(10);
 
-        //0: Default address incrementing mode
-        //1: Contextual address incrementing mode
+        /*  0: Default address incrementing mode    */
+        /*  1: Contextual address incrementing mode */
             BRST = read_1_digit(0, 1);
             
             if(BRST == 0){
@@ -357,13 +397,13 @@ int devMAX11300(void){
 
             }
             
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-                
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
         SEGGER_RTT_WriteString(0, "\r\t Thermal shutdown Mode Selection (0/1): \n");
         OSA_TimeDelay(10);
 
-        //0: Thermal shutdown disabled
-        //1: Thermal shutdown enabled
+        /*  0: Thermal shutdown disabled */
+        /*  1: Thermal shutdown enabled */
             THSHD = read_1_digit(0, 1);
                 
             if(THSHD == 0){
@@ -377,21 +417,21 @@ int devMAX11300(void){
 
             }
             
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-                
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
         SEGGER_RTT_WriteString(0, "\r\t ADC Conversion Rate Selection (0-3): \n");
         OSA_TimeDelay(10);
-        //0: 200kbps
-        //1: 250kbps
-        //2: 333kbps
-        //3: 400kbps
+        /*  0: 200kbps
+            1: 250kbps
+            2: 333kbps
+            3: 400kbps  */
         int Rate[4] = {200, 250, 333, 400};
             ADCL = read_1_digit(0, 3);
             SEGGER_RTT_printf(0, "\r\t Rate %d kbps Selected. \n", Rate[ADCL]);
             OSA_TimeDelay(10);
 
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
         BRST = BRST;
         THSHD = THSHD;
         ADCL1 = (ADCL>1);
@@ -404,38 +444,38 @@ int devMAX11300(void){
         SEGGER_RTT_printf(0, "\r\t Bytes Selected: %x \n", S_Command1);
         OSA_TimeDelay(10);
 
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
         SEGGER_RTT_WriteString(0, "\r\t Port Configuration Mode Selection (03-12): \n");
         OSA_TimeDelay(10);
 
-        //03: Digital Output with DAC Controlled Level
-        //04: Unidirectional Path Output with DAC Controlled Level
-        //05: Analog Output for DAC
-        //06: Analog Output for DAC with ADC Monitoring
-        //07: Positive Analog IN to Single Ended ADC
-        //08: Positive Analog IN to Differential  ADC
-        //09: Negative Analog IN to Differential  ADC
-        //10: Analog Output for DAC and negative IN for Differential ADC
-        //11: Terminal to GPI-Controlled Analog Switch
-        //12: Terminal to Register-Controlled Analog Switch
+        /*  03: Digital Output with DAC Controlled Level
+            04: Unidirectional Path Output with DAC Controlled Level
+            05: Analog Output for DAC
+            06: Analog Output for DAC with ADC Monitoring
+            07: Positive Analog IN to Single Ended ADC
+            08: Positive Analog IN to Differential  ADC
+            09: Negative Analog IN to Differential  ADC
+            10: Analog Output for DAC and negative IN for Differential ADC
+            11: Terminal to GPI-Controlled Analog Switch
+            12: Terminal to Register-Controlled Analog Switch   */
         MODE = read_2_digits(3, 12);
         SEGGER_RTT_printf(0, "\r\t Mode %d Selected. \n", MODE);
         OSA_TimeDelay(10);
                     
-        //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-                  
+        /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
         if(MODE == 1 || MODE == 3 || MODE == 4 || MODE == 5 || MODE == 6 || MODE == 10){
                  
             SEGGER_RTT_WriteString(0, "\r\t Configure DACREF, DACL: \n");
             OSA_TimeDelay(10);
 
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
-            
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
             SEGGER_RTT_WriteString(0, "\r\t DAC Reference Selection (0/1): \n");
             OSA_TimeDelay(10);
-            //0: External Reference Voltage
-            //1: Internal Reference Voltage
+            /*  0: External Reference Voltage
+                1: Internal Reference Voltage */
             DACREF = read_1_digit(0, 1);
                           
             if(DACREF == 0){
@@ -447,20 +487,20 @@ int devMAX11300(void){
                 OSA_TimeDelay(10);
             }
                   
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
-                      
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
             SEGGER_RTT_WriteString(0, "\r\t DAC Mode Selection (0-3): \n");
             OSA_TimeDelay(10);
-            //0: Sequential mode for DAC configured ports
-            //1: Immediate update for DAC configured ports
-            //2: All DAC configured ports use the same data stored in DACPRSTDAT1[11:0]
-            //3: All DAC configured ports use the same data stored in DACPRSTDAT2[11:0]
+            /*  0: Sequential mode for DAC configured ports
+                1: Immediate update for DAC configured ports
+                2: All DAC configured ports use the same data stored in DACPRSTDAT1[11:0]
+                3: All DAC configured ports use the same data stored in DACPRSTDAT2[11:0]   */
             DACL = read_1_digit(0, 3);
             SEGGER_RTT_printf(0, "\r\t DAC Mode %d Selected. \n", DACL);
             OSA_TimeDelay(10);
             
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
-             
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
             BRST = BRST;
             THSHD = THSHD;
             ADCL1 = (ADCL>1);
@@ -477,7 +517,7 @@ int devMAX11300(void){
             SEGGER_RTT_printf(0, "\r\t Bytes Selected: %x \n", S_Command2);
             OSA_TimeDelay(10);
             
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
             if (!((DACL == 2) || (DACL == 3))){
                       
@@ -538,18 +578,18 @@ int devMAX11300(void){
         
     }
     
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-        
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     else{
        
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            BRST = 0;   //0: Default address incrementing mode
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            THSHD = 0;  //0: Thermal shutdown disabled
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            ADCL = 0;   //0: 200kbps
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-           
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            BRST = 0;   /*  0: Default address incrementing mode */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            THSHD = 0;  /*  0: Thermal shutdown disabled    */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            ADCL = 0;   /*  0: 200kbps */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
             BRST = BRST;
             THSHD = THSHD;
             ADCL1 = (ADCL>1);
@@ -559,14 +599,14 @@ int devMAX11300(void){
        
             S_Command1 = assemble_Command(D_C1);
            
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            MODE = 5;   // DAC Output port
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            DACREF = 1; // DAC Internal reference
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -
-            DACL = 1;   // Immediate update for DAC configured ports
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
-                
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            MODE = 5;   /*  DAC Output port */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            DACREF = 1; /*  DAC Internal referenc    */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+            DACL = 1;   /*  Immediate update for DAC configured ports   */
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
             BRST = BRST;
             THSHD = THSHD;
             ADCL1 = (ADCL>1);
@@ -580,28 +620,28 @@ int devMAX11300(void){
                            
             S_Command2 = assemble_Command(D_C2);
                
-            //       -       -       -       -       -       -       -       -       -       -       -       -       -
+            /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-            S_Command3 = Assemble_DAC_DAT(0); // INITIALISE DAC DATA AS 0
+            S_Command3 = Assemble_DAC_DAT(0); /* INITIALISE DAC DATA AS 0 */
 
     }
         
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-    bool FUNCPRM_GEN_test[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};    // FUNCPRM GENERAL PURPOSE - HI & AS
-    bool FUNCPRM_DAC_test[12] = {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0};    // FUNCPRM DAC: Voltage range from 0V to +10V
-    bool FUNCPRM_ADC_test[12] = {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0};    // FUNCPRM DAC: Voltage range from 0V to +10V, 1 Sample
+    bool FUNCPRM_GEN_test[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};    /* FUNCPRM GENERAL PURPOSE - HI & AS   */
+    bool FUNCPRM_DAC_test[12] = {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0};    /* FUNCPRM DAC: Voltage range from 0V to +10V  */
+    bool FUNCPRM_ADC_test[12] = {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0};    /* FUNCPRM DAC: Voltage range from 0V to +10V, 1 Sample    */
     
-    S_Command4_DAC = Assemble_CONF(FUNCPRM_DAC_test, FUNCid_XXXX, 5);    // DAC MODE CONFIGURATION COMMAND
-    S_Command4_AS  = Assemble_CONF(FUNCPRM_GEN_test, FUNCid_XXXX, 12);   // AS MODE CONFIGURATION COMMAND
-    S_Command4_HI  = Assemble_CONF(FUNCPRM_GEN_test, FUNCid_XXXX, 0);    // HIGH IMPEDANCE PORT MODE CONFIGURATION COMMAND
-    S_Command4_ADC = Assemble_CONF(FUNCPRM_ADC_test, FUNCid_XXXX, 7);    // HIGH IMPEDANCE PORT MODE CONFIGURATION COMMAND
+    S_Command4_DAC = Assemble_CONF(FUNCPRM_DAC_test, FUNCid_XXXX, 5);    /* DAC MODE CONFIGURATION COMMAND  */
+    S_Command4_AS  = Assemble_CONF(FUNCPRM_GEN_test, FUNCid_XXXX, 12);   /* AS MODE CONFIGURATION COMMAND   */
+    S_Command4_HI  = Assemble_CONF(FUNCPRM_GEN_test, FUNCid_XXXX, 0);    /* HIGH IMPEDANCE PORT MODE CONFIGURATION COMMAND  */
+    S_Command4_ADC = Assemble_CONF(FUNCPRM_ADC_test, FUNCid_XXXX, 7);    /* HIGH IMPEDANCE PORT MODE CONFIGURATION COMMAND  */
     
-    bool INTERRUPT_MSK_REG[16] = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // INTERRUPT REGISTER: DAC OVERCURRENT INTERRUPT  0000 0100 0000 0000
+    bool INTERRUPT_MSK_REG[16] = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; /*   INTERRUPT REGISTER: DAC OVERCURRENT INTERRUPT  0000 0100 0000 0000    */
     S_Command5 = assemble_Command(INTERRUPT_MSK_REG);
                    
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-    
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     SEGGER_RTT_WriteString(0, "\r\t Port Configuration Starts \n");
     OSA_TimeDelay(10);
 
@@ -609,16 +649,16 @@ int devMAX11300(void){
     OSA_TimeDelay(1);
     SPI_Scope();
 
-    writeCommand(0x10, S_Command1, 0); // DEVICE CONTROL (0) [Write]
+    writeCommand(0x10, S_Command1, 0); /*   DEVICE CONTROL (0) [Write]  */
     OSA_TimeDelay(1);
     SPI_Scope();
 
-    writeCommand(0x10, S_Command2, 0); // DEVICE CONTROL (0) [Write]
+    writeCommand(0x10, S_Command2, 0); /*   DEVICE CONTROL (0) [Write]  */
     OSA_TimeDelay(1);
     SPI_Scope();
     
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-    
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     SEGGER_RTT_WriteString(0, "\r\t Select Port Configuration: Enter a 20-element vector. \n");
     OSA_TimeDelay(10);
     SEGGER_RTT_WriteString(0, "\r\t Options: Analogue switch (A), DAC Output (O), Waveform Generator (G), High impedance port (H) or ADC Input port (I): \n");
@@ -691,45 +731,45 @@ int devMAX11300(void){
         
     }
     
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-        
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     if (AS_number >= 1){
         for (int k = 0; k < AS_number; k++){
 
-            // --- --- --- AS PORT CONFIGURATION
-            writeCommand(PORT_Config_Addr[AS_port[k]], S_Command4_AS, 0); // PORT CONTROL - AS (0) [Write]
+            /* --- --- --- AS PORT CONFIGURATION    */
+            writeCommand(PORT_Config_Addr[AS_port[k]], S_Command4_AS, 0); /*    PORT CONTROL - AS (0) [Write]   */
             OSA_TimeDelay(1);
-            // SPI_Scope();
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /*  SPI_Scope();    */
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
             
         }
     }
         
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-            
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     if (HI_number >= 1){
         for (int k = 0; k < HI_number; k++){
 
-            // --- --- --- HI PORT CONFIGURATION
-            writeCommand(PORT_Config_Addr[HI_port[k]], S_Command4_HI, 0); // PORT CONTROL - HI (0) [Write]
+            /* --- --- --- HI PORT CONFIGURATION    */
+            writeCommand(PORT_Config_Addr[HI_port[k]], S_Command4_HI, 0); /*    PORT CONTROL - HI (0) [Write]  */
             OSA_TimeDelay(1);
-            // SPI_Scope();
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /* SPI_Scope(); */
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
             
         }
     }
         
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-    
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     if (DAC_number >= 1){
         
         for (int k = 1; k <= DAC_number; k++){
 
-            // --- --- --- DAC PORT CONFIGURATION
-            writeCommand(PORT_Config_Addr[DAC_port[k]], S_Command4_DAC, 0); // PORT CONTROL - DAC (0) [Write]
+            /* --- --- --- DAC PORT CONFIGURATION   */
+            writeCommand(PORT_Config_Addr[DAC_port[k]], S_Command4_DAC, 0); /* PORT CONTROL - DAC (0) [Write]   */
             OSA_TimeDelay(1);
-            // SPI_Scope();
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /* SPI_Scope(); */
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
             
         }
         
@@ -745,10 +785,10 @@ int devMAX11300(void){
             
             uint16_t VALUE_Command = Assemble_DAC_DAT((value*4095/10000));
 
-            // --- --- ---  CONFIGURE DAC STATIC OUTPUT VALUE
-            writeCommand(DAC_DataPorts[DAC_port[k]], VALUE_Command, 0); // DAC CONTROL  (0) [Write]
+            /* --- --- ---  CONFIGURE DAC STATIC OUTPUT VALUE   */
+            writeCommand(DAC_DataPorts[DAC_port[k]], VALUE_Command, 0); /*  DAC CONTROL  (0) [Write] */
             OSA_TimeDelay(1);
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
                 
         }
         
@@ -777,16 +817,16 @@ int devMAX11300(void){
         SEGGER_RTT_WriteString(0, "\r\t Waveform Generator Starts \n");
         OSA_TimeDelay(10);
         
-        // --- --- --- DAC PORT CONFIGURATION
-        writeCommand(PORT_Config_Addr[DAC_WAVE_port], S_Command4_DAC, 0); // PORT CONTROL - DAC (0) [Write]
+        /* --- --- --- DAC PORT CONFIGURATION   */
+        writeCommand(PORT_Config_Addr[DAC_WAVE_port], S_Command4_DAC, 0); /* PORT CONTROL - DAC (0) [Write] */
         OSA_TimeDelay(1);
-        // SPI_Scope();
-        // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+        /* SPI_Scope(); */
+        /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
  
-        // --- --- ---  CONFIGURE DAC STATIC OUTPUT VALUE
-        writeCommand(DAC_DataPorts[DAC_WAVE_port], S_Command4_DAC, 0); // DAC CONTROL  (0) [Write]
+        /* --- --- ---  CONFIGURE DAC STATIC OUTPUT VALUE   */
+        writeCommand(DAC_DataPorts[DAC_WAVE_port], S_Command4_DAC, 0); /* DAC CONTROL  (0) [Write]  */
         OSA_TimeDelay(1);
-        // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+        /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
         
         SEGGER_RTT_printf(0, "\r\t DAC # %d selected. \n", DAC_WAVE_port);
         OSA_TimeDelay(10);
@@ -799,12 +839,12 @@ int devMAX11300(void){
           
             WAVE_INT = l*Slope/10;
           
-            //       -       -       -       -       -       -       -       -       -       -
+            /*       -       -       -       -       -       -       -       -       -       -  */
             uint16_t WAVE_Command = Assemble_DAC_DAT(WAVE_INT);
-            // --- --- ---  CONFIGURE DAC OUTPUT VALUE
-            writeCommand(DAC_DataPorts[DAC_WAVE_port], WAVE_Command, 0); // DAC CONTROL  (0) [Write]
+            /* --- --- ---  CONFIGURE DAC OUTPUT VALUE  */
+            writeCommand(DAC_DataPorts[DAC_WAVE_port], WAVE_Command, 0); /* DAC CONTROL  (0) [Write] */
             OSA_TimeDelay(1);
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
         
         }
         
@@ -819,11 +859,11 @@ int devMAX11300(void){
         
         for (int k = 1; k <= ADC_number; k++){
 
-            // --- --- --- ADC PORT CONFIGURATION
-            writeCommand(PORT_Config_Addr[ADC_port[k]], S_Command4_ADC, 0); // PORT CONTROL - ADC (0) [Write]
+            /* --- --- --- ADC PORT CONFIGURATION   */
+            writeCommand(PORT_Config_Addr[ADC_port[k]], S_Command4_ADC, 0); /* PORT CONTROL - ADC (0) [Write] */
             OSA_TimeDelay(1);
-            // SPI_Scope();
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            /* SPI_Scope(); */
+            /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
         }
        
         ADCL0 = 1;
@@ -842,13 +882,12 @@ int devMAX11300(void){
     
         for (int k = 1; k <= ADC_number; k++){
             
-            // --- --- ---  READ ADC REGISTER VALUE
+            // --- --- ---  READ ADC REGISTER VALUE //
             writeCommand(ADC_DataPorts[ADC_port[k]], 0x0000, 1); // DAC CONTROL  (1) [Read]
             OSA_TimeDelay(1);
             
-            //int ADC_DATA = ADC_DATA_B * 10000/4095;
             int ADC_DATA = (inBuffer[1] << inBuffer[0]) & 0x0FFF;
-            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+            // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  //
             
             SEGGER_RTT_printf(0, "\r\t ADC on PORT # %d selected: ADC DATA: # %d . \n", ADC_port[k], ADC_DATA);
             OSA_TimeDelay(10);
@@ -858,16 +897,16 @@ int devMAX11300(void){
     }
 
 
-    //       -       -       -       -       -       -       -       -       -       -       -       -       -
-    
+    /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
+
     SEGGER_RTT_WriteString(0, "\r\t Configuration & TEST END \n");
     OSA_TimeDelay(10);
 
-    // --- --- ---  CONFIGURE INTERRUPT CONTROL
-    writeCommand(0x11, S_Command5, 0); // INTERRUPT CONTROL  (0) [Write]
+    /* --- --- ---  CONFIGURE INTERRUPT CONTROL */
+    writeCommand(0x11, S_Command5, 0); /* INTERRUPT CONTROL  (0) [Write]    */
     OSA_TimeDelay(1);
-    // SPI_Scope();
-    // --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---
+    SPI_Scope();
+    /* --- --- ---  --- --- ---  --- --- ---  --- --- ---  --- --- ---  */
 
     return 0;
  
