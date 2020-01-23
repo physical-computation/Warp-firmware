@@ -61,14 +61,14 @@
 *	Comment out the header file to disable devices
 */
 #ifndef WARP_FRDMKL03
-#	include "devBMX055.h"
-#	include "devMMA8451Q.h"
-#	include "devHDC1000.h"
-#	include "devMAG3110.h"
-#	include "devL3GD20H.h"
-#	include "devBME680.h"
-#	include "devCCS811.h"
-#	include "devAMG8834.h"
+//#	include "devBMX055.h"
+//#	include "devMMA8451Q.h"
+//#	include "devHDC1000.h"
+//#	include "devMAG3110.h"
+//#	include "devL3GD20H.h"
+//#	include "devBME680.h"
+//#	include "devCCS811.h"
+//#	include "devAMG8834.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
 //#include "devSI7021.h"
@@ -85,6 +85,8 @@
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
 
+
+#include "devMAX11300.h"
 
 /*
 *	BTstack includes WIP
@@ -1422,6 +1424,8 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+        SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");  // MODIFIED HERE
+        OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);     // MODIFIED HERE
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -2065,7 +2069,14 @@ main(void)
 				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 				break;
 			}
-
+                
+            case 'q': // MAX11300 CONFIGURATION
+            {
+            SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
+            devMAX11300();
+            break;
+            }
+                            
 			/*
 			 *	Switch to RUN
 			 */
