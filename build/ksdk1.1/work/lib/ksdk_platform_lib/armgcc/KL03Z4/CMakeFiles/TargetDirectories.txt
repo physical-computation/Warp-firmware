@@ -1,0 +1,3 @@
+/Users/admin/GitHub_Repo/Warp-firmware/build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4/CMakeFiles/rebuild_cache.dir
+/Users/admin/GitHub_Repo/Warp-firmware/build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4/CMakeFiles/edit_cache.dir
+/Users/admin/GitHub_Repo/Warp-firmware/build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4/CMakeFiles/KsdkPlatformLib.dir
