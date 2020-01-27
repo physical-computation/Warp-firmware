@@ -2547,7 +2547,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
-					(0b1010000<<8),
+					(0b1000000<<8),
 					i2cPullupValue
 					);
 	#endif
