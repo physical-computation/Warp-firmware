@@ -2701,7 +2701,7 @@ loopForSensor(	const char *  tagString,
 {
 	WarpStatus		status; 
 	uint8_t			address;
-	if(minAddress < baseAddress <= maxAddress) 
+	if((minAddress < baseAddress) || (baseAddress <= maxAddress)) 
 	{ 
 		 address = baseAddress;
 	}
