@@ -212,7 +212,6 @@ Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Effi
 	author = {P. {Stanley-Marbell} and M. {Rinard}}, 
 	title = {Warp: A Hardware Platform for Efficient Multi-Modal
 	Sensing with Adaptive Approximation},
-	doi = {10.1109/MM.2019.2951004},
 	journal = {IEEE Micro},
 	year = {2020}, 
 	volume = {40}, 
