@@ -2699,8 +2699,16 @@ loopForSensor(	const char *  tagString,
 		bool  chatty
 		)
 {
-	WarpStatus		status;
-	uint8_t			address = min(minAddress, baseAddress);
+	WarpStatus		status; 
+	uint8_t			address;
+	if((minAddress < baseAddress) || (baseAddress <= maxAddress)) 
+	{ 
+		 address = baseAddress;
+	}
+	else 
+	{ 
+		address = minAddress;
+	}
 	int			readCount = repetitionsPerAddress + 1;
 	int			nSuccesses = 0;
 	int			nFailures = 0;
