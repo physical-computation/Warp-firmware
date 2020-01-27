@@ -196,23 +196,28 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 **BibTeX:**
 ```
 @ARTICLE{1804.09241,
-author = {Stanley-Marbell, Phillip and Rinard, Martin},
-title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-journal = {ArXiv e-prints},
-archivePrefix = {arXiv},
-eprint = {1804.09241},
-year = 2018,
+	author = {Stanley-Marbell, Phillip and Rinard, Martin},
+	title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+	journal = {ArXiv e-prints},
+	archivePrefix = {arXiv},
+	eprint = {1804.09241},
+	year = 2018,
 }
 ```
 Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro (2019), doi 10.1109/MM.2019.2951004.
 **BibTeX:**
 ```
-@ARTICLE{10.1109/MM.2019.2951004,
-author = {Stanley-Marbell, Phillip and Rinard, Martin},
-title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-doi = {10.1109/MM.2019.2951004},
-journal = {IEEE Micro},
-year = 2019,
+@ARTICLE{8959350,
+	author = {P. {Stanley-Marbell} and M. {Rinard}}, 
+	title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
+	doi = {10.1109/MM.2019.2951004},
+	journal = {IEEE Micro},
+	year = {2020}, 
+	volume = {40}, 
+	number = {1}, 
+	pages = {57-66}, 
+	ISSN = {1937-4143}, 
+	month = {Jan},
 }
 ```
 ### Acknowledgements
