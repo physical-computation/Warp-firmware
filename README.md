@@ -5,13 +5,13 @@ This is the firmware for the [Warp hardware](https://github.com/physical-computa
 
 ## 1.  Compiling the Warp firmware
 First, make sure the environment variable `ARMGCC_DIR` is set correctly (you can check whether this is set correctly, e.g., via `echo $ARMGCC_DIR`; if this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
-
-	setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
-
+```
+  setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
+```
 Alternatively, if your shell is `bash`
-
-	export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
-
+```
+  export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
+```
 (You can check what your shell is, e.g., via `echo $SHELL`.) Second, edit the jlink command file, `tools/scripts/jlink.commands` to include the correct path.
 
 Third, you should be able to build the Warp firmware by
@@ -33,9 +33,9 @@ m_data overflowed by 112 bytes`, the error is that the firmware image size excee
 
 
 Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
-
-	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
-
+```
+  JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
+```
 In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>:
 
 	JLinkRTTClient
@@ -205,7 +205,7 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 	year = 2018,
 }
 ```
-Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro (2019), doi 10.1109/MM.2019.2951004.
+Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro, Volume 40 , Issue 1 , Jan.-Feb. 2020.
 **BibTeX:**
 ```
 @ARTICLE{8959350,
