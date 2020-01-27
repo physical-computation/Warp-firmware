@@ -176,6 +176,13 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	 *	See https://narcisaam.github.io/Init_Device/ for more information 
 	 *	on how to initialize and configure CCS811
 	 */
+
+    /*
+	 *	Delay needed before start of i2c.
+	 */
+
+	OSA_TimeDelay(20); 
+
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
 							payloadMEAS_MODE /* Dummy value */,
 							menuI2cPullupValue);
