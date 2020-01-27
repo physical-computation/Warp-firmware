@@ -86,6 +86,8 @@
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
 
 
+#include "devMAX11300.h"
+
 /*
 *	BTstack includes WIP
 */
@@ -1422,6 +1424,8 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+        SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");  /* MODIFIED HERE */
+        OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);     /* MODIFIED HERE */
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -2065,7 +2069,14 @@ main(void)
 				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 				break;
 			}
-
+                
+            case 'q': /* MAX11300 CONFIGURATION */
+            {
+            SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
+            devMAX11300();
+            break;
+            }
+                            
 			/*
 			 *	Switch to RUN
 			 */
@@ -2547,7 +2558,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#ifdef WARP_BUILD_ENABLE_DEVHDC1000
 	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
-					(0b1000000<<8),
+					(0b1010000<<8),
 					i2cPullupValue
 					);
 	#endif
@@ -2699,16 +2710,8 @@ loopForSensor(	const char *  tagString,
 		bool  chatty
 		)
 {
-	WarpStatus		status; 
-	uint8_t			address;
-	if((minAddress < baseAddress) || (baseAddress <= maxAddress)) 
-	{ 
-		 address = baseAddress;
-	}
-	else 
-	{ 
-		address = minAddress;
-	}
+	WarpStatus		status;
+	uint8_t			address = min(minAddress, baseAddress);
 	int			readCount = repetitionsPerAddress + 1;
 	int			nSuccesses = 0;
 	int			nFailures = 0;
