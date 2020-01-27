@@ -177,7 +177,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	 *	on how to initialize and configure CCS811
 	 */
 
-    /*
+	/*
 	 *	Delay needed before start of i2c.
 	 */
 
