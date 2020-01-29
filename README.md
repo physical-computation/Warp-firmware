@@ -5,13 +5,13 @@ This is the firmware for the [Warp hardware](https://github.com/physical-computa
 
 ## 1.  Compiling the Warp firmware
 First, make sure the environment variable `ARMGCC_DIR` is set correctly (you can check whether this is set correctly, e.g., via `echo $ARMGCC_DIR`; if this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
-
-	setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
-
+```
+  setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
+```
 Alternatively, if your shell is `bash`
-
-	export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
-
+```
+  export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
+```
 (You can check what your shell is, e.g., via `echo $SHELL`.) Second, edit the jlink command file, `tools/scripts/jlink.commands` to include the correct path.
 
 Third, you should be able to build the Warp firmware by
@@ -21,10 +21,21 @@ Third, you should be able to build the Warp firmware by
 
 This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `Warp/src/boot/ksdk1.1.0/`, not the files in the build location, since the latter are overwritten during each build._
 
+> **NOTE:** If you run into a compile error such as `/usr/lib/gcc/arm-none-eabi/6.3.1/../../../arm-none-eabi/bin/ld: region
+m_data overflowed by 112 bytes`, the error is that the firmware image size exceeded the KL03 memory size. Some arm-gcc cross compilers, particularly on Linux, generate firmware images that are quite large. Easiest fixes are either:
+>
+> - Comment out some of the driver includes in the list between lines 64 and 71 (these trigger the instantiation of various driver data structures which take up memory)
+>
+> or
+>
+> - Modify src/boot/ksdk1.1.0/CMakeLists.txt and reduce the default stack size, e.g., by changing all occurrences of "__stack_size__=0x300” to, e.g., "__stack_size__=0x100"
+
+
+
 Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
-
-	JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
-
+```
+  JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
+```
 In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>:
 
 	JLinkRTTClient
@@ -185,23 +196,29 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 **BibTeX:**
 ```
 @ARTICLE{1804.09241,
-author = {Stanley-Marbell, Phillip and Rinard, Martin},
-title = {A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-journal = {ArXiv e-prints},
-archivePrefix = {arXiv},
-eprint = {1804.09241},
-year = 2018,
+	author = {Stanley-Marbell, Phillip and Rinard, Martin},
+	title = {A Hardware Platform for Efficient Multi-Modal 
+	Sensing with Adaptive Approximation},
+	journal = {ArXiv e-prints},
+	archivePrefix = {arXiv},
+	eprint = {1804.09241},
+	year = 2018,
 }
 ```
-Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro (2019), doi 10.1109/MM.2019.2951004.
+Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro, Volume 40 , Issue 1 , Jan.-Feb. 2020.
 **BibTeX:**
 ```
-@ARTICLE{10.1109/MM.2019.2951004,
-author = {Stanley-Marbell, Phillip and Rinard, Martin},
-title = {Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation},
-doi = {10.1109/MM.2019.2951004},
-journal = {IEEE Micro},
-year = 2019,
+@ARTICLE{8959350,
+	author = {P. {Stanley-Marbell} and M. {Rinard}}, 
+	title = {Warp: A Hardware Platform for Efficient Multi-Modal
+	Sensing with Adaptive Approximation},
+	journal = {IEEE Micro},
+	year = {2020}, 
+	volume = {40}, 
+	number = {1}, 
+	pages = {57-66}, 
+	ISSN = {1937-4143}, 
+	month = {Jan},
 }
 ```
 ### Acknowledgements
