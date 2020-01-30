@@ -1,7 +1,7 @@
 /*
 	Authored 2016-2018. Phillip Stanley-Marbell.
 	
-	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang, Sam Willis.
+	Additional contributions, 2018 onwards: Jan Heck, Chatura Samarakoon, Youchao Wang, Sam Willis.
 
 	All rights reserved.
 
@@ -55,7 +55,9 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
+
 //#define WARP_FRDMKL03
+
 
 /*
 *	Comment out the header file to disable devices
@@ -69,6 +71,7 @@
 #	include "devBME680.h"
 #	include "devCCS811.h"
 #	include "devAMG8834.h"
+#	include "devMAX11300.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
 //#include "devSI7021.h"
@@ -1422,6 +1425,8 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+		SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -2065,6 +2070,13 @@ main(void)
 				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 				break;
 			}
+                
+			case 'q':   /* MAX11300 CONFIGURATION */
+			{
+				SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
+				devMAX11300();
+				break;
+			}
 
 			/*
 			 *	Switch to RUN
@@ -2699,8 +2711,16 @@ loopForSensor(	const char *  tagString,
 		bool  chatty
 		)
 {
-	WarpStatus		status;
-	uint8_t			address = min(minAddress, baseAddress);
+	WarpStatus		status; 
+	uint8_t			address;
+	if((minAddress < baseAddress) || (baseAddress <= maxAddress)) 
+	{ 
+		 address = baseAddress;
+	}
+	else 
+	{ 
+		address = minAddress;
+	}
 	int			readCount = repetitionsPerAddress + 1;
 	int			nSuccesses = 0;
 	int			nFailures = 0;
