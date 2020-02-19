@@ -1,7 +1,2 @@
-/*
 
- */
-
-
-int    MAX11300(void);
-
+int MAX11300(void);

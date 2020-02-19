@@ -71,7 +71,7 @@
 #	include "devBME680.h"
 #	include "devCCS811.h"
 #	include "devAMG8834.h"
-#	include "devMAX11300.h"
+//#	include "devMAX11300.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
 //#include "devSI7021.h"
@@ -2070,13 +2070,14 @@ main(void)
 				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 				break;
 			}
-                
+#ifdef WARP_BUILD_ENABLE_DEVMAX11300              
 			case 'q':   /* MAX11300 CONFIGURATION */
 			{
 				SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
 				devMAX11300();
 				break;
 			}
+#endif
 
 			/*
 			 *	Switch to RUN
