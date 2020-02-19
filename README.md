@@ -30,7 +30,7 @@ m_data overflowed by 112 bytes`, the error is that the firmware image size excee
 >
 > - Modify src/boot/ksdk1.1.0/CMakeLists.txt and reduce the default stack size, e.g., by changing all occurrences of "__stack_size__=0x300” to, e.g., "__stack_size__=0x100"
 
-
+If you are on Mac OS clone an compile the tools from https://github.com/payne92/bare-metal-arm and then set the $ARMGCC_DIR variable to point to them.
 
 Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
 ```
