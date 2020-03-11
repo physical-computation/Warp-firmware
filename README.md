@@ -193,6 +193,7 @@ From your local clone:
 
 ### If you use Warp in your research, please cite it as:
 Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. ArXiv e-prints (2018). arXiv:1804.09241.
+
 **BibTeX:**
 ```
 @ARTICLE{1804.09241,
@@ -206,6 +207,7 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 }
 ```
 Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Efficient Multi-Modal Sensing with Adaptive Approximation”. IEEE Micro, Volume 40 , Issue 1 , Jan.-Feb. 2020.
+
 **BibTeX:**
 ```
 @ARTICLE{8959350,
