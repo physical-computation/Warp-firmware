@@ -223,6 +223,38 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 	return kWarpStatusOK;
 }
 
+WarpStatus
+readSensorDataRegisterHDC1000(WarpTypeMask signalType)
+{
+	WarpStatus	i2cReadStatus;
+	WarpSensorOutputRegister	readRegister;
+
+	switch(signalType)
+	{
+		case kWarpTypeMaskTemperature:
+		{
+			readRegister = kWarpSensorOutputRegisterHDC1000Temperature;
+			break;
+		}
+
+		case kWarpTypeMaskHumidity:
+		{
+			readRegister = kWarpSensorOutputRegisterHDC1000Humidity;
+			break;
+		}
+		
+		default:
+		{
+			readRegister = kWarpSensorOutputRegisterHDC1000Temperature;
+			break;
+		}
+	}
+
+	i2cReadStatus = readSensorRegisterHDC1000(readRegister, 2 /* numberOfBytes */);
+
+	return i2cReadStatus;
+}
+
 void
 printSensorDataHDC1000(bool hexModeFlag)
 {
@@ -232,7 +264,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
-	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
+	i2cReadStatus = readSensorDataRegisterHDC1000(kWarpTypeMaskTemperature);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
@@ -260,7 +292,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Humidity, 2 /* numberOfBytes */);
+	i2cReadStatus = readSensorDataRegisterHDC1000(kWarpTypeMaskHumidity);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
@@ -287,4 +319,88 @@ printSensorDataHDC1000(bool hexModeFlag)
 			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined*100 / (1u << 16)));
 		}
 	}
+}
+
+
+WarpStatus
+configureSensorHDC1000(WarpTypeMask signalType, WarpSignalBitPrecision bitPrecision, 
+		int i2cPullupValue)
+{
+	uint16_t	payload = 0, configSensorRegisterValueMSB, configSensorRegisterValueLSB, configSensorRegisterValue; 
+	WarpStatus	configStatus;
+
+	switch(signalType)
+	{
+		case kWarpTypeMaskTemperature:
+		{
+			switch(bitPrecision)
+			{
+				case kWarpSignalBitPrecisionMin:
+				case kWarpSignalBitPrecision11:
+				{
+					payload |= 1 << 10;
+					break;
+				}
+
+				case kWarpSignalBitPrecision14:
+				case kWarpSignalBitPrecisionMax:
+				default: 
+				{
+					payload &= ~(1 << 10);
+					break;
+				}
+			}
+		}
+			break;
+
+		case(kWarpTypeMaskHumidity):
+		{
+			switch(bitPrecision)
+			{
+        		case kWarpSignalBitPrecisionMin:
+				case kWarpSignalBitPrecision8: 
+				{
+					payload |= 0b10 << 8;
+					break;
+				}
+
+				case kWarpSignalBitPrecision11: 
+				{
+					payload |= 0b01 << 8;
+					break;
+				}
+
+				case kWarpSignalBitPrecision14: 
+				case kWarpSignalBitPrecisionMax: 
+				default: 
+				{
+					break;
+				}
+			}
+		}
+			break;
+
+		default: 
+		{
+			break;
+		}
+    }
+
+	configStatus = writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
+			payload,
+			i2cPullupValue
+			);
+
+	/* Check the register value is set */
+	configStatus = readSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration, 2 /* numberOfBytes */); /* Read back register */
+	configSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	configSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
+	configSensorRegisterValue = ((configSensorRegisterValueMSB & 0xFF) << 8) | (configSensorRegisterValueLSB & 0xFF);
+
+	if (configSensorRegisterValue != payload)
+	{
+		configStatus = kWarpStatusDeviceNotConfigured;
+	}
+	
+	return configStatus;
 }

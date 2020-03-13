@@ -72,11 +72,11 @@
 #	include "devCCS811.h"
 #	include "devAMG8834.h"
 //#	include "devMAX11300.h"
-//#include "devTCS34725.h"
+#include "devTCS34725.h"
 //#include "devSI4705.h"
-//#include "devSI7021.h"
-//#include "devLPS25H.h"
-//#include "devADXL362.h"
+#include "devSI7021.h"
+#include "devLPS25H.h"
+#include "devADXL362.h"
 //#include "devPAN1326.h"
 //#include "devAS7262.h"
 //#include "devAS7263.h"
@@ -2561,10 +2561,8 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 
 	#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
-					(0b1000000<<8),
-					i2cPullupValue
-					);
+	numberOfConfigErrors += configureSensorHDC1000(kWarpTypeMaskTemperature, kWarpSignalBitPrecision14, i2cPullupValue); /* Configuration sensor for temperature reading */
+	numberOfConfigErrors += configureSensorHDC1000(kWarpTypeMaskHumidity, kWarpSignalBitPrecision14, i2cPullupValue); /* Configuration sensor for humidity reading */
 	#endif
 
 	#ifdef WARP_BUILD_ENABLE_DEVCCS811
