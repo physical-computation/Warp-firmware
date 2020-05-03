@@ -301,4 +301,53 @@ printSensorDataCCS811(bool hexModeFlag)
 			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
 		}
 	}
-}
+	/*
+	 *	Get Voltage across V_REF
+	 */
+	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+	
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+        /*
+	 *	Get Voltage across R_NTC
+	 */
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[2];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[3];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+	
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+} 
+} 
+
+
+
