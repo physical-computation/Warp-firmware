@@ -252,6 +252,7 @@ typedef enum
 
 	kWarpSensorOutputRegisterCCS811ALG_DATA				= 0x02,
 	kWarpSensorOutputRegisterCCS811RAW_DATA				= 0x03,
+	kWarpSensorOutputRegisterCCS811RAW_REF_NTC			= 0x06,
 
 	kWarpSensorOutputRegisterBMX055accelACCD_X_LSB			= 0x02,
 	kWarpSensorOutputRegisterBMX055accelACCD_X_MSB			= 0x03,
