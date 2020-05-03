@@ -347,7 +347,7 @@ printSensorDataCCS811(bool hexModeFlag)
 		}
 	}
 } 
-} 
+
 
 
 
