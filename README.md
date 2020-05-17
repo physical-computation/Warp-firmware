@@ -218,8 +218,8 @@ Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Effi
 	year = {2020},
 	volume = {40},
 	number = {1},
-	pages = {57-66},
-	ISSN = {1937-4143}, 
+	pages = {57-66}, 
+	ISSN = {1937-4143},
 	month = {Jan},
 }
 ```
