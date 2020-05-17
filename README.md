@@ -83,8 +83,7 @@ index 87a27e1..42ce458 100755
 @@ -55,7 +55,7 @@
  #include "SEGGER_RTT.h"
  #include "warp.h"
-
--//#define WARP_FRDMKL03
+ -//#define WARP_FRDMKL03
 +#define WARP_FRDMKL03
 ```
 
