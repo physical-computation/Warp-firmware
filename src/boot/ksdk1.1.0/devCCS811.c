@@ -173,7 +173,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	WarpStatus	status1, status2;
 
 	/*
-	 *	See https://narcisaam.github.io/Init_Device/ for more information 
+	 *	See https://narcisaam.github.io/Init_Device/ for more information
 	 *	on how to initialize and configure CCS811
 	 */
 
@@ -181,7 +181,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	 *	Delay needed before start of i2c.
 	 */
 
-	OSA_TimeDelay(20); 
+	OSA_TimeDelay(20);
 
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
 							payloadMEAS_MODE /* Dummy value */,
@@ -197,7 +197,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 							menuI2cPullupValue);
 
 	/*
-	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4, 
+	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4,
 	 *	run CCS811 for 20 minutes, before accurate readings are generated.
 	 */
 
@@ -286,6 +286,51 @@ printSensorDataCCS811(bool hexModeFlag)
 	readSensorRegisterValueCombined =
 						((readSensorRegisterValueLSB & 0x03) << 8) |
 						(readSensorRegisterValueMSB & 0xFF);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+	/*
+	 *	Get Voltage across V_REF
+	 */
+	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, " ----,");
+	}
+	else
+	{
+		if (hexModeFlag)
+		{
+			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+		}
+		else
+		{
+			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+		}
+	}
+  /*
+	 *	Get Voltage across R_NTC
+	 */
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[2];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[3];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
