@@ -197,7 +197,7 @@ Phillip Stanley-Marbell and Martin Rinard. “A Hardware Platform for Efficient 
 **BibTeX:**
 ```
 @ARTICLE{1804.09241,
-	author = {Stanley-Marbell, Phillip and Rinard, Martin},
+	author = {Stanley-Marbell, Phillip and Rinard, Martin}, 
 	title = {A Hardware Platform for Efficient Multi-Modal
 	Sensing with Adaptive Approximation},
 	journal = {ArXiv e-prints},
