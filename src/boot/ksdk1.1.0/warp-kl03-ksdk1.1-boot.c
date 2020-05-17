@@ -1336,7 +1336,7 @@ main(void)
 	warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
 	enableSssupply(3000);
 	enableI2Cpins(menuI2cPullupValue);
-	printAllSensors(false /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, menuI2cPullupValue);
+	printAllSensors(false /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, menuI2cPullupValue);
 	/*
 	 *	Notreached
 	 */
@@ -1425,7 +1425,9 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#ifdef WARP_BUILD_ENABLE_DEVMAX11300 
 		SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");
+#endif
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
@@ -2070,8 +2072,8 @@ main(void)
 				warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* sleep seconds : irrelevant here */);
 				break;
 			}
-#ifdef WARP_BUILD_ENABLE_DEVMAX11300              
-			case 'q':   /* MAX11300 CONFIGURATION */
+#ifdef WARP_BUILD_ENABLE_DEVMAX11300 
+			case 'q':
 			{
 				SEGGER_RTT_printf(0, "\r\tMAX11300 Configuration\n");
 				devMAX11300();
