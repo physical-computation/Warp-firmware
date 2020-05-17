@@ -135,7 +135,7 @@ Select:
 - 'u': set I2C address.
 - 'x': disable SWD and spin for 10 secs.
 - 'z': dump all sensors data.
-Enter selection> 
+Enter selection>
 ````
 ### Double echo characters
 By default on Unix, you will likely see characters you enter shown twice. To avoid this, do the following:
@@ -211,15 +211,15 @@ Phillip Stanley-Marbell and Martin Rinard. “Warp: A Hardware Platform for Effi
 **BibTeX:**
 ```
 @ARTICLE{8959350,
-	author = {P. {Stanley-Marbell} and M. {Rinard}}, 
+	author = {P. {Stanley-Marbell} and M. {Rinard}},
 	title = {Warp: A Hardware Platform for Efficient Multi-Modal
 	Sensing with Adaptive Approximation},
 	journal = {IEEE Micro},
-	year = {2020}, 
-	volume = {40}, 
-	number = {1}, 
-	pages = {57-66}, 
-	ISSN = {1937-4143}, 
+	year = {2020},
+	volume = {40},
+	number = {1},
+	pages = {57-66},
+	ISSN = {1937-4143},
 	month = {Jan},
 }
 ```
