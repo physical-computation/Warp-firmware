@@ -83,7 +83,7 @@ index 87a27e1..42ce458 100755
 @@ -55,7 +55,7 @@
  #include "SEGGER_RTT.h"
  #include "warp.h"
-
+ 
 -//#define WARP_FRDMKL03
 +#define WARP_FRDMKL03
 ```
@@ -135,7 +135,7 @@ Select:
 - 'u': set I2C address.
 - 'x': disable SWD and spin for 10 secs.
 - 'z': dump all sensors data.
-Enter selection>
+Enter selection> 
 ````
 ### Double echo characters
 By default on Unix, you will likely see characters you enter shown twice. To avoid this, do the following:
