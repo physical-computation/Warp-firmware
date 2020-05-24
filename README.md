@@ -135,7 +135,7 @@ Select:
 - 'u': set I2C address.
 - 'x': disable SWD and spin for 10 secs.
 - 'z': dump all sensors data.
-Enter selection> 
+Enter selection>
 ````
 ### Double echo characters
 By default on Unix, you will likely see characters you enter shown twice. To avoid this, do the following:
