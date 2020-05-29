@@ -69,7 +69,8 @@ extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
  *		"
  */
 void		
-initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) {
+initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) 
+{
 	deviceStatePointer->signalType	= (
 					kWarpTypeMaskMax
 				); /* FIXME */
@@ -77,26 +78,32 @@ initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) {
 }
 
 WarpStatus	
-readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) {
+readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) 
+{
 	/* two ISL23415 configured in Daisy Chain Configuration */
 
 	/*
 	 *	XXX Populate the shift-out register with the read-register command,
 	 *	followed by the register to be read, followed by a zero byte FIXME.
 	 */
-	if (deviceRegister == kWarpISL23415RegACR) {
+	if (deviceRegister == kWarpISL23415RegACR) 
+	{
 		//deviceISL23415State.spiSourceBuffer[0] = 0b00100000; /* ACR READ */
 		deviceISL23415State.spiSourceBuffer[0] = 0b10010000; /* ACR READ of DCP1 */
 		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
 		deviceISL23415State.spiSourceBuffer[2] = 0b10010000; /* ACR READ of DCP0 */
 		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
 
-	} else if (deviceRegister == kWarpISL23415RegWR) {
+	} 
+	else if (deviceRegister == kWarpISL23415RegWR) 
+	{
 		deviceISL23415State.spiSourceBuffer[0] = 0b10000000; /* WR0 READ of DCP1 */
 		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
 		deviceISL23415State.spiSourceBuffer[2] = 0b10000000; /* WR0 READ of DCP0 */
 		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
-	} else {
+	} 
+	else 
+	{
 		/* FIXME */
 	}
 
@@ -192,17 +199,22 @@ writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int n
 	 *	Populate the shift-out register with the read-register command,
 	 *	followed by the register to be read, followed by a zero byte XXX.
 	 */
-	if (deviceRegister == kWarpISL23415RegACR) {
+	if (deviceRegister == kWarpISL23415RegACR) 
+	{
 		deviceISL23415State.spiSourceBuffer[0] = 0b01100000; /* ACR WRITE of DCP 1 */
 		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
 		deviceISL23415State.spiSourceBuffer[2] = 0b01100000; /* ACR WRITE of DCP 0 */
 		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
-	} else if (deviceRegister == kWarpISL23415RegWR) {
+	} 
+	else if (deviceRegister == kWarpISL23415RegWR) 
+	{
 		deviceISL23415State.spiSourceBuffer[0] = 0b11000000; /* WR0 WRITE of DCP 1 */
 		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
 		deviceISL23415State.spiSourceBuffer[2] = 0b11000000; /* WR0 WRITE of DCP 0 */
 		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
-	} else {
+	} 
+	else 
+	{
 		/* FIXME */
 	}
 	
