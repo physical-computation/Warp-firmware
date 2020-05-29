@@ -911,7 +911,7 @@ debugISL23415(void)
 
 
 void 
-sensorCommDemoISL(void)
+sensorCommDemoISL23415(void)
 {
 	uint16_t				menuI2cPullupValue = 32768;
 	uint16_t				menuSupplyVoltage = 0;
