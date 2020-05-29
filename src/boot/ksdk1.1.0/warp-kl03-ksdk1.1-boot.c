@@ -457,8 +457,8 @@ configureI2Cpins(uint8_t pullupValue)
 	 *	Configure the two ISL23415 DCPs over SPI
 	 */
 	
-	uint8_t valuesDPC[2] = {pullupValue, pullupValue};
-	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDPC, 4);
+	uint8_t valuesDCP[2] = {pullupValue, pullupValue};
+	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDCP, 4);
 }
 
 void
@@ -864,9 +864,6 @@ void
 debugISL23415(void)
 {
 #ifdef WARP_BUILD_ENABLE_DEVISL23415_DEBUG
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou 11 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-	
 	for (uint8_t i=0; i < 4; i++) 
 	{
 		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
@@ -886,10 +883,11 @@ debugISL23415(void)
 		OSA_TimeDelay(2000);
 	}
 
-	uint8_t valuesDPC[2] = {0x81, 0x79};
-	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDPC, 4);
+	uint8_t valuesDCP[2] = {0x81, 0x79};
+	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDCP, 4);
 
-	for (uint8_t i=0; i < 4; i++) {
+	for (uint8_t i=0; i < 4; i++)
+	{
 		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
 
 	#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
@@ -917,8 +915,6 @@ sensorCommDemoISL23415(void)
 	uint16_t				menuSupplyVoltage = 0;
 
 #ifdef WARP_BUILD_ENABLE_DEVISL23415_SENSOR_COMM_DEMO
-	SEGGER_RTT_WriteString(0, "\r[  \t\t\t\t   Billtsou V1 Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	SEGGER_RTT_WriteString(0, "\r\n\rUsing deviceMMA8451Q register 0x17 value ");
 
 	WarpStatus i2cReadStatus = kWarpStatusOK, i2cWriteStatus = kWarpStatusOK;
@@ -928,8 +924,8 @@ sensorCommDemoISL23415(void)
 	enableI2Cpins(0x80);
 
 	/*	
-	*	I2C MMA8451Q initialization
-	*/	
+	 *	I2C MMA8451Q initialization
+	 */	
 	i2cWriteStatus = configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
 					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 					menuI2cPullupValue
@@ -946,12 +942,9 @@ sensorCommDemoISL23415(void)
 
 	for (gWarpI2cBaudRateKbps=100; gWarpI2cBaudRateKbps<=2000; gWarpI2cBaudRateKbps+=100) 
 	{
-
 		uint8_t dcpValue=0x08;
 		while (dcpValue > 0x00) 
 		{
-		//for (uint8_t dcpValue=0x08; dcpValue<=0xFF; dcpValue+=0x08) {
-
 			configureI2Cpins(dcpValue);
 			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
@@ -976,8 +969,8 @@ sensorCommDemoISL23415(void)
 					SEGGER_RTT_WriteString(0, "\nError when reading from I2C device");
 				}
 				
-				//SEGGER_RTT_printf(0, "\r\n\tWrote value 0x%02X, read value 0x%02X, Diff = 0x%02X", 
-				//	writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0]));
+				SEGGER_RTT_printf(0, "\r\n\tWrote value 0x%02X, read value 0x%02X, Diff = 0x%02X", 
+					writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0]));
 
 				SEGGER_RTT_printf(0, "\r\n%u, 0x%02X, 0x%02X, 0x%02X, 0x%02X", 
 					gWarpI2cBaudRateKbps, dcpValue, writeValue, deviceMMA8451QState.i2cBuffer[0], (writeValue - deviceMMA8451QState.i2cBuffer[0]));	 
