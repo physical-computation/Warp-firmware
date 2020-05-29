@@ -78,7 +78,9 @@ initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer)
 WarpStatus	
 readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) 
 {
-	/* two ISL23415 configured in Daisy Chain Configuration */
+	/*
+	 *	Two ISL23415 configured in Daisy Chain Configuration.
+	 */
 
 	/*
 	 *	XXX Populate the shift-out register with the read-register command,
@@ -192,7 +194,8 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes)
 }
 
 WarpStatus	
-writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int numberOfBytes) {
+writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int numberOfBytes)
+{
 	/*
 	 *	Populate the shift-out register with the read-register command,
 	 *	followed by the register to be read, followed by a zero byte XXX.
