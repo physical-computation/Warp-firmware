@@ -56,8 +56,6 @@ extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 
 /*
- *	Analog Devices ADXL362.
- *
  *	From device manual, Rev. B, Page 19 of 44:
  *
  *		"
