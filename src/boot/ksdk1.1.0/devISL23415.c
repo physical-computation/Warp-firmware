@@ -83,8 +83,8 @@ readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes)
 	 */
 
 	/*
-	 *	XXX Populate the shift-out register with the read-register command,
-	 *	followed by the register to be read, followed by a zero byte FIXME.
+	 *	Populate the shift-out register with the read-register command,
+	 *	followed by the register to be read, followed by a zero byte.
 	 */
 	if (deviceRegister == kWarpISL23415RegACR) 
 	{

@@ -871,6 +871,9 @@ void
 debugISL23415(void)
 {
 #ifdef WARP_BUILD_ENABLE_DEVISL23415_DEBUG
+	/*
+	 *	Counter i is only used to repeat debug operations a number of times.
+	 */
 	for (uint8_t i=0; i < 4; i++) 
 	{
 		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
@@ -890,9 +893,16 @@ debugISL23415(void)
 		OSA_TimeDelay(2000);
 	}
 
+	/*
+	 *	Values are chosen to slightly deviate from 0x80, which is
+	 *	the median value of the range of availalbe tap positions.
+	 */
 	uint8_t valuesDCP[2] = {0x81, 0x79};
 	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDCP, 4);
 
+	/*
+	 *	Counter i is only used to repeat debug operations a number of times.
+	 */
 	for (uint8_t i=0; i < 4; i++)
 	{
 		readDeviceRegisterISL23415(kWarpISL23415RegACR, 4);
@@ -925,7 +935,7 @@ sensorCommDemoISL23415(void)
 	SEGGER_RTT_WriteString(0, "\r\n\rUsing deviceMMA8451Q register 0x17 value ");
 
 	WarpStatus i2cReadStatus = kWarpStatusOK, i2cWriteStatus = kWarpStatusOK;
-	menuSupplyVoltage = 1800; //3300;
+	menuSupplyVoltage = 1800;
 	enableSssupply(menuSupplyVoltage);
 	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	enableI2Cpins(0x80);
@@ -937,12 +947,6 @@ sensorCommDemoISL23415(void)
 					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
 					menuI2cPullupValue
 					);
-	
-	
-	// i2cReadStatus = readSensorRegisterMMA8451Q(0x17 /* Freefall/motion threshold register - FF_MT_THS */,
-	// 						1 /* 1 byte */);
-
-	// SEGGER_RTT_printf(0, "\r\n\tRead 0x%02X", deviceMMA8451QState.i2cBuffer[0]); 
 	
 	SEGGER_RTT_printf(0, "\r\n\tmenuSupplyVoltage %d", menuSupplyVoltage);
 	SEGGER_RTT_WriteString(0, "\ndgWarpI2cBaudRateKbps, cpValue, writeValue, readValue, diff");
@@ -957,7 +961,7 @@ sensorCommDemoISL23415(void)
 
 			for (uint8_t writeValue=0x00; writeValue<0xFF; writeValue++) 
 			{
-				i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address F_SETUP */,
+				i2cWriteStatus = writeSensorRegisterMMA8451Q(0x17 /* register address FF_MT_THS */,
 									writeValue /* payload: Disable FIFO */,
 									0);
 
