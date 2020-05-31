@@ -35,8 +35,20 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef WARP_BUILD_ENABLE_DEVISL23415
+#define WARP_BUILD_ENABLE_DEVISL23415
+#endif
 
+//#define WARP_BUILD_ENABLE_DEVISL23415_DEBUG
+
+#define WARP_BUILD_ENABLE_DEVISL23415_SENSOR_COMM_DEMO
+
+typedef enum
+{
+	kWarpISL23415RegACR			= 0x00,
+	kWarpISL23415RegWR			= 0x01,
+} WarpISL23415Reg;
 
 void		initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer);
 WarpStatus	readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	writeDeviceRegisterISL23415(uint8_t command, uint8_t deviceRegister, uint8_t writeValue);
+WarpStatus	writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int numberOfBytes);
