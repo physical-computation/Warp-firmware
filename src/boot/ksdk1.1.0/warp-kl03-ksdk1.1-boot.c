@@ -51,8 +51,10 @@
 #include "fsl_port_hal.h"
 #include "fsl_lpuart_driver.h"
 
+//TODO: need a better way to enable variants of the firmware instead of including, e.g., glaux.h which defines WARP_BUILD_ENABLE_GLAUX_VARIANT as the means of enabling Glauc build.
+//TODO: one possibility is to -DWARP_BUILD_ENABLE_GLAUX_VARIANT as a build flag 
 /*
- *	Glaux.h needs to come before bpio_pins.hexModeFlag
+ *	Glaux.h needs to come before gpio_pins.h
  */
 #include "glaux.h"
 #include "warp.h"
@@ -71,6 +73,7 @@
 //#include "devSI7021.h"
 //#include "devL3GD20H.h"
 #include "devBME680.h"
+#include "devIS25xP.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
 //#include "devCCS811.h"
@@ -96,6 +99,10 @@
 
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 volatile WarpSPIDeviceState			deviceADXL362State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVIS25xP
+volatile WarpSPIDeviceState			deviceIS25xPState;
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
@@ -436,15 +443,19 @@ enableSPIpins(void)
 {
 	CLOCK_SYS_EnableSpiClock(0);
 
-	/*	Warp KL03_SPI_MISO	--> PTA6	(ALT3)		*/
+	/*	kWarpPinSPI_MISO	--> PTA6	(ALT3)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAlt3);
 
-	/*	Warp KL03_SPI_MOSI	--> PTA7	(ALT3)		*/
+	/*	kWarpPinSPI_MOSI	--> PTA7	(ALT3)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAlt3);
 
-	/*	Warp KL03_SPI_SCK	--> PTB0	(ALT3)		*/
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	/*	kWarpPinSPI_SCK	--> PTA9	(ALT3)			*/
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAlt3);
+#else
+	/*	kWarpPinSPI_SCK	--> PTB0	(ALT3)			*/
 	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAlt3);
-
+#endif
 
 	/*
 	 *	Initialize SPI master. See KSDK13APIRM.pdf Section 70.4
@@ -473,8 +484,14 @@ disableSPIpins(void)
 	/*	Warp KL03_SPI_MOSI	--> PTA7	(GPIO)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
-	/*	Warp KL03_SPI_SCK	--> PTB0	(GPIO)		*/
+#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
+	/*	kWarpPinSPI_SCK	--> PTA9	(GPIO)			*/
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
+#else
+	/*	kWarpPinSPI_SCK	--> PTB0	(GPIO)			*/
 	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
+#endif
+
 
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO);
@@ -593,7 +610,7 @@ lowPowerPinStates(void)
 	 *		to prevent unwanted leakage (potentially caused by floating inputs)."
 	 *
 	 *	However, other documents advice to place pin as GPIO and drive low or high.
-	 *	For now, leave as GPIO. Filed issue #54 low-power pin states to investigate.
+	 *	For now, leave disabled. Filed issue #54 low-power pin states to investigate.
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortPinDisabled);
@@ -651,13 +668,13 @@ lowPowerPinStates(void)
 
 
 	/*
-	 *	Now, set the non-disabled pins (PTA6, PTA7, PTA8 (sacrificial), PTA9 and PTB0, PTB1, PTB2, PTB3, PTB4), to 0
+	 *	Now, set the non-disabled pins (PTA6, PTA7, PTA8 (sacrificial), PTA9 and PTB0, PTB1, PTB2, PTB3, PTB4), to 0 <-- this comment is outdated?
 	 */
 
 
 
 	/*
-	 *	If we are in mode where we disable the ADC, then drive the pin high since it is tied to KL03_VDD
+	 *	If we are in mode where we disable the ADC, then drive the pin high since it is tied to KL03_VDD <-- no longer relevant on Glaux?
 	 */
 	GPIO_DRV_SetPinOutput(kGlauxPinFlash_CS);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
@@ -788,7 +805,9 @@ lowPowerPinStates(void)
 	/*
 	 *	Drive these chip selects high since they are active low:
 	 */
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+#endif
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 	GPIO_DRV_SetPinOutput(kWarpPinADXL362_CS);
 #endif
@@ -1632,14 +1651,49 @@ main(void)
 	{
 		SEGGER_RTT_WriteString(0, "setRTCCountdownRV8803C7() succeeded.\n");
 	}
+
+	/*
+	 *	Set the CLKOUT frequency to 1Hz, to reduce CV^2 power on the CLKOUT pin.
+	 *	See RV-8803-C7_App-Manual.pdf section 3.6 (register is 0Dh)
+	 */
+	uint8_t	extReg;
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &extReg);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7() failed...\n");
+	}
+	else
+	{
+		SEGGER_RTT_WriteString(0, "readRTCRegisterRV8803C7() failed...\n");
+	}
+
+	/*
+	 *	Set bits 3:2 (FD) to 10 (1Hz CLKOUT)
+	 */
+	extReg &= 0b11110011;
+	extReg |= 0b00001000;
+	status = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, extReg);
+	if (status != kWarpStatusOK)
+	{
+		SEGGER_RTT_WriteString(0, "writeRTCRegisterRV8803C7() failed...\n");
+	}
+	else
+	{
+		SEGGER_RTT_WriteString(0, "writeRTCRegisterRV8803C7() succeeded.\n");
+	}
 	disableI2Cpins();
 #endif
+
 
 	/*
 	 *	Initialization: Devices hanging off SPI
 	 */
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 	initADXL362(&deviceADXL362State);
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVIS25xP
+	initIS25xP(&deviceIS25xPState);
 #endif
 
 
@@ -1686,6 +1740,22 @@ main(void)
 
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
 	printBootSplash(menuSupplyVoltage, menuRegisterAddress, menuI2cPullupValue, &powerManagerCallbackStructure);
+
+	SEGGER_RTT_WriteString(0, "About to read IS25xP JEDEC ID...\n");
+	spiTransactionIS25xP(0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+	SEGGER_RTT_printf(0, "IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+
+	SEGGER_RTT_WriteString(0, "About to read IS25xP Manufacturer ID...\n");
+	spiTransactionIS25xP(0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+	SEGGER_RTT_printf(0, "IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+
+	SEGGER_RTT_WriteString(0, "About to read IS25xP Flash ID (also releases low-power mode)...\n");
+	spiTransactionIS25xP(0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+	SEGGER_RTT_printf(0, "IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
+
+
+	SEGGER_RTT_WriteString(0, "About to activate low-power modes (including IS25xP Flash)...\n");
+	activateAllLowPowerSensorModes(true /* verbose */);
 
 	uint8_t	tmpRV8803RegisterByte;
 	enableI2Cpins(menuI2cPullupValue);
@@ -1807,6 +1877,22 @@ main(void)
 		blinkLED(kGlauxPinLED);
 
 
+
+/*
+		Causes of power drain on revB
+		(1) The clock output on the RV8803 is enabled (we tied CLOKOE high and routed CLKOUT to the KL03). This could easily be drianing a few uA.
+		The RV-8803-C7_App-Manual.pdf (section 7.2)indicates that all the stated sub-uA currents in the datasheet are with CLKOUT disabled
+		and gives a power supply "adder" for ΔIVDD:CK32 of 1uA for a load capacitance of CL = 10 pF. The datasheet also gives
+		a supply current for temperature sensing by the RV8803 as 19 uA (IVDD:TSP). Have updated the RV8803 initialization code above so that we write to register 0D
+		to set the CLKOUT signal from the default of 32KHz to be the lowest (1Hz) 
+		to reduce power. Verified that this reduces the power dissipation from ~60uA to fluctuating between 8uA and 40uA at 1Hz as the CLKOUT toggles
+	
+		(2) The IS25LP016 flash is by default in standy, not deep power down. The IS25LP016
+		has a standby current of ~15uA at 85C (8uA at 25C) (and a deep power-down current of ~10uA at 85C / 6uA at 25C). We need to explicitly 
+		engage the deep power down mode. See 25LP-WP016D-1090979.pdf, section 8.22
+*/
+
+
 		/*
 		 *	Go into very low leakage stop mode (VLLS0) for 10 seconds.
 		 *	The end of the VLLS0 sleep triggers a reset
@@ -1814,8 +1900,8 @@ main(void)
 //		SEGGER_RTT_WriteString(0, "About to go into VLPS for 3 seconds...\n");
 //currently causes a hang:		warpLowPowerSecondsSleep(3, true /* forceAllPinsIntoLowPowerState */, menuI2cPullupValue);
 
-		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 60 seconds (will reset afterwords)...\n");
-		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 60/* sleep seconds */, menuI2cPullupValue);		
+		SEGGER_RTT_WriteString(0, "About to go into VLLS0 for 60*60 seconds (will reset afterwords)...\n");
+		status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 60*60/* sleep seconds */, menuI2cPullupValue);		
 		if (status != kWarpStatusOK)
 		{
 			SEGGER_RTT_WriteString(0, "warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
@@ -3634,6 +3720,13 @@ activateAllLowPowerSensorModes(bool verbose)
 	 */
 
 
+#ifdef WARP_BUILD_ENABLE_DEVIS25xP
+	/*
+	 *	Put the Flash in deep power-down
+	 */
+	//TODO: move 0xB9 into a named constant
+	spiTransactionIS25xP(0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 1 /* opCount */);
+#endif
 
 	/*
 	 *	BMX055accel: At POR, device is in Normal mode. Move it to Deep Suspend mode.

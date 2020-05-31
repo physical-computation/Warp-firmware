@@ -1,5 +1,12 @@
 #include <stdint.h>
 #include <stdlib.h>
+
+//TODO: need a better way to enable variants of the firmware instead of including, e.g., glaux.h which defines WARP_BUILD_ENABLE_GLAUX_VARIANT as the means of enabling Glauc build.
+//TODO: one possibility is to -DWARP_BUILD_ENABLE_GLAUX_VARIANT as a build flag 
+/*
+ *	Glaux.h needs to come before gpio_pins.h
+ */
+#include "glaux.h"
 #include "gpio_pins.h"
 #include "device/fsl_device_registers.h"
 
@@ -80,13 +87,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-#endif
-	{
-		.pinName = kWarpPinSPI_SCK,				/*	Was kWarpPinTPS82740A_CTLEN in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
 	{
 		.pinName = kWarpPinTS5A3154_IN,				/*	Was kWarpPinUnusedPTB6 in Warp v2			*/
 		.config.outputLogic = 1,
@@ -118,6 +118,19 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
+		.pinName = kWarpPinTPS82740A_CTLEN,			/*	Was kWarpPinTPS82675_EN in Warp v2			*/
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+#endif
+	{
+		.pinName = kWarpPinSPI_SCK,				/*	Was kWarpPinTPS82740A_CTLEN in Warp v2			*/
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
 		.pinName = kWarpPinI2C0_SCL,
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
@@ -137,12 +150,6 @@ gpio_output_pin_user_config_t	outputPins[] = {
 	},
 	{
 		.pinName = kWarpPinSPI_MOSI,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740A_CTLEN,			/*	Was kWarpPinTPS82675_EN in Warp v2			*/
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
@@ -192,6 +199,12 @@ gpio_output_pin_user_config_t	outputPins[] = {
 		.config.slewRate = kPortSlowSlewRate,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
+	{
+		.pinName = kGlauxPinFlash_CS,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
 #endif
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
@@ -227,12 +240,15 @@ gpio_input_pin_user_config_t	inputPins[] = {
 		.config.interrupt = kPortIntDisabled,
 	},
 #else
+/*
+	Enabling these leads to higher power dissipation. We orignally thought we had these activated but since we were not including Glaux.h they were not getting defined
+
 	{
 		.pinName = kWarpPinUnusedPTA0,
 		.config.isPullEnable = true,
 		.config.pullSelect = kPortPullUp,
 		.config.isPassiveFilterEnabled = false,
-		.config.interrupt = kPortIntEnabled,
+		.config.interrupt = kPortIntEitherEdge,
 	},
 	{
 		.pinName = kWarpPinEXTAL0,
@@ -255,6 +271,7 @@ gpio_input_pin_user_config_t	inputPins[] = {
 		.config.isPassiveFilterEnabled = false,
 		.config.interrupt = kPortIntDisabled,
 	},
+*/
 #endif //WARP_BUILD_ENABLE_GLAUX_VARIANT
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,

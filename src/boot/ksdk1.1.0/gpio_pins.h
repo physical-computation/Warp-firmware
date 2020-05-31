@@ -70,7 +70,7 @@ enum _gpio_pins
 	kWarpPinTPS82740B_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 12),		/*	Warp kWarpPinTPS82740B_CTLEN --> PTA12 		(was kWarpPinTPS82675_EN in Warp v2)			*/
 
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
-	kGlauxPinLED				= GPIO_MAKE_PIN(HW_GPIOB, 0),		/*	Warp kWarpPinSPI_SCK	--> PTB0		(was kWarpPinTPS82740A_CTLEN in Warp v2)		*/
+	kGlauxPinLED				= GPIO_MAKE_PIN(HW_GPIOB, 0),		/*	kGlauxPinLED		--> PTB0		(was kWarpPinTPS82740A_CTLEN in Warp v2)		*/
 	kGlauxPinUnusedPTB1			= GPIO_MAKE_PIN(HW_GPIOB, 1),		/*	Warp KL03 VDD ADC	--> PTB1									*/
 #else
 	kWarpPinSPI_SCK				= GPIO_MAKE_PIN(HW_GPIOB, 0),		/*	Warp kWarpPinSPI_SCK	--> PTB0		(was kWarpPinTPS82740A_CTLEN in Warp v2)		*/
@@ -104,7 +104,7 @@ enum _gpio_pins
 	kWarpPinSPI_MOSI			= GPIO_MAKE_PIN(HW_GPIOA, 7),		/*	Warp KL03_SPI_MOSI	--> PTA7									*/
 
 #ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
-	kWarpPinSPI_SCK				= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinSPI_SCK --> PTA9		(was kWarpPinSPI_SCK_I2C_PULLUP_EN in Warp v2)		*/	
+	kWarpPinSPI_SCK				= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinSPI_SCK --> PTA9			(on Glaux, SPI_SCK is PTA9)				*/
 #else
 	kWarpPinTPS82740A_CTLEN			= GPIO_MAKE_PIN(HW_GPIOA, 9),		/*	Warp kWarpPinTPS82740A_CTLEN --> PTA9		(was kWarpPinSPI_SCK_I2C_PULLUP_EN in Warp v2)		*/	
 #endif
