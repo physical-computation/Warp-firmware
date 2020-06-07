@@ -2554,7 +2554,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 				SEGGER_RTT_WriteString(0, "\n\n");
 			}
 
-			OSA_TimeDelay(10*gWarpMenuPrintDelayMilliseconds);
+			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 			#endif
 		}
 	}
