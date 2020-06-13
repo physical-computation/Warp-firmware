@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
+#include "byteUtilities.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -254,8 +255,8 @@ printSensorDataCCS811(bool hexModeFlag)
 
 
 	i2cReadStatus	= readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811ALG_DATA, 4 /* numberOfBytes */);
-	equivalentCO2	= (deviceCCS811State.i2cBuffer[0] << 8) | deviceCCS811State.i2cBuffer[1];
-	TVOC		= (deviceCCS811State.i2cBuffer[2] << 8) | deviceCCS811State.i2cBuffer[3];
+	equivalentCO2	= concatTwoBytes(deviceCCS811State.i2cBuffer[0], deviceCCS811State.i2cBuffer[1]);
+	TVOC		= concatTwoBytes(deviceCCS811State.i2cBuffer[2], deviceCCS811State.i2cBuffer[3]);
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----, ----,");
@@ -277,15 +278,13 @@ printSensorDataCCS811(bool hexModeFlag)
 	}
 
 	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_DATA, 2 /* numberOfBytes */);
-	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
-	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[1];
 
 	/*
 	 *	RAW ADC value. See CCS811 manual, Figure 15:
 	 */
-	readSensorRegisterValueCombined =
-						((readSensorRegisterValueLSB & 0x03) << 8) |
-						(readSensorRegisterValueMSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes((readSensorRegisterValueMSB & 0x03), readSensorRegisterValueLSB);
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
@@ -307,7 +306,7 @@ printSensorDataCCS811(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
@@ -329,7 +328,7 @@ printSensorDataCCS811(bool hexModeFlag)
 	 */
 	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[2];
 	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[3];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{

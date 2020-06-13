@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
+#include "byteUtilities.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -209,11 +210,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
-
-	/*
-	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
-	 */
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
@@ -235,7 +232,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -261,7 +258,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
