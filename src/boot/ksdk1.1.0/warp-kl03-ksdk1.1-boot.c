@@ -81,9 +81,11 @@
 //#include "devAS7262.h"
 //#include "devAS7263.h"
 //#include "devRV8803C7.h"
+//#include "devISL23415.h"
 #else
 #	include "devMMA8451Q.h"
 #endif
+
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 //#define WARP_BUILD_BOOT_TO_CSVSTREAM
@@ -102,6 +104,10 @@
 
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
 volatile WarpSPIDeviceState			deviceADXL362State;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+volatile WarpSPIDeviceState			deviceISL23415State;
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVBMX055
@@ -203,8 +209,8 @@ void					enableTPS82740B(uint16_t voltageMillivolts);
 void					setTPS82740CommonControlLines(uint16_t voltageMillivolts);
 void					printPinDirections(void);
 void					dumpProcessorState(void);
-void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress,
-								uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
+void					repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, 
+								uint8_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty,
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
 int					char2int(int character);
@@ -454,10 +460,20 @@ disableSPIpins(void)
 	CLOCK_SYS_DisableSpiClock(0);
 }
 
-
+void
+configureI2Cpins(uint8_t pullupValue)
+{
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+	/*
+	 *	Configure the two ISL23415 DCPs over SPI
+	 */
+	uint8_t valuesDCP[2] = {pullupValue, pullupValue};
+	writeDeviceRegisterISL23415(kWarpISL23415RegWR, valuesDCP, 4);
+#endif
+}
 
 void
-enableI2Cpins(uint16_t pullupValue)
+enableI2Cpins(uint8_t pullupValue)
 {
 	CLOCK_SYS_EnableI2cClock(0);
 
@@ -470,11 +486,7 @@ enableI2Cpins(uint16_t pullupValue)
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
 
-
-	/*
-	 *	TODO: need to implement config of the DCP
-	 */
-	//...
+	configureI2Cpins(pullupValue);
 }
 
 
@@ -493,9 +505,9 @@ disableI2Cpins(void)
 
 
 	/*
-	 *	TODO: need to implement clearing of the DCP
+	 *	Reset DCP configuration
 	 */
-	//...
+	configureI2Cpins(0x80); /* Defaults DCP configuration ISL datasheet FN7780 Rev 2.00 - page 14 */
 
 	/*
 	 *	Drive the I2C pins low
@@ -636,7 +648,7 @@ lowPowerPinStates(void)
 	/*
 	 *	Drive these chip selects high since they are active low:
 	 */
-	#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
 #endif
 #ifdef WARP_BUILD_ENABLE_DEVADXL362
@@ -854,8 +866,6 @@ setTPS82740CommonControlLines(uint16_t voltageMillivolts)
 	 */
 	OSA_TimeDelay(gWarpSupplySettlingDelayMilliseconds);
 }
-
-
 
 void
 enableSssupply(uint16_t voltageMillivolts)
@@ -1311,7 +1321,9 @@ main(void)
 	initPAN1326B(&devicePAN1326BState);
 #endif
 
-
+#ifdef WARP_BUILD_ENABLE_DEVISL23415
+	initISL23415(&deviceISL23415State);
+#endif
 
 	/*
 	 *	Make sure SCALED_SENSOR_SUPPLY is off.
@@ -1341,9 +1353,6 @@ main(void)
 	 *	Notreached
 	 */
 #endif
-
-
-
 
 	while (1)
 	{
@@ -1425,10 +1434,12 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 'p': switch to VLPR mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
 #ifdef WARP_BUILD_ENABLE_DEVMAX11300
 		SEGGER_RTT_WriteString(0, "\r- 'q': MAX11300.\n");
-#endif
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+#endif
+
 		SEGGER_RTT_WriteString(0, "\r- 'r': switch to RUN mode.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\r- 's': power up all sensors.\n");
@@ -1455,7 +1466,7 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		key = SEGGER_RTT_WaitKey();
-
+		
 		switch (key)
 		{
 			/*
@@ -2449,7 +2460,6 @@ main(void)
 			{
 				bool		hexModeFlag;
 
-
 				SEGGER_RTT_WriteString(0, "\r\n\tEnabling I2C pins...\n");
 				enableI2Cpins(menuI2cPullupValue);
 
@@ -2533,7 +2543,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 	#ifdef WARP_BUILD_ENABLE_DEVBME680
 	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
-							0b10110100,	/*	Temperature oversample 16x, pressure overdsample 16x, mode 00	*/
+							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
 							0b00001000,	/*	Turn off heater							*/
 							i2cPullupValue
 					);
@@ -2856,7 +2866,7 @@ loopForSensor(	const char *  tagString,
 
 
 void
-repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, uint16_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty, int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts, uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte)
+repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, uint8_t pullupValue, bool autoIncrement, int chunkReadsPerAddress, bool chatty, int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts, uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte)
 {
 	if (warpSensorDevice != kWarpSensorADXL362)
 	{
