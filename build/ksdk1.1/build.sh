@@ -1,6 +1,6 @@
 #!/bin/sh
 	
-	export ARMGCC_DIR=/Users/james/Desktop/bare-metal-arm/gcc-arm-none-eabi-4_8-2014q1
+	# Uncomment this to set ARMGCC_DIR correctly: export ARMGCC_DIR=<full path to arm-gcc directory>
 
 	mkdir -p work
 	mkdir -p work/boards/Warp

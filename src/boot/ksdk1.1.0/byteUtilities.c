@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2020. Phillip Stanley-Marbell, Youchao Wang AND James Meech.
+	Authored 2016-2020. Phillip Stanley-Marbell, Youchao Wang and James Meech.
 
 	All rights reserved.
 
@@ -34,6 +34,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */ 
+
 #include <stdlib.h>
 #include "fsl_misc_utilities.h"
 
