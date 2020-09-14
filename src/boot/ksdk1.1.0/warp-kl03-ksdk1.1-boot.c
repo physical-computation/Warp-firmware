@@ -63,14 +63,14 @@
 *	Comment out the header file to disable devices
 */
 #ifndef WARP_FRDMKL03
-#	include "devBMX055.h"
-#	include "devMMA8451Q.h"
-#	include "devHDC1000.h"
-#	include "devMAG3110.h"
-#	include "devL3GD20H.h"
+//#	include "devBMX055.h"
+//#	include "devMMA8451Q.h"
+//#	include "devHDC1000.h"
+//#	include "devMAG3110.h"
+//#	include "devL3GD20H.h"
 #	include "devBME680.h"
-#	include "devCCS811.h"
-#	include "devAMG8834.h"
+//#	include "devCCS811.h"
+//#	include "devAMG8834.h"
 //#	include "devMAX11300.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
@@ -2542,6 +2542,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					);
 	#endif
 	#ifdef WARP_BUILD_ENABLE_DEVBME680
+	activateAllLowPowerSensorModes(true /* verbose */);
 	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
 							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
 							0b00001000,	/*	Turn off heater							*/
