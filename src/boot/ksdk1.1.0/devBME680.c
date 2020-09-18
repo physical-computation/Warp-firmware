@@ -35,11 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
-#include "byteUtilities.h"
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
-#include "fsl_spi_master_driver.h"
 #include "fsl_rtc_driver.h"
 #include "fsl_clock_manager.h"
 #include "fsl_power_manager.h"
@@ -50,12 +48,12 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 #include <math.h>
-#define UINT_MAX 4294967295
+//#define UINT_MAX 4294967295
 #define BME680_CONCAT_BYTES(msb, lsb)	(((uint16_t)msb << 8) | (uint16_t)lsb)
 #define BME680_CONCAT_BYTESxlsb(msb, xlsb)	(((uint32_t)msb << 4) | (uint32_t)xlsb)
 float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t CalibVals[]);
 float calcH(uint8_t hum_msb, uint8_t hum_lsb, uint8_t CalibVals[], float temp_comp); 
-float calcP(uint8_t pres_msb, uint8_t pres_lsb, uint8_t pres_xlsb, uint8_t CalibVals[], float t_fine);
+//float calcP(uint8_t pres_msb, uint8_t pres_lsb, uint8_t pres_xlsb, uint8_t CalibVals[], float t_fine);
 float findMean(float samples[], int size);
 float findStandardDeviation(float samples[], float mean, int size);
 float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX, float meanY, float standardDeviationX, float standardDeviationY, int size);
@@ -196,20 +194,19 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	/*
 	 *	Read the calibration registers
 	 */
-	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion1Start;
-		reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion1End;
-		reg++)
+	uint8_t addr = 0x89; 
+	for (int i = 0; i < 25; i++)
 	{
-		status4 |= readSensorRegisterBME680(reg, 1 /* numberOfBytes */);
-		deviceBME680CalibrationValues[index++] = deviceBME680State.i2cBuffer[0];
+		status4 |= readSensorRegisterBME680(addr, 1 /* numberOfBytes */);
+		deviceBME680CalibrationValues[i] = deviceBME680State.i2cBuffer[0];
+		addr++;
 	}
-
-	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start;
-		reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion2End;
-		reg++)
+	addr = 0xE1;
+	for (int i = 0; i < 16; i++)
 	{
-		status4 |= readSensorRegisterBME680(reg, 1 /* numberOfBytes */);
-		deviceBME680CalibrationValues[index++] = deviceBME680State.i2cBuffer[0];
+		status4 |= readSensorRegisterBME680(addr, 1 /* numberOfBytes */);
+		deviceBME680CalibrationValues[i+25] = deviceBME680State.i2cBuffer[0];
+		addr++;
 	}
 
 	return (status1 | status2 | status3 | status4);
@@ -240,7 +237,6 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	float humiditySkewness; 
 	float temperatureKurtosis;
 	float humidityKurtosis; 
-	float randomHumidityDistribution[] = {-1.0368, -0.8571, -0.1699, -0.1917, -0.8658, 0.1807, 1.2665, -0.2512, -0.2046, -2.2015, -0.7745, -1.3933, -0.3862, 0.5256, 1.5233, 1.7985, -0.1169, -0.3202, 0.8175, 0.4902, 0.7653, 0.7783, -1.4803, 0.5404, -0.0915, -0.7603, -0.6936, 1.2815, -0.8097, -1.2368}; 
 	float r0 = 0;
 	float r1 = 0;
     for(int i = 0; i < samplesPerDistribution; i++)
@@ -289,18 +285,13 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(temperatureStandardDeviation), (int)((temperatureStandardDeviation - (int)(temperatureStandardDeviation))*100000)); 
 		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityMean), (int)((humidityMean - (int)(humidityMean))*100000)); 
 		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
-		//correlation = findCorrelationCoefficient(humidityDistribution, temperatureDistribution, humidityMean, temperatureMean, humidityStandardDeviation, temperatureStandardDeviation, samplesPerDistribution);
-		//for(int j = 0 ; j < samplesPerDistribution ; j++)
-        //{
-		//	humidityDistribution[j] = (randomHumidityDistribution[j]*humidityStandardDeviation) + humidityMean; 
-        //}
-		//humidityStandardDeviation = findNewUncertainty(humidityDistribution, humidityMean, humidityStandardDeviation, correlation, temperatureStandardDeviation, samplesPerDistribution);
-		//SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
+		correlation = findCorrelationCoefficient(humidityDistribution, temperatureDistribution, humidityMean, temperatureMean, humidityStandardDeviation, temperatureStandardDeviation, samplesPerDistribution);
+		BubbleSort(humidityDistribution, samplesPerDistribution);
+		humidityStandardDeviation = findNewUncertainty(humidityDistribution, humidityMean, humidityStandardDeviation, correlation, temperatureStandardDeviation, samplesPerDistribution);
+		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
+
 	}
 }
-	//SEGGER_RTT_printf(0, "\n %u.%05u, ", (int)(pressureMean), (int)((pressureMean - (int)(pressureMean))*100000));
-	
-	
 
 float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t CalibVals[]) 
 	{ 	 	 	 
@@ -354,7 +345,7 @@ float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t Calib
 	float calc_hum = 0; 
 	float var1 = 0;
 	float var2 = 0;
-        float var3 = 0;
+    float var3 = 0;
 	float var4 = 0;
 
 	
@@ -380,67 +371,7 @@ float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t Calib
 	// Store the calculated temperature in the array that was passed by reference
 	return calc_hum; 
 	}
-
-	float calcP(uint8_t pres_msb, uint8_t pres_lsb, uint8_t pres_xlsb, uint8_t CalibVals[], float t_fine)  
-	{  
-    uint32_t pres_adc; 
-
-	uint8_t	 par_p10; 
-	uint16_t par_p1; 
-	int16_t  par_p2, par_p4, par_p5, par_p8, par_p9;
-	int8_t   par_p3, par_p6, par_p7;
-
-	// Combine the components to get the whole pressure value
-	pres_adc = (pres_msb << 12) | (pres_lsb << 4) | (pres_xlsb >> 4); 
-	// Combine the componets from the calibration array to get the calibration parameters
-	par_p1 = BME680_CONCAT_BYTES(CalibVals[6],CalibVals[5]);
-	par_p2 = BME680_CONCAT_BYTES(CalibVals[8],CalibVals[7]);
-	par_p3 = CalibVals[9]; 
-	par_p4 = BME680_CONCAT_BYTES(CalibVals[12],CalibVals[11]);
-	par_p5 = BME680_CONCAT_BYTES(CalibVals[14],CalibVals[13]);
-	par_p6 = CalibVals[16];
-	par_p7 = CalibVals[15];
-    par_p8 = BME680_CONCAT_BYTES(CalibVals[20],CalibVals[19]);
-	par_p9 = BME680_CONCAT_BYTES(CalibVals[22],CalibVals[21]);
-	par_p10 = CalibVals[23];
-
-	// 
-	float calc_pres = 0; 
-	float var1 = 0;
-	float var2 = 0;
-    float var3 = 0;
-
-    t_fine = t_fine * 5120.0f;
-
-	 // Calculate pressure
-	var1 = (((float)t_fine / 2.0f) - 64000.0f);
-	var2 = var1 * var1 * (((float)par_p6) / (131072.0f));
-	var2 = var2 + (var1 * ((float)par_p5) * 2.0f);
-	var2 = (var2 / 4.0f) + (((float)par_p4) * 65536.0f);
-	var1 = (((((float)par_p3 * var1 * var1) / 16384.0f)
-		+ ((float)par_p2 * var1)) / 524288.0f);
-	var1 = ((1.0f + (var1 / 32768.0f)) * ((float)par_p1));
-	calc_pres = (1048576.0f - ((float)pres_adc));
-
-	/* Avoid exception caused by division by zero */
-	if ((int)var1 != 0) 
-		{
-		calc_pres = (((calc_pres - (var2 / 4096.0f)) * 6250.0f) / var1);
-		var1 = (((float)par_p9) * calc_pres * calc_pres) / 2147483648.0f;
-		var2 = calc_pres * (((float)par_p8) / 32768.0f);
-		var3 = ((calc_pres / 256.0f) * (calc_pres / 256.0f) * (calc_pres / 256.0f)
-			* (par_p10 / 131072.0f));
-		calc_pres = (calc_pres + (var1 + var2 + var3 + ((float)par_p7 * 128.0f)) / 16.0f);
-		} 
-	
-	else 
-		{
-		calc_pres = 0;
-		} 
-	// Store the calculated pressure in the array that was passed by reference
-	return calc_pres;
-	}
-
+    
 float findMean(float samples[], int size)
 { 
     float sum = 0;
@@ -474,20 +405,7 @@ float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX
     sumBottom = sqrt(standardDeviationX*standardDeviationX*size*standardDeviationY*standardDeviationY*size);
     return sumTop/sumBottom; 
 }
-/*
-float sqrt1(const float x){
-    u.x = x;
-    u.i = (1<<29) + (u.i >> 1) - (1<<22); 
 
-    // Two Babylonian Steps (simplified from:)
-    //u.x = 0.5f * (u.x + x/u.x);
-    //u.x = 0.5f * (u.x + x/u.x);
-    u.x =       u.x + x/u.x;
-    u.x = 0.25f*u.x + x/u.x;
-
-    return u.x;
-}  
-*/
 float Skewness(float samples[], float mean, float standardDeviation, int size)
 {
   float Skewness = 0;
@@ -515,14 +433,14 @@ float findNewUncertainty(float samplesH[], float meanH, float sigmaH, float rhoH
     float A = 0;
     float b = 0;
     float h = 0;  
-    BubbleSort(samplesH, size);
+    
     for(int i = 0; i < size-1; i++)
     {
         b = samplesH[i+1] - samplesH[i];
         h = (normalPDF(samplesH[i], meanH, sigmaH, sigmaT, rhoHT) + normalPDF(samplesH[i+1], meanH, sigmaH, sigmaT, rhoHT))/2; 
         A += b*h; 
     }
-    return 1.0/(A*sqrt(6.283185307));
+    return 1.0/(A*sqrt(2*M_PI));
 }
 
 float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT) 
@@ -530,25 +448,10 @@ float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT)
     float top = ((h-meanH)/sigmaH);
 	top = top*top;
     float bottom = 2*(1-(rhoHT*rhoHT));
-    float mult = 1/(6.283185307*sigmaT*sigmaH*sqrt(1-(rhoHT*rhoHT)));
+    float mult = 1/(2*M_PI*sigmaT*sigmaH*sqrt(1-(rhoHT*rhoHT)));
     return mult*exp(-(top/bottom));
 } 
-/*
-float exp(float x)
-{
-	float x2 = x*x;
-	float x3 = x2*x;
-	float x4 = x3*x;
-	float x5 = x4*x;
-	float x6 = x5*x;
-	float x7 = x6*x;
-	float x8 = x7*x;
-	float x9 = x8*x;
-	float x10 = x9*x;
-	float out = 1.0 + x + (x2/2.0) + (x3/6.0) + (x4/24.0) + (x5/120.0) + (x6/720.0) + (x7/5040.0) + (x8/40320.0) + (x9/362880.0) + (x10/3628800.0);
-	return out;
-}
-*/
+
 void Swap(float *a, float *b)
 {
     float temp = *a;
@@ -570,61 +473,3 @@ void BubbleSort(float *arr, int n)
         }
     }
 }
-/*
-unsigned int lfsr113_Bits(void)
-{
-   static unsigned int z1 = 12345, z2 = 12345, z3 = 12345, z4 = 12345;
-   unsigned int b;
-   b  = ((z1 << 6) ^ z1) >> 13;
-   z1 = ((z1 & 4294967294U) << 18) ^ b;
-   b  = ((z2 << 2) ^ z2) >> 27; 
-   z2 = ((z2 & 4294967288U) << 2) ^ b;
-   b  = ((z3 << 13) ^ z3) >> 21;
-   z3 = ((z3 & 4294967280U) << 7) ^ b;
-   b  = ((z4 << 3) ^ z4) >> 12;
-   z4 = ((z4 & 4294967168U) << 13) ^ b;
-   return (z1 ^ z2 ^ z3 ^ z4);
-}
-*/
-/*
-void boxMueller(float mu, float sigma, float *z0, float *z1)
-{
-  float U1 = (float) lfsr113_Bits() / ((float) UINT_MAX);
-  float U2 = (float) lfsr113_Bits() / ((float) UINT_MAX);   
-  float R2 = -2*log(U1); 
-  float R = sqrt(R2);
-  float theta = 6.283185307*U2; 
-  *z0 = R*cos(theta)*sigma + mu;
-  *z1 = R*sin(theta)*sigma + mu;
-}
-*/
-/*
-float sin(float x)
-{
-	float x3 = x*x*x;
-	float x5 = x3*x*x;
-	float x7 = x5*x*x;
-	float x9 = x7*x*x;
-	return x - (x3/6.0) + (x5/120.0) - (x7/5040.0) + (x9/362880.0);
-}
-*/
-/*
-float cos(float x)
-{
-	float x2 = x*x;
-	float x4 = x2*x2;
-	float x6 = x4*x2;
-	float x8 = x6*x2; 
-	return 1 - (x2/2.0) + (x4/24.0) - (x6/720.0) + (x8/40320.0);
-}
-*/
-/*
-float log(float x)
-{
-	float x2 = x*x;
-	float x3 = x2*x;
-	float x4 = x3*x;
-	float x5 = x4*x;
-	return x - (x2/2.0) + (x3/3.0) - (x4/4.0) + (x5/5.0);
-}
-*/
