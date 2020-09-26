@@ -71,72 +71,9 @@
 #define						kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define						kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
-
-volatile WarpI2CDeviceState			deviceBMX055accelState;
-volatile WarpI2CDeviceState			deviceBMX055gyroState;
-volatile WarpI2CDeviceState			deviceBMX055magState;
-
-
-#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-volatile WarpI2CDeviceState			deviceMMA8451QState;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVLPS25H
-volatile WarpI2CDeviceState			deviceLPS25HState;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-volatile WarpI2CDeviceState			deviceHDC1000State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-volatile WarpI2CDeviceState			deviceMAG3110State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVSI7021
-volatile WarpI2CDeviceState			deviceSI7021State;
-#endif
-
-
-volatile WarpI2CDeviceState			deviceL3GD20HState;
-
-
 #ifdef WARP_BUILD_ENABLE_DEVBME680
 volatile WarpI2CDeviceState			deviceBME680State;
 volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
-#endif
-
-
-volatile WarpI2CDeviceState			deviceTCS34725State;
-
-
-#ifdef WARP_BUILD_ENABLE_DEVSI4705
-volatile WarpI2CDeviceState			deviceSI4705State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVCCS811
-volatile WarpI2CDeviceState			deviceCCS811State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-volatile WarpI2CDeviceState			deviceAMG8834State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVPAN1326
-volatile WarpUARTDeviceState			devicePAN1326BState;
-volatile WarpUARTDeviceState			devicePAN1323ETUState;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVAS7262
-volatile WarpI2CDeviceState			deviceAS7262State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVAS7263
-volatile WarpI2CDeviceState			deviceAS7263State;
-#endif
-
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-volatile WarpI2CDeviceState			deviceRV8803C7State;
 #endif
 
 /*
@@ -170,7 +107,7 @@ void					disableSssupply(void);
 uint8_t					readHexByte(void);
 int					    read4digits(void);
 void					printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, int i2cPullupValue);
-
+void activateAllLowPowerSensorModes(bool verbose);
 
 /*
  *	TODO: change the following to take byte arrays
@@ -1138,7 +1075,7 @@ main(void)
 				uint16_t	menuDelayBetweenEachRun = read4digits();
 				SEGGER_RTT_printf(0, "\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
 				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
+				activateAllLowPowerSensorModes(true);
 				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, menuI2cPullupValue);
 
 				/*
@@ -1172,10 +1109,11 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	uint32_t	readingCount = 0;
 	uint32_t	numberOfConfigErrors = 0;
 
-	#ifdef WARP_BUILD_ENABLE_DEVBME680
+	
 	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
 							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
 							0b00001000,	/*	Turn off heater							*/
+							0b00000000,
 							i2cPullupValue
 					);
 
@@ -1199,57 +1137,16 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 			#endif
 		}
 	}
-	#endif
+	
 
 	if (printHeadersAndCalibration)
 	{
 		SEGGER_RTT_WriteString(0, "Measurement number, RTC->TSR, RTC->TPR,");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
-		#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-		for (uint8_t i = 0; i < 64; i++)
-		{
-			#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-			SEGGER_RTT_printf(0, " AMG8834 %d,", i);
-			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-			#endif
-		}
-		SEGGER_RTT_WriteString(0, " AMG8834 Temp,");
+		SEGGER_RTT_WriteString(0, " Temperature,");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-
-		#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-		SEGGER_RTT_WriteString(0, " MMA8451 x, MMA8451 y, MMA8451 z,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-		SEGGER_RTT_WriteString(0, " MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-		SEGGER_RTT_WriteString(0, " L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVBME680
-		SEGGER_RTT_WriteString(0, " Mean temp, Temp std, Mean hum, Hum std");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVBMX055
-		SEGGER_RTT_WriteString(0, " BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_WriteString(0, " BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		SEGGER_RTT_WriteString(0, " BMX055gyro x, BMX055gyro y, BMX055gyro z,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVCCS811
-		SEGGER_RTT_WriteString(0, " CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value, CCS811 RAW R_REF value, CCS811 RAW R_NTC value,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-		SEGGER_RTT_WriteString(0, " HDC1000 Temp, HDC1000 Hum,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		#endif
+	
 		SEGGER_RTT_WriteString(0, " RTC->TSR, RTC->TPR, # Config Errors");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		SEGGER_RTT_WriteString(0, "\n\n");
@@ -1259,41 +1156,11 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	while(1)
 	{
-		#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		
 		SEGGER_RTT_printf(0, "%u, %d, %d,", readingCount, RTC->TSR, RTC->TPR);
-		#endif
-
-		#ifdef WARP_BUILD_ENABLE_DEVAMG8834
-		printSensorDataAMG8834(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-		printSensorDataMMA8451Q(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVMAG3110
-		printSensorDataMAG3110(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVL3GD20H
-		printSensorDataL3GD20H(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVBME680
 		printSensorDataBME680(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVBMX055
-		printSensorDataBMX055accel(hexModeFlag);
-		printSensorDataBMX055mag(hexModeFlag);
-		printSensorDataBMX055gyro(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVCCS811
-		printSensorDataCCS811(hexModeFlag);
-		#endif
-		#ifdef WARP_BUILD_ENABLE_DEVHDC1000
-		printSensorDataHDC1000(hexModeFlag);
-		#endif
-
-
-		#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
 		SEGGER_RTT_printf(0, " %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
-		#endif
+	
 
 		if (menuDelayBetweenEachRun > 0)
 		{
@@ -1386,6 +1253,161 @@ writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t c
 	return (status == kStatus_I2C_Success ? kWarpStatusOK : kWarpStatusDeviceCommunicationFailed);
 }
 
+void
+activateAllLowPowerSensorModes(bool verbose)
+{
+	WarpStatus	status;
 
+
+
+	/*
+	 *	ADXL362:	See Power Control Register (Address: 0x2D, Reset: 0x00).
+	 *
+	 *	POR values are OK.
+	 */
+
+
+
+	/*
+	 *	BMX055accel: At POR, device is in Normal mode. Move it to Deep Suspend mode.
+	 *
+	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
+	 */
+
+	status = writeByteToI2cDeviceRegister(	0x18	/*	i2cAddress		*/,
+						true					/*	sendCommandByte		*/,
+						0x11					/*	commandByte		*/,
+						true					/*	sendPayloadByte		*/,
+						(1 << 5)				/*	payloadByte		*/);
+	if ((status != kWarpStatusOK) && verbose)
+	{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for BMX055accel @ 0x18.\n", status);
+#endif
+	}
+
+	/*
+	 *	BMX055gyro: At POR, device is in Normal mode. Move it to Deep Suspend mode.
+	 *
+	 *	Write '1' to deep suspend bit of register 0x11. See page 81.
+	 */
+
+	status = writeByteToI2cDeviceRegister(	0x68	/*	i2cAddress		*/,
+						true					/*	sendCommandByte		*/,
+						0x11					/*	commandByte		*/,
+						true					/*	sendPayloadByte		*/,
+						(1 << 5)				/*	payloadByte		*/);
+	if ((status != kWarpStatusOK) && verbose)
+	{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for BMX055gyro @ 0x68.\n", status);
+#endif
+	}
+
+	/*
+	 *	BMX055mag: At POR, device is in Suspend mode. See page 121.
+	 *
+	 *	POR state seems to be powered down.
+	 */
+
+
+
+	/*
+	 *	MMA8451Q: See 0x2B: CTRL_REG2 System Control 2 Register (page 43).
+	 *
+	 *	POR state seems to be not too bad.
+	 */
+
+
+
+	/*
+	 *	LPS25H: See Register CTRL_REG1, at address 0x20 (page 26).
+	 *
+	 *	POR state seems to be powered down.
+	 */
+
+
+
+	/*
+	 *	MAG3110: See Register CTRL_REG1 at 0x10. (page 19).
+	 *
+	 *	POR state seems to be powered down.
+	 */
+
+
+
+	/*
+	 *	HDC1000: currently can't turn it on (3V)
+	 */
+
+
+
+	/*
+	 *	SI7021: Can't talk to it correctly yet.
+	 */
+
+
+
+	/*
+	 *	L3GD20H: See CTRL1 at 0x20 (page 36).
+	 *
+	 *	POR state seems to be powered down.
+	 */
+	status = writeByteToI2cDeviceRegister(	0x6A	/*	i2cAddress		*/,
+						true				/*	sendCommandByte		*/,
+						0x20				/*	commandByte		*/,
+						true				/*	sendPayloadByte		*/,
+						0x00				/*	payloadByte		*/);
+	if ((status != kWarpStatusOK) && verbose)
+	{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x6A.\n", status);
+#endif
+	}
+
+	/*
+	 *	BME680: TODO
+	 */
+
+
+
+	/*
+	 *	TCS34725: By default, is in the "start" state (see page 9).
+	 *
+	 *	Make it go to sleep state. See page 17, 18, and 19.
+	 */
+	status = writeByteToI2cDeviceRegister(	0x29	/*	i2cAddress		*/,
+						true				/*	sendCommandByte		*/,
+						0x00				/*	commandByte		*/,
+						true				/*	sendPayloadByte		*/,
+						0x00				/*	payloadByte		*/);
+	if ((status != kWarpStatusOK) && verbose)
+	{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+		SEGGER_RTT_printf(0, "\r\tPowerdown command failed, code=%d, for TCS34725 @ 0x29.\n", status);
+#endif
+	}
+	/*
+	 *	SI4705: Send a POWER_DOWN command (byte 0x17). See AN332 page 124 and page 132.
+	 *
+	 *	For now, simply hold its reset line low.
+	 */
+#ifdef WARP_BUILD_ENABLE_DEVSI4705
+	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
+#endif
+
+
+
+	/*
+	 *	PAN1326.
+	 *
+	 *	For now, simply hold its reset line low.
+	 */
+#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
+#ifdef WARP_BUILD_ENABLE_DEVPAN1326
+	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
+#endif
+#endif
+}
 
 

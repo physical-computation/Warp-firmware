@@ -48,23 +48,22 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 #include <math.h>
-//#define UINT_MAX 4294967295
 #define BME680_CONCAT_BYTES(msb, lsb)	(((uint16_t)msb << 8) | (uint16_t)lsb)
 #define BME680_CONCAT_BYTESxlsb(msb, xlsb)	(((uint32_t)msb << 4) | (uint32_t)xlsb)
 float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t CalibVals[]);
-float calcH(uint8_t hum_msb, uint8_t hum_lsb, uint8_t CalibVals[], float temp_comp); 
+//float calcH(uint8_t hum_msb, uint8_t hum_lsb, uint8_t CalibVals[], float temp_comp); 
 //float calcP(uint8_t pres_msb, uint8_t pres_lsb, uint8_t pres_xlsb, uint8_t CalibVals[], float t_fine);
-float findMean(float samples[], int size);
-float findStandardDeviation(float samples[], float mean, int size);
-float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX, float meanY, float standardDeviationX, float standardDeviationY, int size);
-float Skewness(float samples[], float mean, float standardDeviation, int size);
-float Kurtosis(float samples[], float mean, float standardDeviation, int size);
-float findNewUncertainty(float samplesH[], float meanH, float sigmaH, float rhoHT, float sigmaT, int size);
-float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT);
+//float findMean(float samples[], int size);
+//float findStandardDeviation(float samples[], float mean, int size);
+//float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX, float meanY, float standardDeviationX, float standardDeviationY, int size);
+//float Skewness(float samples[], float mean, float standardDeviation, int size);
+//float Kurtosis(float samples[], float mean, float standardDeviation, int size);
+//float findNewUncertainty(float samplesH[], float meanH, float sigmaH, float rhoHT, float sigmaT, int size);
+//float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT);
 //float sqrt1(const float x);
 //float exp(float x);
-void Swap(float *a, float *b);
-void BubbleSort(float *arr, int n);
+//void Swap(float *a, float *b);
+//void BubbleSort(float *arr, int n);
 //unsigned int lfsr113_Bits(void);
 //void boxMueller(float mu, float sigma, float *z0, float *z1);
 //float log(float x);
@@ -76,12 +75,7 @@ extern volatile uint8_t			deviceBME680CalibrationValues[];
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
-/*
-union {
-    int i;
-    float x;
-} u;
-*/
+
 void
 initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
 {
@@ -173,7 +167,7 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 
 WarpStatus
-configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint16_t menuI2cPullupValue)
+configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint8_t payloadGas_1, uint16_t menuI2cPullupValue)
 {
 	uint8_t		reg, index = 0;
 	WarpStatus	status1, status2, status3, status4 = 0;
@@ -185,12 +179,14 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	status2 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
 							payloadCtrl_Meas,
 							menuI2cPullupValue);
-
+ 
 	status3 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Gas_0,
 							payloadGas_0,
 							menuI2cPullupValue);
-
-
+							
+	status4 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Gas_1,
+							payloadGas_1,
+							menuI2cPullupValue);
 	/*
 	 *	Read the calibration registers
 	 */
@@ -222,39 +218,46 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	uint16_t 	unsignedRawAdcValueUint16_t;
 	uint32_t	unsignedRawAdcValueUint32_t;
 	WarpStatus	triggerStatus, i2cReadStatusMSB, i2cReadStatusLSB, i2cReadStatusXLSB;
-    const int samplesPerDistribution= 30; 
-	float temperatureDistribution[samplesPerDistribution];
-	float humidityDistribution[samplesPerDistribution];
+	float temperature = 0;
+    //const int samplesPerDistribution= 30; 
+	//float temperatureDistribution[samplesPerDistribution];
+	//float humidityDistribution[samplesPerDistribution];
 	//float pressureDistribution[samplesPerDistribution];
-	float temperatureMean;
+	//float temperatureMean;
 	//float pressureMean;
-	float humidityMean; 
-	float temperatureStandardDeviation;
+	//float humidityMean; 
+	//float temperatureStandardDeviation;
 	//float pressureStandardDeviation;
-	float humidityStandardDeviation;
-	float correlation; 
-	float temperatureSkewness;
-	float humiditySkewness; 
-	float temperatureKurtosis;
-	float humidityKurtosis; 
-	float r0 = 0;
-	float r1 = 0;
-    for(int i = 0; i < samplesPerDistribution; i++)
-	{
+	//float humidityStandardDeviation;
+	//float correlation; 
+	//float temperatureSkewness;
+	//float humiditySkewness; 
+	//float temperatureKurtosis;
+	//float humidityKurtosis; 
+	//float r0 = 0;
+	//float r1 = 0;
+    //for(int i = 0; i < samplesPerDistribution; i++)
+	//{
+		configureSensorBME680(	0b00000001,	/*	Humidity oversampling (OSRS) to 1x				*/
+							0b00100100,	/*	Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
+							0b00001000,	/*	Turn off heater							*/
+							0b00000000,
+							32768
+					);
 		/*
 		*	First, trigger a measurement
 		*/
 		triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
 								0b00100101,
 								menuI2cPullupValue);
-
 		i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_msb, 1);
 		readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
 		i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_lsb, 1);
 		readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
 		i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_xlsb, 1);
 		readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
-		temperatureDistribution[i] = calcT(readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB, deviceBME680CalibrationValues);
+		temperature = calcT(readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB, deviceBME680CalibrationValues);
+		SEGGER_RTT_printf(0, " %u.%05u, ", (int)(temperature), (int)((temperature - (int)(temperature))*100000));
 		/*
 		i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 1);
 		readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
@@ -264,33 +267,34 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 		readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 		pressureDistribution[i] = calcP(readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB, deviceBME680CalibrationValues, temperatureDistribution[i]);
 		*/
+		/*
 		i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_msb, 1);
 		readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
 		i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_lsb, 1);
 		readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
 		humidityDistribution[i] = calcH(readSensorRegisterValueMSB, readSensorRegisterValueLSB, deviceBME680CalibrationValues, temperatureDistribution[i]);
-	}
-	temperatureMean = findMean(temperatureDistribution, samplesPerDistribution);
-	humidityMean = findMean(humidityDistribution, samplesPerDistribution);
+		*/
+	//}
+	//temperatureMean = findMean(temperatureDistribution, samplesPerDistribution);
+	//humidityMean = findMean(humidityDistribution, samplesPerDistribution);
 	//pressureMean = findMean(pressureDistribution, samplesPerDistribution);
-	temperatureStandardDeviation = findStandardDeviation(temperatureDistribution, temperatureMean, samplesPerDistribution);
-	humidityStandardDeviation = findStandardDeviation(humidityDistribution, humidityMean, samplesPerDistribution); 
-	temperatureSkewness = Skewness(temperatureDistribution, temperatureMean, temperatureStandardDeviation, samplesPerDistribution); 
-	humiditySkewness = Skewness(humidityDistribution, humidityMean, humidityStandardDeviation, samplesPerDistribution); 
-	temperatureKurtosis = Kurtosis(temperatureDistribution, temperatureMean, temperatureStandardDeviation, samplesPerDistribution); 
-	humidityKurtosis = Kurtosis(humidityDistribution, humidityMean, humidityStandardDeviation, samplesPerDistribution); 
-	if((abs(temperatureSkewness) < 2) && (abs(humiditySkewness) < 2) && (temperatureKurtosis < 7) && (humidityKurtosis < 7))
-	{
-		SEGGER_RTT_printf(0, " %u.%05u, ", (int)(temperatureMean), (int)((temperatureMean - (int)(temperatureMean))*100000)); 
-		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(temperatureStandardDeviation), (int)((temperatureStandardDeviation - (int)(temperatureStandardDeviation))*100000)); 
-		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityMean), (int)((humidityMean - (int)(humidityMean))*100000)); 
-		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
-		correlation = findCorrelationCoefficient(humidityDistribution, temperatureDistribution, humidityMean, temperatureMean, humidityStandardDeviation, temperatureStandardDeviation, samplesPerDistribution);
-		BubbleSort(humidityDistribution, samplesPerDistribution);
-		humidityStandardDeviation = findNewUncertainty(humidityDistribution, humidityMean, humidityStandardDeviation, correlation, temperatureStandardDeviation, samplesPerDistribution);
-		SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
-
-	}
+	//temperatureStandardDeviation = findStandardDeviation(temperatureDistribution, temperatureMean, samplesPerDistribution);
+	//humidityStandardDeviation = findStandardDeviation(humidityDistribution, humidityMean, samplesPerDistribution); 
+	//temperatureSkewness = Skewness(temperatureDistribution, temperatureMean, temperatureStandardDeviation, samplesPerDistribution); 
+	//humiditySkewness = Skewness(humidityDistribution, humidityMean, humidityStandardDeviation, samplesPerDistribution); 
+	//temperatureKurtosis = Kurtosis(temperatureDistribution, temperatureMean, temperatureStandardDeviation, samplesPerDistribution); 
+	//humidityKurtosis = Kurtosis(humidityDistribution, humidityMean, humidityStandardDeviation, samplesPerDistribution); 
+	//if((abs(temperatureSkewness) < 2) && (abs(humiditySkewness) < 2) && (temperatureKurtosis < 7) && (humidityKurtosis < 7))
+	//{
+	//	SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityMean), (int)((humidityMean - (int)(humidityMean))*100000)); 
+	//	SEGGER_RTT_printf(0, "%u.%05u, ", (int)(humidityStandardDeviation), (int)((humidityStandardDeviation - (int)(humidityStandardDeviation))*100000));
+	//	SEGGER_RTT_printf(0, " %u.%05u, ", (int)(temperatureMean), (int)((temperatureMean - (int)(temperatureMean))*100000)); 
+	//	SEGGER_RTT_printf(0, "%u.%05u, ", (int)(temperatureStandardDeviation), (int)((temperatureStandardDeviation - (int)(temperatureStandardDeviation))*100000)); 
+	//	correlation = findCorrelationCoefficient(humidityDistribution, temperatureDistribution, humidityMean, temperatureMean, humidityStandardDeviation, temperatureStandardDeviation, samplesPerDistribution);
+	//	BubbleSort(temperatureDistribution, samplesPerDistribution);
+	//	temperatureStandardDeviation = findNewUncertainty(temperatureDistribution, temperatureMean, temperatureStandardDeviation, correlation, humidityStandardDeviation, samplesPerDistribution);
+	//	SEGGER_RTT_printf(0, "%u.%05u, ", (int)(temperatureStandardDeviation), (int)((temperatureStandardDeviation - (int)(temperatureStandardDeviation))*100000)); 
+	//}
 }
 
 float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t CalibVals[]) 
@@ -326,7 +330,7 @@ float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t Calib
 	// Store the calculated temperature in the array that was passed by reference
 	return calc_temp; 
 	} 
-
+/*
 	float calcH(uint8_t hum_msb, uint8_t hum_lsb, uint8_t CalibVals[], float temp_comp)
 	{ 
 
@@ -371,7 +375,8 @@ float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t Calib
 	// Store the calculated temperature in the array that was passed by reference
 	return calc_hum; 
 	}
-    
+  */
+ /*  
 float findMean(float samples[], int size)
 { 
     float sum = 0;
@@ -382,7 +387,8 @@ float findMean(float samples[], int size)
     sum = sum/size; 
     return sum; 
 }
-
+*/
+/*
 float findStandardDeviation(float samples[], float mean, int size)
 {
     float sum = 0;
@@ -393,7 +399,8 @@ float findStandardDeviation(float samples[], float mean, int size)
     sum = sqrt(sum/size); 
     return sum; 
 }
-
+*/
+/*
 float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX, float meanY, float standardDeviationX, float standardDeviationY, int size)
 { 
     float sumTop = 0;
@@ -405,7 +412,8 @@ float findCorrelationCoefficient(float samplesX[], float samplesY[], float meanX
     sumBottom = sqrt(standardDeviationX*standardDeviationX*size*standardDeviationY*standardDeviationY*size);
     return sumTop/sumBottom; 
 }
-
+*/
+/*
 float Skewness(float samples[], float mean, float standardDeviation, int size)
 {
   float Skewness = 0;
@@ -416,7 +424,8 @@ float Skewness(float samples[], float mean, float standardDeviation, int size)
   Skewness = Skewness/(size*standardDeviation*standardDeviation*standardDeviation);
   return Skewness;
 }
-
+*/
+/*
 float Kurtosis(float samples[], float mean, float standardDeviation, int size)
 {
   float Kurtosis = 0;
@@ -427,7 +436,8 @@ float Kurtosis(float samples[], float mean, float standardDeviation, int size)
   Kurtosis = Kurtosis/(size*standardDeviation*standardDeviation*standardDeviation*standardDeviation);
   return Kurtosis;
 }
-
+*/
+/*
 float findNewUncertainty(float samplesH[], float meanH, float sigmaH, float rhoHT, float sigmaT, int size)
 {
     float A = 0;
@@ -442,7 +452,8 @@ float findNewUncertainty(float samplesH[], float meanH, float sigmaH, float rhoH
     }
     return 1.0/(A*sqrt(2*M_PI));
 }
-
+*/
+/*
 float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT) 
 {
     float top = ((h-meanH)/sigmaH);
@@ -451,14 +462,16 @@ float normalPDF(float h, float meanH, float sigmaH, float sigmaT, float rhoHT)
     float mult = 1/(2*M_PI*sigmaT*sigmaH*sqrt(1-(rhoHT*rhoHT)));
     return mult*exp(-(top/bottom));
 } 
-
+*/
+/*
 void Swap(float *a, float *b)
 {
     float temp = *a;
     *a = *b;
     *b = temp;
 }
-//Function to sort the array
+*/
+/*
 void BubbleSort(float *arr, int n)
 {
     int i = 0, j = 0;
@@ -473,3 +486,4 @@ void BubbleSort(float *arr, int n)
         }
     }
 }
+*/
