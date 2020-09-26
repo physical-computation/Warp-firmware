@@ -1076,6 +1076,8 @@ main(void)
 				SEGGER_RTT_printf(0, "\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
 				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 				activateAllLowPowerSensorModes(true);
+				gWarpI2cBaudRateKbps = 300;
+				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
 				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, menuI2cPullupValue);
 
 				/*
