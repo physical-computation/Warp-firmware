@@ -740,12 +740,7 @@ warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerSta
 int
 main(void)
 {
-	WarpSensorDevice			menuTargetSensor = kWarpSensorBMX055accel;
-	volatile WarpI2CDeviceState *		menuI2cDevice = NULL;
 	uint16_t				menuI2cPullupValue = 32768;
-	uint8_t					menuRegisterAddress = 0x00;
-	
-
 
 	rtc_datetime_t				warpBootDate;
 

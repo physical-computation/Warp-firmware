@@ -173,7 +173,6 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 WarpStatus
 configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint8_t payloadGas_1, uint16_t menuI2cPullupValue)
 {
-	uint8_t		reg, index = 0;
 	WarpStatus	status1, status2, status3, status4 = 0;
 
 	status1 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Hum,
@@ -219,10 +218,6 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	uint16_t	readSensorRegisterValueXLSB;
-	uint16_t 	unsignedRawAdcValueUint16_t;
-	uint32_t	unsignedRawAdcValueUint32_t;
-	WarpStatus	triggerStatus, i2cReadStatusMSB, i2cReadStatusLSB, i2cReadStatusXLSB;
-	float temperature = 0;
     const int samplesPerDistribution= 30; 
 	float temperatureDistribution[samplesPerDistribution];
 	float humidityDistribution[samplesPerDistribution];
@@ -252,14 +247,14 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 		/*
 		*	First, trigger a measurement
 		*/
-		triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
+		writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
 								0b00100101,
 								menuI2cPullupValue);
-		i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_msb, 1);
+		readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_msb, 1);
 		readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
-		i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_lsb, 1);
+		readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_lsb, 1);
 		readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
-		i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_xlsb, 1);
+		readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_xlsb, 1);
 		readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 		temperatureDistribution[i] = calcT(readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB, deviceBME680CalibrationValues);
 	  
@@ -273,9 +268,9 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 		pressureDistribution[i] = calcP(readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB, deviceBME680CalibrationValues, temperatureDistribution[i]);
 		*/
 		
-		i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_msb, 1);
+		readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_msb, 1);
 		readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
-		i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_lsb, 1);
+		readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_lsb, 1);
 		readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
 		humidityDistribution[i] = calcH(readSensorRegisterValueMSB, readSensorRegisterValueLSB, deviceBME680CalibrationValues, temperatureDistribution[i]);
 		
@@ -554,6 +549,7 @@ float cos_32(float x)
 		case 2: return -cos_32s(x-M_PI);
 		case 3: return cos_32s((2*M_PI)-x);
 	}
+	return 0;
 }
 
 float sin_32(float x)
