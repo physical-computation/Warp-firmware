@@ -947,10 +947,14 @@ while (1)
 	{
 	
 				enableSssupply(3000);
+				OSA_TimeDelay(200);
 				enableI2Cpins(menuI2cPullupValue);
+				OSA_TimeDelay(200);
 				activateAllLowPowerSensorModes(true);
+				OSA_TimeDelay(200);
 				gWarpI2cBaudRateKbps = 300;
 				warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */);
+				OSA_TimeDelay(200);
 				printAllSensors(true /* printHeadersAndCalibration */, 'c', 0, menuI2cPullupValue);
 
 	}
