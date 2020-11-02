@@ -56,7 +56,7 @@
 #include "warp.h"
 
 
-//#define WARP_FRDMKL03
+#define WARP_FRDMKL03
 
 
 /*
@@ -1248,7 +1248,7 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
+	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVLPS25H
