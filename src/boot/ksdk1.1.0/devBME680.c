@@ -100,6 +100,8 @@ writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload, uint16_t menu
 	}
 
 	return kWarpStatusOK;
+	SEGGER_RTT_WriteString(0, " Write OK!,");
+	
 }
 
 WarpStatus
@@ -145,6 +147,7 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	return kWarpStatusOK;
+	SEGGER_RTT_WriteString(0, " Read OK!,");
 }
 
 
@@ -205,7 +208,9 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
 							0b00100101,
 							menuI2cPullupValue);
-
+	
+		SEGGER_RTT_WriteString(0, " Trigger successful!,");
+	
 	i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 1);
 	readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
 	i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_lsb, 1);
@@ -220,12 +225,13 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK) || (i2cReadStatusXLSB != kWarpStatusOK))
 	{
 		SEGGER_RTT_WriteString(0, " ----,");
+	
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
+			SEGGER_RTT_printf(0, " MSB, LSB, XLB1 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
 		}
 		else
 		{
@@ -252,11 +258,11 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
+			SEGGER_RTT_printf(0, " MSB, LSB, XLB2 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %u,", unsignedRawAdcValue);
+			SEGGER_RTT_printf(0, "UnsignedADC %u,", unsignedRawAdcValue);
 		}
 	}
 
@@ -274,11 +280,11 @@ printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			SEGGER_RTT_printf(0, " Read MSB, LSB 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %u,", unsignedRawAdcValue);
+			SEGGER_RTT_printf(0, " UnsignedADC %u,", unsignedRawAdcValue);
 		}
 	}
 }
