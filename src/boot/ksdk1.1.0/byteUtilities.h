@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2020. Phillip Stanley-Marbell, Youchao Wang AND James Meech.
 
 	All rights reserved.
 
@@ -33,20 +33,17 @@
 	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
-*/
+*/ 
 
-#ifndef WARP_BUILD_ENABLE_DEVBME680
-#define WARP_BUILD_ENABLE_DEVBME680
-#endif
+#include <stdlib.h>
+#include "fsl_misc_utilities.h"
 
-void		initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
-WarpStatus configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint8_t payloadGas_1, uint16_t menuI2cPullupValue);
-WarpStatus	readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	readSensorSignalBME680(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
-void		printSensorDataBME680(bool hexModeFlag);
-float calcT(uint8_t temp_msb, uint8_t temp_lsb, uint8_t temp_xlsb, uint8_t CalibVals[]);
+int16_t AMG8834ByteUtility(uint16_t	readSensorRegisterValueMSB, uint16_t readSensorRegisterValueLSB);
+uint16_t concatTwoBytes(uint16_t MSB, uint16_t LSB);
+uint32_t concatTwoPointFiveBytes(uint16_t MSB, uint16_t LSB, uint16_t XLSB); 
+int16_t BMX055AccelerometerByteUtility(uint16_t MSB, uint16_t LSB);
+int16_t BMX055MagnetometerByteUtility(uint16_t MSB, uint16_t LSB);
+int16_t	MMA8451QAccelerometerByteUtility(uint16_t MSB, uint16_t LSB); 
+
+
+

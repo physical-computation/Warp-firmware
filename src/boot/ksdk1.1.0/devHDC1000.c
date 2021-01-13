@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
+#include "byteUtilities.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -235,7 +236,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB); 
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -263,7 +264,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Humidity, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueMSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t

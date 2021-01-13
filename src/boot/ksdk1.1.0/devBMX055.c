@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
+#include "byteUtilities.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -392,13 +393,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_X_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
-
-	/*
-	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
-
+	readSensorRegisterValueCombined = BMX055AccelerometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
@@ -419,13 +414,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_Y_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
-
-	/*
-	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
-
+	readSensorRegisterValueCombined = BMX055AccelerometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
@@ -446,13 +435,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_Z_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
-
-	/*
-	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
-
+	readSensorRegisterValueCombined = BMX055AccelerometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
@@ -508,7 +491,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_X_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -533,7 +516,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_Y_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -558,7 +541,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_Z_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined = concatTwoBytes(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -593,12 +576,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magX_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
-
-	/*
-	 *	Sign extend the 13-bit value based on knowledge that upper 3 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 12)) - (1 << 12);
+	readSensorRegisterValueCombined = BMX055MagnetometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 
 	if (i2cReadStatus != kWarpStatusOK)
@@ -620,12 +598,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magY_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
-
-	/*
-	 *	Sign extend the 13-bit value based on knowledge that upper 4 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 12)) - (1 << 12);
+	readSensorRegisterValueCombined = BMX055MagnetometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 
 	if (i2cReadStatus != kWarpStatusOK)
@@ -647,12 +620,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magZ_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 7) | (readSensorRegisterValueLSB >> 1);
-
-	/*
-	 *	Sign extend the 15-bit value based on knowledge that upper 1 bit are 0:
-	 */
-	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 14)) - (1 << 14);
+	readSensorRegisterValueCombined = BMX055MagnetometerByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 
 	if (i2cReadStatus != kWarpStatusOK)

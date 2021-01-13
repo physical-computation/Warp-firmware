@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
+#include "byteUtilities.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -184,17 +185,8 @@ printSensorDataAMG8834(bool hexModeFlag)
 		i2cReadStatus			= readSensorRegisterAMG8834(bufAddress, 2 /* numberOfBytes */);
 		readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
 		readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
-
-		/*
-		 *	Format is 12 bits with the highest-order bit being a sign (0 +ve, 1 -ve)
-		 */
-		readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0x07) << 8) | (readSensorRegisterValueLSB & 0xFF);
-		readSensorRegisterValueCombined *= ((readSensorRegisterValueMSB & (1 << 3)) == 0 ? 1 : -1);
-
-		/*
-		 *	Specification, page 14/26, says LSB counts for 0.25 C (1/4 C)
-		 */
-		readSensorRegisterValueCombined >>= 2;
+		
+		readSensorRegisterValueCombined = AMG8834ByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 		if (i2cReadStatus != kWarpStatusOK)
 		{
@@ -217,16 +209,12 @@ printSensorDataAMG8834(bool hexModeFlag)
 	readSensorRegisterValueLSB	= deviceAMG8834State.i2cBuffer[0];
 	readSensorRegisterValueMSB	= deviceAMG8834State.i2cBuffer[1];
 
-	/*
-	 *	Format is 12 bits with the highest-order bit being a sign (0 +ve, 1 -ve)
-	 */
-	readSensorRegisterValueCombined	= ((readSensorRegisterValueMSB & 0x07) << 8) | (readSensorRegisterValueLSB & 0xFF);
-	readSensorRegisterValueCombined *= ((readSensorRegisterValueMSB & (1 << 3)) == 0 ? 1 : -1);
+	readSensorRegisterValueCombined = AMG8834ByteUtility(readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 
 	/*
 	 *	Specification, page 13/26, says LSB of the 12-bit thermistor value counts for 0.0625 C (1 / 16 C)
 	 */
-	readSensorRegisterValueCombined >>= 4;
+	readSensorRegisterValueCombined >>= 2;
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
