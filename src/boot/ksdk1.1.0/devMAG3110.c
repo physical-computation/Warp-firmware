@@ -1,5 +1,7 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell.
+
+	Other contributors, 2018 onwards: See git blame.
 
 	All rights reserved.
 
@@ -36,6 +38,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -50,24 +57,16 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-
 extern volatile WarpI2CDeviceState	deviceMAG3110State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
-
 void
 initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
 {
 	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (
-						kWarpTypeMaskMagneticX |
-						kWarpTypeMaskMagneticY |
-						kWarpTypeMaskMagneticZ |
-						kWarpTypeMaskTemperature
-					);
 
 	return;
 }
@@ -101,6 +100,8 @@ writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t men
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
+	warpEnableI2Cpins();
+
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
 							&slave,
@@ -151,7 +152,6 @@ readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-
 	/*
 	 *	Steps (Repeated single-byte read. See Section 4.2.2 of MAG3110 manual.):
 	 *
@@ -161,6 +161,7 @@ readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 	*/
 
 	cmdBuf[0] = deviceRegister;
+	warpEnableI2Cpins();
 
 	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -197,7 +198,6 @@ printSensorDataMAG3110(bool hexModeFlag)
 	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatus;
 
-
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_X_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMAG3110State.i2cBuffer[1];
@@ -209,20 +209,19 @@ printSensorDataMAG3110(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
-
 
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_Y_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
@@ -235,20 +234,19 @@ printSensorDataMAG3110(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
-
 
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_Z_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];
@@ -261,20 +259,19 @@ printSensorDataMAG3110(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
-
 
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110DIE_TEMP, 1 /* numberOfBytes */);
 	readSensorRegisterSignedByte = deviceMAG3110State.i2cBuffer[0];
@@ -285,17 +282,17 @@ printSensorDataMAG3110(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x,", deviceMAG3110State.i2cBuffer[0]);
+			warpPrint(" 0x%02x,", deviceMAG3110State.i2cBuffer[0]);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterSignedByte);
+			warpPrint(" %d,", readSensorRegisterSignedByte);
 		}
 	}
 }

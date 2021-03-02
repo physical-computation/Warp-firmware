@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -34,12 +35,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVBMX055
-#define WARP_BUILD_ENABLE_DEVBMX055
-#endif
-
-
 void		initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 void		initBMX055gyro(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 void		initBMX055mag(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
@@ -63,24 +58,6 @@ WarpStatus	configureSensorBMX055mag(uint8_t payloadPowerCtrl,
 WarpStatus	readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes);
-
-WarpStatus	readSensorSignalBMX055accel(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
-
-WarpStatus	readSensorSignalBMX055gyro(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
-
-WarpStatus	readSensorSignalBMX055mag(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
 
 void		printSensorDataBMX055accel(bool hexModeFlag);
 void		printSensorDataBMX055gyro(bool hexModeFlag);

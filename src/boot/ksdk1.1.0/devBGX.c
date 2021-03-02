@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -53,76 +58,79 @@
 
 extern volatile lpuart_state_t		lpuartState;
 extern volatile lpuart_user_config_t	lpuartUserConfig;
-extern WarpUARTDeviceState		deviceBGXState;
 
 static void	uartRxCallback(uint32_t instance, void * uartState);
-
+static void	powerUpBGX(void);
+static void	powerDownBGX(void);
 
 void
-initBGX()
+initBGX(WarpUARTDeviceState volatile *  deviceStatePointer)
 {
 	/*
 	 *	Initialize UART and setup callback function.
 	 */
-	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
-	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
+	lpuartState.txBuff = (uint8_t *)deviceStatePointer->uartTXBuffer;
+	lpuartState.rxBuff = (uint8_t *)deviceStatePointer->uartRXBuffer;
 
-	lpuartState.txBuff = deviceBGXState.uartTXBuffer;
-	lpuartState.rxBuff = deviceBGXState.uartRXBuffer;
-	
-	LPUART_DRV_InstallRxCallback(	0,
-					&uartRxCallback,
-					deviceBGXState.uartRXBuffer,
-					(void*)0,
-					1);
+	LPUART_DRV_InstallRxCallback(	0,						/*	uint32_t instance		*/
+					&uartRxCallback,				/*	lpuart_rx_callback_t function	*/
+					(uint8_t *)deviceStatePointer->uartRXBuffer,	/*	uint8_t ∗ rxBuff		*/
+					(void *)0, 					/*	void ∗callbackParam		*/
+					1						/*	bool alwaysEnableRxIrq		*/);
+
+	powerUpBGX();
+	deviceStatePointer->isInitialized = true;
 }
 
 void
-activateBGX()
+deinitBGX(WarpUARTDeviceState volatile *  deviceStatePointer)
+{
+	powerDownBGX();
+	deviceStatePointer->isInitialized = false;
+}
+
+void
+powerUpBGX(void)
 {
 	/*
-	 *	Make sure regulator set to 3.3V and enable the LOAD pin / VS2
+	 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
+	 *
+	 *	Setup:
+	 *		PTA5/kWarpPinBGX_nRST for GPIO
 	 */
-	GPIO_DRV_SetPinOutput(kWarpPinTPS6274X_VSEL1);
-	GPIO_DRV_SetPinOutput(kWarpPinTPS6274X_VSEL2);
-	GPIO_DRV_SetPinOutput(kWarpPinTPS6274X_VSEL3);
-	GPIO_DRV_SetPinOutput(kWarpPinTPS6274X_VSEL4);
-	GPIO_DRV_SetPinOutput(kWarpPinTPS6274X_REGCTRL);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
+
+	/*
+	 *	Make sure regulator set to 3.3V
+	 */
+	warpScaleSupplyVoltage(3300);
 
 	/*
 	 *	Drive /RST on the BGX high
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinBGX_nRST);
-
 }
 
 void
-deactivateBGX()
+powerDownBGX()
 {
-	/*
-	 *	Leave the regulator as-is but disable the LOAD pin
-	 */
-	//xxx
-
 	/*
 	 *	Drive /RST on the BGX low
 	 */
-	//xxx
+	GPIO_DRV_ClearPinOutput(kWarpPinBGX_nRST);
+
+	return;
 }
 
 void
-uartRxCallback(uint32_t instance, void * uartState)
+uartRxCallback(uint32_t instance, void *  uartState)
 {
 	/*
-	 *	Received data is in deviceBGXState.uartRXBuffer
+	 *	We don't do anything special upon receipt of UART bytes.
+	 *	If we wanted to, that code would go here.
 	 */
-	if (deviceBGXState.uartRXBuffer[0] == 0)
-	{
-		
-		/*
-		 *	For now, we do nothing with the received data
-		 */
-	}
+	//	warpPrint("In uartRxCallback(), deviceBGXState.uartRXBuffer[0] = [0x%X] ('%c')\n", deviceBGXState.uartRXBuffer[0], deviceBGXState.uartRXBuffer[0]);
+	//	SEGGER_RTT_WriteString(0, "In uartRxCallback()...\n");
 
 	return;
 }

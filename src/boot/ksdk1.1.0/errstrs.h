@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2021. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,5 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister, int numberOfBytes);
+extern const char	gWarpEfmt[];
+extern const char	gWarpEuartSendChars[];
+extern const char	gWarpEmalloc[];

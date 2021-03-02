@@ -14,58 +14,51 @@
 #include "fsl_rtc_driver.h"
 #include "fsl_spi_master_driver.h"
 
+#include "config.h"
 #include "glaux.h"
 #include "warp.h"
 #include "gpio_pins.h"
-
-/*
- *	For now, hardcode this define here. What we really want is
- *	a warp-config.h, where we selectively enable each of the
- *	drivers and set their corresponding WARP_BUILD_ENABLE_*
- */
 #include "devRV8803C7.h"
 
 
 
 /*
- *	From KSDK power_manager_demo.c <<BEGIN>>>
+ *	From KSDK power_manager_demo.c BEGIN>>>
  */
-
-static void
-setSleepRtcAlarm(uint32_t offsetSec)
-{
-	rtc_datetime_t date;
-	uint32_t seconds;
-
-	// get date time and convert to seconds
-	RTC_DRV_GetDatetime(0, &date);
-
-	// convert to sec and add offset
-	RTC_HAL_ConvertDatetimeToSecs(&date, &seconds);
-
-	//TODO: should check for overflow...
-	seconds += offsetSec;
-	RTC_HAL_ConvertSecsToDatetime(&seconds, &date);
-
-	// set the datetime for alarm
-	if (RTC_DRV_SetAlarm(0, &date, true))
+#if (!WARP_BUILD_ENABLE_DEVRV8803C7)
+	static void
+	setSleepRtcAlarm(uint32_t offsetSec)
 	{
-		//...
-	}
-	else
-	{
-		return;
-	}
-}
+		rtc_datetime_t date;
+		uint32_t seconds;
 
-/*
- *	BOARD_* defines are defined in warp.h
- */
+		// get date time and convert to seconds
+		RTC_DRV_GetDatetime(0, &date);
+
+		// convert to sec and add offset
+		RTC_HAL_ConvertDatetimeToSecs(&date, &seconds);
+
+		//TODO: should check for overflow...
+		seconds += offsetSec;
+		RTC_HAL_ConvertSecsToDatetime(&seconds, &date);
+
+		// set the datetime for alarm
+		if (RTC_DRV_SetAlarm(0, &date, true))
+		{
+			//...
+		}
+		else
+		{
+			return;
+		}
+	}
+#endif
+
 void
 gpioDisableWakeUp(void)
 {
 	/*
-	 *	Disables interrupt on LLWU_Px
+	 *	Disables interrupt on LLWU_Px. The BOARD_* defines are defined in warp.h
 	 */
 	PORT_HAL_SetPinIntMode(BOARD_SW_LLWU_BASE, BOARD_SW_LLWU_PIN, kPortIntDisabled);
 	INT_SYS_DisableIRQ(BOARD_SW_LLWU_IRQ_NUM);
@@ -119,7 +112,7 @@ gpioEnableWakeUp(void)
 	 *	We don't need to revert this later, since waking up from VLLx is done
 	 *	through a soft reset and that config is lost? (TODO: double check.)
 	 */
-	GPIO_DRV_Init(glauxWakeupPins  /* input pins */, NULL  /* output pins */);
+	GPIO_DRV_Init(wakeupPins  /* input pins */, NULL  /* output pins */);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAsGpio);
 
 	/*
@@ -148,14 +141,16 @@ gpioEnableWakeUp(void)
 	 *	Set to enable pin 7 (PTA0/IRQ0/LLWU_P7) as VLLx wakeup source, trigger on any edge.
 	 */
 	LLWU_HAL_SetExternalInputPinMode(LLWU_BASE, kLlwuExternalPinChangeDetect, (llwu_wakeup_pin_t)BOARD_SW_LLWU_EXT_PIN);
+
+	USED(dummyread);
 }
-
-
 
 void
 updateClockManagerToRunMode(uint8_t cmConfigMode)
 {
-	// if current config mode is RUN but CM is not, need to re-config it to RUN
+	/*
+	 *	If current config mode is RUN but CM is not, need to re-config it to RUN
+	 */
 	if ((cmConfigMode == CLOCK_CONFIG_INDEX_FOR_RUN) &&
 		(CLOCK_SYS_GetCurrentConfiguration() != CLOCK_CONFIG_INDEX_FOR_RUN))
 	{
@@ -166,7 +161,9 @@ updateClockManagerToRunMode(uint8_t cmConfigMode)
 void
 updateClockManagerToVlprMode(uint8_t cmConfigMode)
 {
-	// if current config mode and CM are both RUN, need to re-config it to VLPR
+	/*
+	 *	If current config mode and CM are both RUN, need to re-config it to VLPR
+	 */
 	if ((cmConfigMode == CLOCK_CONFIG_INDEX_FOR_RUN) &&
 		(CLOCK_SYS_GetCurrentConfiguration() != CLOCK_CONFIG_INDEX_FOR_VLPR))
 	{
@@ -186,15 +183,14 @@ update_clock_mode(uint8_t cmConfigMode)
 		updateClockManagerToRunMode(cmConfigMode);
 	}
 }
-
 /*
- *	From KSDK power_manager_demo.c <<END>>>
+ *	From KSDK power_manager_demo.c <<END
  */
 
 
 
 WarpStatus
-warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pullupValue)
+warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 {
 	uint8_t				cmConfigMode = CLOCK_CONFIG_INDEX_FOR_RUN;
 	power_manager_error_code_t	status;
@@ -209,28 +205,28 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 				return kWarpStatusPowerTransitionErrorVlpr2Wait;
 			}
 
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				*	Program RV8803 external interrupt
+				*/
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
 
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
@@ -261,28 +257,28 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 				return kWarpStatusPowerTransitionErrorVlpr2Stop;
 			}
 
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				 *	Program RV8803 external interrupt
+				 */
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
 
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
@@ -331,28 +327,28 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 				return kWarpStatusPowerTransitionErrorRun2Vlpw;
 			}
 
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				*	Program RV8803 external interrupt
+				*/
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
 
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
@@ -374,28 +370,28 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 
 		case kWarpPowerModeVLPS:
 		{
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				 *	Program RV8803 external interrupt
+				 */
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
 
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
@@ -442,33 +438,32 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 
 		case kWarpPowerModeVLLS0:
 		{
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				 *	Program RV8803 external interrupt
+				 */
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			/*
-			 *	Since we wakeup via reset and we also turn these back on at reset:
-			 */
+				/*
+				 *	Since we wakeup via reset and we also turn these back on at reset:
+				 */
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
 
-			gpioEnableWakeUp();
-
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
@@ -486,28 +481,29 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 			/*
 			 *	TODO: this can be replaced using the internal RTC
 			 */
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				 *	Program RV8803 external interrupt
+				 */
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
+
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*
@@ -524,28 +520,29 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds, uint16_t pul
 			/*
 			 *	TODO: this can be replaced using the internal RTC
 			 */
-#ifdef WARP_BUILD_ENABLE_DEVRV8803C7
-			/*
-			 *	Program RV8803 external interrupt
-			 */
-			enableI2Cpins(pullupValue);
-			setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
-			disableI2Cpins();
+			#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+				/*
+				 *	Program RV8803 external interrupt
+				 */
+				warpEnableI2Cpins();
+				setRTCCountdownRV8803C7(sleepSeconds, kWarpRV8803ExtTD_1HZ, true /* interupt_enable */);
+				warpDisableI2Cpins();
 
-			gpioEnableWakeUp();
-#else
-			/*
-			 *	In Glaux, because we have the external clock going to RTC_CLKIN,
-			 *	we can actually have the RTC active in stop modes too.
-			 *
-			 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
-			 *
-			 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
-			 *	we are able to wake from VLLS0.
-			 */
-			gpioDisableWakeUp();
-			setSleepRtcAlarm(sleepSeconds);
-#endif
+				gpioEnableWakeUp();
+			#else
+				/*
+				 *	In Glaux, because we have the external clock going to RTC_CLKIN,
+				 *	we can actually have the RTC active in stop modes too.
+				 *
+				 *	See footnote 5 of Table 7-2. "Module operation in low-power modes".
+				 *
+				 *	TODO: Need to test Warp variant of firmware on Glaux HW and see if
+				 *	we are able to wake from VLLS0.
+				 */
+				gpioDisableWakeUp();
+				setSleepRtcAlarm(sleepSeconds);
+			#endif
+
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
 
 			/*

@@ -1,5 +1,10 @@
 #include <stdint.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_spi_master_driver.h"
 #include "fsl_port_hal.h"
 

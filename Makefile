@@ -1,43 +1,52 @@
-#!/bin/sh
-	
-	# Uncomment this to set ARMGCC_DIR correctly: export ARMGCC_DIR=<full path to arm-gcc directory>
+include setup.conf
 
-	mkdir -p work
-	mkdir -p work/boards/Warp
-	mkdir -p work/demos/Warp/src
-	mkdir -p work/demos/Warp/src/btstack
+TARGET	= build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.src
 
-	cp -r ../../tools/sdk/ksdk1.1.0/*				work
-	cp ../../src/boot/ksdk1.1.0/SEGGER*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c		work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-powermodes.c	work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/warp.h				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devBMX055.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devADXL362.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devMMA8451Q.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devLPS25H.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devHDC1000.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devMAG3110.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devSI7021.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devL3GD20H.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devBME680.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devTCS34725.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devSI4705.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devCCS811.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devAMG8834.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devAS7262.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devAS7263.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devAS726x.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devPAN1326.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devRV8803C7.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devIS25xP.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/CMakeLists.txt			work/demos/Warp/armgcc/Warp/
-	cp ../../src/boot/ksdk1.1.0/startup_MKL03Z4.S			work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
-	cp ../../src/boot/ksdk1.1.0/gpio_pins.c				work/boards/Warp
-	cp ../../src/boot/ksdk1.1.0/gpio_pins.h				work/boards/Warp
-	cp ../../src/boot/ksdk1.1.0/glaux.h				work/boards/Warp
+all:
+	mkdir -p build/ksdk1.1/work
+	mkdir -p build/ksdk1.1/work/boards/Warp
+	mkdir -p build/ksdk1.1/work/demos/Warp/src
+	mkdir -p build/ksdk1.1/work/demos/Warp/src/btstack
+	cp -r tools/sdk/ksdk1.1.0/*					build/ksdk1.1/work
+	cp src/boot/ksdk1.1.0/SEGGER*					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/boot.c					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/errstrs*					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/powermodes.c				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/warp.h					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devBMX055.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devADXL362.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devMMA8451Q.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devLPS25H.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devHDC1000.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devMAG3110.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devSI7021.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devL3GD20H.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devTCS34725.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devSI4705.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devCCS811.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devAMG8834.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devAS7262.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devAS7263.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devAS726x.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devBGX.*					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devISL23415.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devAT45DB.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devICE40.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/CMakeLists.txt				build/ksdk1.1/work/demos/Warp/armgcc/Warp/
+	cp src/boot/ksdk1.1.0/startup_MKL03Z4.S				build/ksdk1.1/work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
+	cp src/boot/ksdk1.1.0/gpio_pins.c				build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/gpio_pins.h				build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/glaux.h					build/ksdk1.1/work/boards/Warp
+	cd build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
+	cd build/ksdk1.1/work/demos/Warp/armgcc/Warp && ./clean.sh; ./build_release.sh
+	@echo "\n\nNow, run\n\n\tmake load\n\n"
 
-	cd work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
-	cd ../../../../demos/Warp/armgcc/Warp && ./clean.sh; ./build_release.sh
-	echo "\n\nNow, run\n\n\t/Applications/SEGGER/JLink/JLinkExe -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript ../../tools/scripts/jlink.commands\n\n"
+$(TARGET): all
 
+load:
+	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/jlink.commands

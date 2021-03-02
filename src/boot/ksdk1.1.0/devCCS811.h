@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -34,18 +35,8 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVCCS811
-#define WARP_BUILD_ENABLE_DEVCCS811
-#endif
-
 void		initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
 WarpStatus	writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	readSensorSignalCCS811(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
 void		printSensorDataCCS811(bool hexModeFlag);

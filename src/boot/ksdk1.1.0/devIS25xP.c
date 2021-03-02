@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -46,72 +51,62 @@
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
 
-
-//TODO: need a better way to enable variants of the firmware instead of including, e.g., glaux.h which defines WARP_BUILD_ENABLE_GLAUX_VARIANT as the means of enabling Glauc build.
-//TODO: one possibility is to -DWARP_BUILD_ENABLE_GLAUX_VARIANT as a build flag 
-/*
- *	Glaux.h needs to come before gpio_pins.h
- */
-#include "glaux.h"
+#include "errstrs.h"
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
+#include "devIS25xP.h"
 
-
-extern volatile WarpSPIDeviceState	deviceIS25xPState;
 extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 
 
 void
-initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer)
+initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
 {
+	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
+
 	/*
-	 *	TODO: Need to decide/define on singal type for devices that are not sensors
+	 *	For the IS25xP flash device, we need minimum of 6 entries per SPI transaction
 	 */
-	deviceStatePointer->signalType	= (
-						kWarpTypeMaskMax
-					);
+	deviceStatePointer->spiSourceBuffer = malloc(sizeof(uint8_t)*kIS25xPminSPIbufferLength);
+	if (deviceStatePointer->spiSourceBuffer == NULL)
+	{
+		SEGGER_RTT_WriteString(0, gWarpEmalloc);
+
+		return;
+	}
+
+	deviceStatePointer->spiSinkBuffer = malloc(sizeof(uint8_t)*kIS25xPminSPIbufferLength);
+	if (deviceStatePointer->spiSinkBuffer == NULL)
+	{
+		SEGGER_RTT_WriteString(0, gWarpEmalloc);
+
+		return;
+	}
+
+	deviceStatePointer->spiBufferLength = sizeof(uint8_t)*kIS25xPminSPIbufferLength;
+
 	return;
 }
 
-//TODO: rather than listing out the ops, take in an array
 WarpStatus
-spiTransactionIS25xP(uint8_t op0, uint8_t op1, uint8_t op2, uint8_t op3, uint8_t op4, uint8_t op5, uint8_t op6, int opCount)
+spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount)
 {
-	//TODO: need to allow each SPI device to specify how many entries are in its source and sink buffer, rather than one size fits all. for the IS25xP, we need up to 6
+	spi_status_t	status;
 
-	/*
-	 *	Populate the shift-out register with the read-register command,
-	 *	followed by the register to be read, followed by a zero byte.
-	 */
-	deviceIS25xPState.spiSourceBuffer[0] = op0;
-	deviceIS25xPState.spiSourceBuffer[1] = op1;
-	deviceIS25xPState.spiSourceBuffer[2] = op2;
-	deviceIS25xPState.spiSourceBuffer[3] = op3;
-	deviceIS25xPState.spiSourceBuffer[4] = op4;
-	deviceIS25xPState.spiSourceBuffer[5] = op5;
-	deviceIS25xPState.spiSourceBuffer[5] = op6;
-
-	deviceIS25xPState.spiSinkBuffer[0] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[1] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[2] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[3] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[4] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[5] = 0x00;
-	deviceIS25xPState.spiSinkBuffer[6] = 0x00;
+	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
+	{
+		deviceStatePointer->spiSourceBuffer[i] = ops[i];
+		deviceStatePointer->spiSinkBuffer[i] = 0x00;
+	}
 
 	/*
 	 *	First, create a falling edge on chip-select.
 	 */
-	// TODO: need a better architecture for handling the design variants and their different chip selects...
-#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
-	GPIO_DRV_SetPinOutput(kGlauxPinFlash_CS);
+	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
 	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(kGlauxPinFlash_CS);
-#else
-	//TODO
-#endif
+	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
@@ -127,24 +122,24 @@ spiTransactionIS25xP(uint8_t op0, uint8_t op1, uint8_t op2, uint8_t op3, uint8_t
 	 *
 	 *	TODO: the transfer size should be the per-device sized spiSinkBuffer length, not the current magic number
 	 */
-	enableSPIpins();
-	deviceIS25xPState.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
+	warpEnableSPIpins();
+	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
 					NULL /* spi_master_user_config_t */,
-					(const uint8_t * restrict)deviceIS25xPState.spiSourceBuffer,
-					(uint8_t * restrict)deviceIS25xPState.spiSinkBuffer,
+					(const uint8_t * restrict)deviceStatePointer->spiSourceBuffer,
+					(uint8_t * restrict)deviceStatePointer->spiSinkBuffer,
 					opCount /* transfer size */,
 					gWarpSpiTimeoutMicroseconds);
-	disableSPIpins();
+	warpDisableSPIpins();
 
 	/*
-	 *	Disengage the IS25xP
+	 *	Deassert the IS25xP
 	 */
-	// TODO: need a better architecture for handling the design variants and their different chip selects...
-#ifdef WARP_BUILD_ENABLE_GLAUX_VARIANT
-	GPIO_DRV_SetPinOutput(kGlauxPinFlash_CS);
-#else
-	//TODO
-#endif
+	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+
+	if (status != kStatus_SPI_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	return kWarpStatusOK;
 }

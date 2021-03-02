@@ -35,7 +35,87 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
+#define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
+#define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
+
 /*
  *	Define this here to activate Glaux-specific pin names etc.
  */
-#define WARP_BUILD_ENABLE_GLAUX_VARIANT
+#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			0
+
+/*
+ *	Define this here to activate FRDMKL03-specific behavior
+ */
+#define		WARP_BUILD_ENABLE_FRDMKL03			0
+
+/*
+ *	Force the required configuration if WARP_BUILD_ENABLE_GLAUX_VARIANT is set
+ */
+#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+	#define		WARP_BUILD_ENABLE_DEVADXL362		0
+	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
+	#define		WARP_BUILD_ENABLE_DEVAS7262		0
+	#define		WARP_BUILD_ENABLE_DEVAS7263		0
+	#define		WARP_BUILD_ENABLE_DEVBGX		0
+	#define		WARP_BUILD_ENABLE_DEVBME680		1
+	#define		WARP_BUILD_ENABLE_DEVBMX055		0
+	#define		WARP_BUILD_ENABLE_DEVCCS811		0
+	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
+	#define		WARP_BUILD_ENABLE_DEVIS25xP		1
+	#define		WARP_BUILD_ENABLE_DEVISL23415		0
+	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
+	#define		WARP_BUILD_ENABLE_DEVICE40		0
+	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
+	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
+	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
+	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
+	#define		WARP_BUILD_ENABLE_DEVRV8803C7		1
+	#define		WARP_BUILD_ENABLE_DEVSI4705		0
+	#define		WARP_BUILD_ENABLE_DEVSI7021		0
+	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
+#else
+	/*
+	 *	Otherwise: Edit these to set which code paths are activated in the firmware commpilation
+	 */
+	#define		WARP_BUILD_ENABLE_DEVADXL362		0
+	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
+	#define		WARP_BUILD_ENABLE_DEVAS7262		0
+	#define		WARP_BUILD_ENABLE_DEVAS7263		0
+	#define		WARP_BUILD_ENABLE_DEVBGX		1
+	#define		WARP_BUILD_ENABLE_DEVBME680		0
+	#define		WARP_BUILD_ENABLE_DEVBMX055		0
+	#define		WARP_BUILD_ENABLE_DEVCCS811		0
+	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
+	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
+	#define		WARP_BUILD_ENABLE_DEVISL23415		0
+	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
+	#define		WARP_BUILD_ENABLE_DEVICE40		0
+	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
+	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
+	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
+	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
+	#define		WARP_BUILD_ENABLE_DEVRV8803C7		1
+	#define		WARP_BUILD_ENABLE_DEVSI4705		0
+	#define		WARP_BUILD_ENABLE_DEVSI7021		0
+	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
+#endif
+
+typedef enum
+{
+	kWarpDefaultI2cBaudRateKbps				= 200,
+	kWarpDefaultUartBaudRateBps				= 115200,
+	kWarpDefaultSpiBaudRateKbps				= 1000,
+	kWarpDefaultSleeptimeSeconds				= 0,
+	kWarpDefaultI2cTimeoutMilliseconds			= 5,
+	kWarpDefaultUartTimeoutMilliseconds			= 1000,
+	kWarpDefaultSpiTimeoutMicroseconds			= 5,
+	kWarpDefaultMenuPrintDelayMilliseconds			= 10,
+	kWarpDefaultSupplySettlingDelayMilliseconds		= 1,
+	kWarpDefaultPrintBufferSizeBytes			= 128,
+} WarpDefaults;
+
+typedef enum
+{
+	kWarpMemoryCommonBufferBytes				= 8,
+} WarpMemory;

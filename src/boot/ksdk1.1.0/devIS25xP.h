@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2020. Phillip Stanley-Marbell.
+	Authored 2020-2021. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,10 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVIS25xP
-#define WARP_BUILD_ENABLE_DEVIS25xP
-#endif
+enum
+{
+	kIS25xPminSPIbufferLength = 6,
+};
 
-
-void		initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer);
-WarpStatus	spiTransactionIS25xP(uint8_t op0, uint8_t op1, uint8_t op2, uint8_t op3, uint8_t op4, uint8_t op5, uint8_t op6, int opCount);
+void		initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
+WarpStatus	spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);

@@ -1,5 +1,6 @@
 /*
-	Authored 2019. Sam Willis.
+	Authored 2019. Sam Willis. Additional contributions, 2019-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -36,16 +37,22 @@
 */
 
 #include <stdint.h>
+
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_rtc_driver.h"
 #include "fsl_i2c_master_driver.h"
 
 #include "warp.h"
 #include "devRV8803C7.h"
 
-
 extern volatile WarpI2CDeviceState deviceRV8803C7State;
 extern volatile uint32_t gWarpI2cBaudRateKbps;
 extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
+
 
 void
 initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer)
@@ -74,6 +81,8 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 	};
 	
 	cmdBuff[0] = deviceRegister;
+	warpEnableI2Cpins();
+
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
 							&slave,
 							cmdBuff,
@@ -111,6 +120,8 @@ readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  
 	};
 	
 	cmdBuff[0] = deviceStartRegister;
+	warpEnableI2Cpins();
+
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
 							&slave,
 							cmdBuff,
@@ -150,6 +161,8 @@ writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
 	
 	cmdBuff[0] = deviceRegister;
 	txBuff[0] = payload;
+	warpEnableI2Cpins();
+
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
 						&slave,
 						cmdBuff,
@@ -187,6 +200,8 @@ writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t pa
 	};
 
 	cmdBuff[0] = deviceStartRegister;
+	warpEnableI2Cpins();
+
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
 						&slave,
 						cmdBuff,

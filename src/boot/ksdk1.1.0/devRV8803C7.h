@@ -1,5 +1,6 @@
 /*
-	Authored 2019. Sam Willis.
+	Authored 2019. Sam Willis. Additional contributions, 2019-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -34,10 +35,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVRV8803C7
-#define WARP_BUILD_ENABLE_DEVRV8803C7
-#endif
 
 typedef enum
 {

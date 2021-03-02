@@ -35,16 +35,12 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVADXL362
-#define WARP_BUILD_ENABLE_DEVADXL362
-#endif
+enum
+{
+	kADXL362minSPIbufferLength = 3,
+};
 
-
-void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer);
+void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
 WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue);
-WarpStatus	readSensorSignalADXL362(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
+WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes);
+

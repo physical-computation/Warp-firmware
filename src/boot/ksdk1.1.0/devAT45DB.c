@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2021. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -55,37 +55,24 @@
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
-#include "devADXL362.h"
+#include "devAT45DB.h"
 
-extern volatile WarpSPIDeviceState	deviceADXL362State;
 extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 
+extern uint8_t				gWarpSpiCommonSourceBuffer[];
+extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
-/*
- *	Analog Devices ADXL362.
- *
- *	From device manual, Rev. B, Page 19 of 44:
- *
- *		"
- *		The SPI port uses a multibyte structure 
- *		wherein the first byte is a command. The 
- *		ADXL362 command set is:
- *
- *		-	0x0A: write register
- *		-	0x0B: read register
- *		-	0x0D: read FIFO
- *		"
- */
 void
-initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
+initAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
 {
 	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
 
 	/*
 	 *	For the IS25xP flash device, we need minimum of 6 entries per SPI transaction
 	 */
-	deviceStatePointer->spiSourceBuffer = malloc(sizeof(uint8_t)*kADXL362minSPIbufferLength);
+/*
+	deviceStatePointer->spiSourceBuffer = malloc(sizeof(uint8_t)*kAT45DBminSPIbufferLength);
 	if (deviceStatePointer->spiSourceBuffer == NULL)
 	{
 		SEGGER_RTT_WriteString(0, gWarpEmalloc);
@@ -93,69 +80,68 @@ initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoP
 		return;
 	}
 
-	deviceStatePointer->spiSinkBuffer = malloc(sizeof(uint8_t)*kADXL362minSPIbufferLength);
+	deviceStatePointer->spiSinkBuffer = malloc(sizeof(uint8_t)*kAT45DBminSPIbufferLength);
 	if (deviceStatePointer->spiSinkBuffer == NULL)
 	{
 		SEGGER_RTT_WriteString(0, gWarpEmalloc);
 
 		return;
 	}
+*/
+	deviceStatePointer->spiSourceBuffer = gWarpSpiCommonSourceBuffer;
+	deviceStatePointer->spiSinkBuffer = gWarpSpiCommonSinkBuffer;
 
-	deviceStatePointer->spiBufferLength = sizeof(uint8_t)*kADXL362minSPIbufferLength;
+//	deviceStatePointer->spiBufferLength = sizeof(uint8_t)*kAT45DBminSPIbufferLength;
+	deviceStatePointer->spiBufferLength = kWarpMemoryCommonBufferBytes;
 
 	return;
 }
 
 WarpStatus
-writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes)
+spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount)
 {
 	spi_status_t	status;
 
-	/*
-	 *	Populate the shift-out register with the read-register command,
-	 *	followed by the register to be read, followed by a zero byte.
-	 */
-	deviceADXL362State.spiSourceBuffer[0] = command;
-	deviceADXL362State.spiSourceBuffer[1] = deviceRegister;
-	deviceADXL362State.spiSourceBuffer[2] = writeValue;
+	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
+	{
+		deviceStatePointer->spiSourceBuffer[i] = ops[i];
+		deviceStatePointer->spiSinkBuffer[i] = 0x00;
+	}
 
-	deviceADXL362State.spiSinkBuffer[0] = 0x00;
-	deviceADXL362State.spiSinkBuffer[1] = 0x00;
-	deviceADXL362State.spiSinkBuffer[2] = 0x00;
+	/*
+	 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
+	 *
+	 *	Setup:
+	 *		PTA9/kWarpPinAT45DB_SPI_nCS for GPIO
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
 
 	/*
 	 *	First, create a falling edge on chip-select.
-	 *
 	 */
-	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
 	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(deviceADXL362State.chipSelectIoPinID);
+	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
-	 *
-	 *	Providing a device structure here is optional since it 
-	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
-	 *	so we pass in NULL.
-	 *
-	 *	TODO: the "master instance" is always 0 for the KL03 since
-	 *	there is only one SPI peripheral. We however should remove
-	 *	the '0' magic number and place this in a Warp-HWREV0 header
-	 *	file.
+	 *	Providing a device structure here is optional since it is already provided when we did
+	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+	 *	the KL03 since there is only one SPI peripheral.
 	 */
 	warpEnableSPIpins();
-	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
-					NULL /* spi_master_user_config_t */,
-					(const uint8_t * restrict)deviceADXL362State.spiSourceBuffer,
-					(uint8_t * restrict)deviceADXL362State.spiSinkBuffer,
-					numberOfBytes /* transfer size */,
+	status = SPI_DRV_MasterTransferBlocking(0							/*	master instance			*/,
+					NULL								/*	spi_master_user_config_t	*/,
+					(const uint8_t * restrict)deviceStatePointer->spiSourceBuffer	/*	source buffer			*/,
+					(uint8_t * restrict)deviceStatePointer->spiSinkBuffer		/*	receive buffer			*/,
+					opCount								/*	transfer size			*/,
 					gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
 
 	/*
-	 *	Disengage the ADXL362
+	 *	Deassert the AT45DB
 	 */
-	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
 
 	if (status != kStatus_SPI_Success)
 	{
@@ -163,10 +149,4 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 	}
 
 	return kWarpStatusOK;
-}
-
-WarpStatus
-readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes)
-{	
-	return writeSensorRegisterADXL362(0x0B /* command == read register */, deviceRegister, 0x00 /* writeValue */, numberOfBytes);
 }

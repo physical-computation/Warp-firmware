@@ -34,9 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVBGX
-#define WARP_BUILD_ENABLE_DEVBGX
-#endif
-
-void		initBGX(void);
+void		initBGX(WarpUARTDeviceState volatile *  deviceStatePointer);
+void		deinitBGX(WarpUARTDeviceState volatile *  deviceStatePointer);

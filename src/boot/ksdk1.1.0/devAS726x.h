@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Rae Zhao.
+	Authored 2018. Rae Zhao. Additional contributors 2018-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -40,5 +41,5 @@ enum {
 	kWarpI2C_AS726x_SLAVE_READ_REG	= 0x02
 };
 
-WarpStatus	LedOnAS7262(void);
-WarpStatus	LedOffAS7262(void);
+WarpStatus	ledOnAS726x(uint8_t i2cAddress);
+WarpStatus	ledOffAS726x(uint8_t i2cAddress);

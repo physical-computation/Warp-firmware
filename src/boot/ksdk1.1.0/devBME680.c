@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang, James Meech.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -36,6 +37,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -62,13 +68,12 @@ void
 initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
 {
 	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskPressure | kWarpTypeMaskTemperature);
 
 	return;
 }
 
 WarpStatus
-writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -86,6 +91,8 @@ writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload, uint16_t menu
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
+
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
 							&slave,
@@ -130,6 +137,7 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
@@ -149,22 +157,19 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 
 WarpStatus
-configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0, uint16_t menuI2cPullupValue)
+configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0)
 {
 	uint8_t		reg, index = 0;
 	WarpStatus	status1, status2, status3, status4 = 0;
 
 	status1 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Hum,
-							payloadCtrl_Hum,
-							menuI2cPullupValue);
+							payloadCtrl_Hum);
 
 	status2 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
-							payloadCtrl_Meas,
-							menuI2cPullupValue);
+							payloadCtrl_Meas);
 
 	status3 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Gas_0,
-							payloadGas_0,
-							menuI2cPullupValue);
+							payloadGas_0);
 
 	/*
 	 *	Read the calibration registers
@@ -178,7 +183,7 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	}
 
 	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start;
-		reg <= kWarpSensorConfigurationRegisterBME680CalibrationRegion2End;
+		reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion2End;
 		reg++)
 	{
 		status4 |= readSensorRegisterBME680(reg, 1 /* numberOfBytes */);
@@ -190,90 +195,92 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 
 
 void
-printSensorDataBME680(bool hexModeFlag, uint16_t menuI2cPullupValue)
+printSensorDataBME680(bool hexModeFlag)
 {
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	uint16_t	readSensorRegisterValueXLSB;
 	uint32_t	unsignedRawAdcValue;
-	WarpStatus	triggerStatus, i2cReadStatus;
+	WarpStatus	triggerStatus, i2cReadStatusMSB, i2cReadStatusLSB, i2cReadStatusXLSB;
 
 
 	/*
 	 *	First, trigger a measurement
 	 */
 	triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
-							0b00100101,
-							menuI2cPullupValue);
+							0b00100101);
 
-	i2cReadStatus = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 3);
+	i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 1);
 	readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
-	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[1];
-	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[2];
+	i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_lsb, 1);
+	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
+	i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_xlsb, 1);
+	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 	unsignedRawAdcValue =
 			((readSensorRegisterValueMSB & 0xFF)  << 12) |
 			((readSensorRegisterValueLSB & 0xFF)  << 4)  |
 			((readSensorRegisterValueXLSB & 0xF0) >> 4);
 
-	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatus != kWarpStatusOK))
+	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK) || (i2cReadStatusXLSB != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
+			warpPrint(" 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %u,", unsignedRawAdcValue);
+			warpPrint(" %u,", unsignedRawAdcValue);
 		}
 	}
 
-
-	i2cReadStatus = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_msb, 3);
+	i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_msb, 1);
 	readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
-	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[1];
-	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[2];
+	i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_lsb, 1);
+	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
+	i2cReadStatusXLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680temp_xlsb, 1);
+	readSensorRegisterValueXLSB = deviceBME680State.i2cBuffer[0];
 	unsignedRawAdcValue =
 			((readSensorRegisterValueMSB & 0xFF)  << 12) |
 			((readSensorRegisterValueLSB & 0xFF)  << 4)  |
 			((readSensorRegisterValueXLSB & 0xF0) >> 4);
-	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatus != kWarpStatusOK))
+	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK) || (i2cReadStatusXLSB != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
+			warpPrint(" 0x%02x 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB, readSensorRegisterValueXLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %u,", unsignedRawAdcValue);
+			warpPrint(" %u,", unsignedRawAdcValue);
 		}
 	}
 
-
-	i2cReadStatus = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_msb, 2);
+	i2cReadStatusMSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_msb, 1);
 	readSensorRegisterValueMSB = deviceBME680State.i2cBuffer[0];
-	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[1];
+	i2cReadStatusLSB = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680hum_lsb, 1);
+	readSensorRegisterValueLSB = deviceBME680State.i2cBuffer[0];
 	unsignedRawAdcValue = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
-	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatus != kWarpStatusOK))
+	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %u,", unsignedRawAdcValue);
+			warpPrint(" %u,", unsignedRawAdcValue);
 		}
 	}
 }

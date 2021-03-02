@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2021. Phillip Stanley-Marbell.
 	
 	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang, Sam Willis.
 
@@ -36,11 +36,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-/*
- *	Define this here to activate Glaux-specific pin names etc.
- */
-#define WARP_BUILD_ENABLE_GLAUX_VARIANT
 
 typedef enum
 {
