@@ -68,9 +68,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
  *	AMG8834.
  */
 void
-initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceAMG8834State.i2cAddress			= i2cAddress;
+	deviceAMG8834State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -80,6 +81,9 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t men
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	returnValue;
+
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 
 	switch (deviceRegister)
 	{
@@ -127,6 +131,9 @@ configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, ui
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
 
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
+
 	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834RST /* register address configuration register */,
 							payloadConfigReg,
 							menuI2cPullupValue);
@@ -146,6 +153,10 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 
 
 	USED(numberOfBytes);
+
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
+
 	if (deviceRegister > 0xFF)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -184,6 +195,9 @@ printSensorDataAMG8834(bool hexModeFlag)
 	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
+
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 
 	for (uint16_t bufAddress = kWarpSensorOutputRegisterAMG8834T01L; bufAddress <= kWarpSensorOutputRegisterAMG8834T64H; bufAddress = bufAddress + 2)
 	{

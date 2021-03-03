@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initSI7021(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes);

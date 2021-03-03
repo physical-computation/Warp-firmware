@@ -106,7 +106,7 @@ typedef enum
 	kWarpRV8803CtrlUIE			= BIT(5),
 } WarpRV8803CtrlFlag;
 
-void		initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initRV8803C7(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
 WarpStatus	readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);
 WarpStatus	writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload);
@@ -115,14 +115,15 @@ WarpStatus	setRTCTimeRV8803C7(rtc_datetime_t *  tm);
 WarpStatus	setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool interupt_enable);
 
 /*
- *	TODO: Impalement other functions
- *	handle_irq
- *	gettime
- *	time_update_irq_enable
- *	set_countdown
- *	get_countdown
- *	countdown_irq_enable
- *	getalarm
- *	setalarm
- *	alarm_irq_enable
+ *	TODO: Implement other functions:
+ *
+ *		handle_irq
+ *		gettime
+ *		time_update_irq_enable
+ *		set_countdown
+ *		get_countdown
+ *		countdown_irq_enable
+ *		getalarm
+ *		setalarm
+ *		larm_irq_enable
  */

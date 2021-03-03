@@ -79,12 +79,13 @@ extern uint8_t				gWarpSpiCommonSinkBuffer[];
  *		"
  */
 void
-initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
+initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
-	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
-	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
+	deviceADXL362State.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceADXL362State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceADXL362State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
+	deviceADXL362State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceADXL362State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -93,6 +94,9 @@ WarpStatus
 writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfAdditionalDummyBytes)
 {
 	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceADXL362State.operatingVoltageMillivolts);
 
 	/*
 	 *	Appropriately restrict the total number of bytes shifted out
@@ -121,7 +125,6 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 
 	/*
 	 *	First, create a falling edge on chip-select.
-	 *
 	 */
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
 	OSA_TimeDelay(50);
@@ -160,12 +163,6 @@ WarpStatus
 readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes)
 {
 	/*
-	 *	First, configure chip select pins of the various SPI slave devices
-	 *	as GPIO and drive all of them high.
-	 */
-	warpDeasserAllSPIchipSelects();
-
-	/*
 	 *	Since writeSensorRegisterADXL362() will already write one additional byte
 	 *	after the R/W command designator and the register designator, only need
 	 *	to ask it to do numberOfBytes - 1 additional dummy shifts out.
@@ -182,6 +179,9 @@ readFIFObytesADXL362(void)
 {
 	WarpStatus	status;
 
+
+	warpScaleSupplyVoltage(deviceADXL362State.operatingVoltageMillivolts);
+
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices
 	 *	as GPIO and drive all of them high.
@@ -189,61 +189,73 @@ readFIFObytesADXL362(void)
 	warpDeasserAllSPIchipSelects();
 
 	/*
-		 *	Set MEASURE mode, and ULTRALOWNOISE mode
-		 */
-	status = writeSensorRegisterADXL362(0x0A /* command == write register		*/,
-					    0x2D /* The register to write		*/,
-					    0x22 /* writeValue				*/,
-					    0 /* number of additional dummy bytes	*/
-	);
+	 *	Set MEASURE mode with AUTOSLEEP
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x2D	/*	The register to write			*/,
+						0x06	/*	writeValue				*/,
+						0	/*	number of additional dummy bytes	*/
+					);
 	if (status != kWarpStatusOK)
 	{
 	}
 
 	/*
-		 *	Set ODR mode to 400Hz
-		 */
-	status = writeSensorRegisterADXL362(0x0A /* command == write register		*/,
-					    0x2C /* The register to write		*/,
-					    0x07 /* writeValue				*/,
-					    0 /* number of additional dummy bytes	*/
-	);
+	 *	Set ODR mode to 400Hz
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/* command == write register			*/,
+						0x2C	/* The register to write			*/,
+						0x07	/* writeValue					*/,
+						0	/* number of additional dummy bytes		*/
+					);
 	if (status != kWarpStatusOK)
 	{
 	}
 
 	/*
-		 *	Set FIFO mode to STREAM and AH bit to 1
-		 */
-	status = writeSensorRegisterADXL362(0x0A /* command == write register		*/,
-					    0x28 /* The register to write		*/,
-					    0x0A /* writeValue				*/,
-					    0 /* number of additional dummy bytes	*/
-	);
+	 *	Set FIFO mode to STREAM and AH bit to 1, also read temperature to FIFO
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x28	/*	The register to write			*/,
+						0x0E	/*	writeValue				*/,
+						0	/*	number of additional dummy bytes	*/
+					);
 	if (status != kWarpStatusOK)
 	{
 	}
 
 	/*
-		 *	Set FIFO SAMPLES to 0xFF (AH bit to 1 previously, so total FIFO samples is 512)
-		 */
-	status = writeSensorRegisterADXL362(0x0A /* command == write register		*/,
-					    0x29 /* The register to write		*/,
-					    0xFF /* writeValue				*/,
-					    0 /* number of additional dummy bytes	*/
-	);
+	 *	Set FIFO SAMPLES to 0xFF (AH bit to 1 previously, so total FIFO samples is 512)
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x29	/*	The register to write			*/,
+						0xFF	/*	writeValue				*/,
+						0	/*	number of additional dummy bytes	*/
+					);
 	if (status != kWarpStatusOK)
 	{
 	}
 
 	/*
-		 *	Tune this delay so that the FIFO fill level printed below is ~kWarpMemoryCommonSpiBufferBytes entries
-		 */
-	OSA_TimeDelay(1);
+	 *	Put the sensor in LOOP mode with ACT_EN and INACT_EN enabled
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x27	/*	ACT_INACT_CTL register			*/,
+						0x35	/*	writeValue				*/,
+						0	/*	numberOfAdditionalDummyBytes		*/
+					);
+	if (status != kWarpStatusOK)
+	{
+	}
 
 	/*
-		 *	Populate the shift-out register with the read-FIFO command.
-		 */
+	 *	Tune this delay so that the FIFO fill level printed below is ~kWarpMemoryCommonSpiBufferBytes entries
+	 */
+	OSA_TimeDelay(10);
+
+	/*
+	 *	Populate the shift-out register with the read-FIFO command.
+	 */
 	deviceADXL362State.spiSourceBuffer[0] = 0x0D;
 
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
@@ -271,12 +283,12 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("Status --> [0x%02x]\n",
-				  deviceADXL362State.spiSinkBuffer[2]);
+				deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
-		 *	Read and print FIFO_ENTRIES_L
-		 */
+	 *	Read and print FIFO_ENTRIES_L
+	 */
 	status = readSensorRegisterADXL362(0x0C, 1 /* numberOfBytes */);
 	if (status != kWarpStatusOK)
 	{
@@ -284,12 +296,12 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_L --> [0x%02x]\n",
-				  deviceADXL362State.spiSinkBuffer[2]);
+				deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
-		 *	Read and print FIFO_ENTRIES_H
-		 */
+	 *	Read and print FIFO_ENTRIES_H
+	 */
 	status = readSensorRegisterADXL362(0x0D, 1 /* numberOfBytes */);
 	if (status != kWarpStatusOK)
 	{
@@ -297,18 +309,21 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_H --> [0x%02x]\n",
-				  deviceADXL362State.spiSinkBuffer[2]);
+				deviceADXL362State.spiSinkBuffer[2]);
 	}
 
-	for (int i = 1; i < kWarpMemoryCommonSpiBufferBytes; i += 6)
+	for (int i = 1; i < kWarpMemoryCommonSpiBufferBytes; i += 8)
 	{
-		warpPrint("0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
-				  deviceADXL362State.spiSinkBuffer[i + 0],
-				  deviceADXL362State.spiSinkBuffer[i + 1],
-				  deviceADXL362State.spiSinkBuffer[i + 2],
-				  deviceADXL362State.spiSinkBuffer[i + 3],
-				  deviceADXL362State.spiSinkBuffer[i + 4],
-				  deviceADXL362State.spiSinkBuffer[i + 5]);
+		warpPrint("0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+				deviceADXL362State.spiSinkBuffer[i + 0],
+				deviceADXL362State.spiSinkBuffer[i + 1],
+				deviceADXL362State.spiSinkBuffer[i + 2],
+				deviceADXL362State.spiSinkBuffer[i + 3],
+				deviceADXL362State.spiSinkBuffer[i + 4],
+				deviceADXL362State.spiSinkBuffer[i + 5],
+				deviceADXL362State.spiSinkBuffer[i + 6],
+				deviceADXL362State.spiSinkBuffer[i + 7]
+			);
 	}
 	warpPrint("\n");
 
@@ -326,21 +341,40 @@ printSensorDataADXL362(bool hexModeFlag)
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
-	WarpStatus	spiReadStatus;
+	WarpStatus	status;
 
 readFIFObytesADXL362();
-return;
+
 
 	/*
-	 *	Put the sensor in MEASURE mode
+	 *	Set MEASURE mode with AUTOSLEEP
 	 */
-	writeSensorRegisterADXL362(0x0A /* command == read register */, 0x2D /* POWER_CTL register */, 0x02 /* writeValue */, 0 /* numberOfAdditionalDummyBytes */);
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x2D	/*	The register to write			*/,
+						0x06	/*	writeValue				*/,
+						0	/*	number of additional dummy bytes	*/
+					);
+	if (status != kWarpStatusOK)
+	{
+	}
+
+	/*
+	 *	Put the sensor in LOOP mode with ACT_EN and INACT_EN enabled
+	 */
+	status = writeSensorRegisterADXL362(	0x0A	/*	command == write register		*/,
+						0x27	/*	ACT_INACT_CTL register			*/,
+						0x35	/*	writeValue				*/,
+						0	/*	numberOfAdditionalDummyBytes		*/
+					);
+	if (status != kWarpStatusOK)
+	{
+	}
 
 	/*
 	 *			Read X
 	 */
-	spiReadStatus = readSensorRegisterADXL362(kWarpSensorOutputRegisterMMA8451QOUT_X_MSB, 2 /* numberOfBytes */);
-	if (spiReadStatus != kWarpStatusOK)
+	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362XDATA_L, 2 /* numberOfBytes */);
+	if (status != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -374,8 +408,8 @@ return;
 	/*
 	 *			Read Y
 	 */
-	spiReadStatus = readSensorRegisterADXL362(kWarpSensorOutputRegisterMMA8451QOUT_Y_MSB, 2 /* numberOfBytes */);
-	if (spiReadStatus != kWarpStatusOK)
+	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362YDATA_L, 2 /* numberOfBytes */);
+	if (status != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -409,8 +443,8 @@ return;
 	/*
 	 *			Read Z
 	 */
-	spiReadStatus = readSensorRegisterADXL362(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
-	if (spiReadStatus != kWarpStatusOK)
+	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362ZDATA_L, 2 /* numberOfBytes */);
+	if (status != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -444,8 +478,8 @@ return;
 	/*
 	 *			Read TEMP
 	 */
-	spiReadStatus = readSensorRegisterADXL362(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
-	if (spiReadStatus != kWarpStatusOK)
+	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362TEMP_L, 2 /* numberOfBytes */);
+	if (status != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}

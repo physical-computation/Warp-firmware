@@ -57,26 +57,31 @@
 #include "warp.h"
 #include "devIS25xP.h"
 
+extern volatile WarpSPIDeviceState	deviceIS25xPState;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 extern uint8_t				gWarpSpiCommonSourceBuffer[];
 extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
 
 void
-initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
+initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
-	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
-	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
+	deviceIS25xPState.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceIS25xPState.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceIS25xPState.spiSinkBuffer			= gWarpSpiCommonSinkBuffer;
+	deviceIS25xPState.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceIS25xPState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
 
 WarpStatus
-spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount)
+spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 {
 	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceIS25xPState.operatingVoltageMillivolts);
 
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices
@@ -84,18 +89,18 @@ spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	 */
 	warpDeasserAllSPIchipSelects();
 
-	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
+	for (int i = 0; (i < opCount) && (i < deviceIS25xPState.spiBufferLength); i++)
 	{
-		deviceStatePointer->spiSourceBuffer[i] = ops[i];
-		deviceStatePointer->spiSinkBuffer[i] = 0x00;
+		deviceIS25xPState.spiSourceBuffer[i] = ops[i];
+		deviceIS25xPState.spiSinkBuffer[i] = 0x00;
 	}
 
 	/*
 	 *	First, create a falling edge on chip-select.
 	 */
-	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
 	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_ClearPinOutput(deviceIS25xPState.chipSelectIoPinID);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
@@ -107,8 +112,8 @@ spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	warpEnableSPIpins();
 	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
 					NULL /* spi_master_user_config_t */,
-					(const uint8_t * restrict)deviceStatePointer->spiSourceBuffer,
-					(uint8_t * restrict)deviceStatePointer->spiSinkBuffer,
+					(const uint8_t * restrict)deviceIS25xPState.spiSourceBuffer,
+					(uint8_t * restrict)deviceIS25xPState.spiSinkBuffer,
 					opCount /* transfer size */,
 					gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
@@ -116,7 +121,7 @@ spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	/*
 	 *	Deassert the IS25xP
 	 */
-	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
 
 	if (status != kStatus_SPI_Success)
 	{

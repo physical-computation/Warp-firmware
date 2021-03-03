@@ -36,7 +36,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initMAG3110(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint16_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes);

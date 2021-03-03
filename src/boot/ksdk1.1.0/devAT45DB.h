@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
+void		initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);

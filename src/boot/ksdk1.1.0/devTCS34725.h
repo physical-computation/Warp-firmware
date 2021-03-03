@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister, int numberOfBytes);

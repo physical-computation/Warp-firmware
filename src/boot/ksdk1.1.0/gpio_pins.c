@@ -15,15 +15,15 @@
  *		PTA1 / RESET_b : pulled up at reset
  *		PTB5 : pulled up at reset
  *
- *	(B) See Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf) for additional hints on pin setup for low power
+ *	(B) See Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf) for additional hints on pin setup for low power.
  *
  *	(C) On Glaux, PTA3, PTA4, PTA5, PTA8, PTA12, PTB5, and PTB13 are
  *	either sacrifical or input so we don't configure them as GPIO.
  *
- *	**NOTE 1**: 	The semantics is that pins that are excluded are disabled (TODO: double check).
+ *	**NOTE 1**:	The semantics is that pins that are excluded are disabled (TODO: double check).
  *
- *	**NOTE 2**:	Empirically, adding entries for pinss which we want to leave disabled on Glaux
- *			(e.g., sacrificial pins) leads to higher power dissipation
+ *	**NOTE 2**:	Empirically, adding entries for pins which we want to leave disabled on Glaux
+ *			(e.g., sacrificial pins) leads to higher power dissipation.
  *
  */
 
@@ -88,6 +88,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+		/*	Not GPIO, so don't configure it as GPIO
 		{
 			.pinName = kWarpPinI2C0_SCL_UART_TX,
 			.config.outputLogic = 1,
@@ -100,6 +101,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+		*/
 		{
 			.pinName = kWarpPinTPS62740_REGCTRL,
 			.config.outputLogic = 1,

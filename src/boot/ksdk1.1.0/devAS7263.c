@@ -63,9 +63,10 @@ extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 
 
 void
-initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initAS7263(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceAS7263State.i2cAddress			= i2cAddress;
+	deviceAS7263State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -95,6 +96,8 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		.address = deviceAS7263State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
+
+	warpScaleSupplyVoltage(deviceAS7263State.operatingVoltageMillivolts);
 
 	cmdBuf_write[1] = deviceRegister;
 	warpEnableI2Cpins();

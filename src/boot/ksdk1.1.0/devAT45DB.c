@@ -57,17 +57,19 @@
 #include "warp.h"
 #include "devAT45DB.h"
 
+extern volatile WarpSPIDeviceState	deviceAT45DBState;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
 extern uint8_t				gWarpSpiCommonSourceBuffer[];
 extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
 void
-initAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
+initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
-	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
-	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
+	deviceAT45DBState.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceAT45DBState.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceAT45DBState.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
+	deviceAT45DBState.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceAT45DBState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -77,16 +79,19 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 {
 	spi_status_t	status;
 
+
+	warpScaleSupplyVoltage(deviceAT45DBState.operatingVoltageMillivolts);
+
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices
 	 *	as GPIO and drive all of them high.
 	 */
 	warpDeasserAllSPIchipSelects();
 
-	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
+	for (int i = 0; (i < opCount) && (i < deviceAT45DBState.spiBufferLength); i++)
 	{
-		deviceStatePointer->spiSourceBuffer[i] = ops[i];
-		deviceStatePointer->spiSinkBuffer[i] = 0xFF;
+		deviceAT45DBState.spiSourceBuffer[i] = ops[i];
+		deviceAT45DBState.spiSinkBuffer[i] = 0xFF;
 	}
 
 	/*
@@ -101,15 +106,15 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	 *	Since txudpd is 100us, we wait another millisecond before proceeding to assert /CS
 	 *	again below.
 	 */
-	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
 	OSA_TimeDelay(1);
-	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
 	OSA_TimeDelay(1);
 
 	/*
 	 *	Next, create a falling edge on chip-select.
 	 */
-	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
@@ -120,8 +125,8 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	warpEnableSPIpins();
 	status = SPI_DRV_MasterTransferBlocking(0							/*	master instance			*/,
 					NULL								/*	spi_master_user_config_t	*/,
-					(const uint8_t * restrict)deviceStatePointer->spiSourceBuffer	/*	source buffer			*/,
-					(uint8_t * restrict)deviceStatePointer->spiSinkBuffer		/*	receive buffer			*/,
+					(const uint8_t * restrict)deviceAT45DBState.spiSourceBuffer	/*	source buffer			*/,
+					(uint8_t * restrict)deviceAT45DBState.spiSinkBuffer		/*	receive buffer			*/,
 					opCount								/*	transfer size			*/,
 					gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
@@ -129,7 +134,7 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	/*
 	 *	Deassert the AT45DB
 	 */
-	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
 
 	if (status != kStatus_SPI_Success)
 	{

@@ -181,9 +181,6 @@
 #endif
 
 
-/*
- *	TODO: move this and possibly others into a global structure
- */
 volatile i2c_master_state_t				i2cMasterState;
 volatile spi_master_state_t				spiMasterState;
 volatile spi_master_user_config_t			spiUserConfig;
@@ -202,6 +199,7 @@ volatile uint32_t					gWarpSpiTimeoutMicroseconds		= kWarpDefaultSpiTimeoutMicro
 volatile uint32_t					gWarpUartTimeoutMilliseconds		= kWarpDefaultUartTimeoutMilliseconds;
 volatile uint32_t					gWarpMenuPrintDelayMilliseconds		= kWarpDefaultMenuPrintDelayMilliseconds;
 volatile uint32_t					gWarpSupplySettlingDelayMilliseconds	= kWarpDefaultSupplySettlingDelayMilliseconds;
+volatile uint16_t					gWarpCurrentSupplyVoltage		= kWarpDefaultSupplyVoltageMillivolts;
 char							gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
 
 /*
@@ -389,7 +387,9 @@ sleepUntilReset(void)
 void
 enableLPUARTpins(void)
 {
-	/*	Enable UART CLOCK */
+	/*
+	 *	Enable UART CLOCK
+	 */
 	CLOCK_SYS_EnableLpuartClock(0);
 
 	/*
@@ -413,7 +413,6 @@ enableLPUARTpins(void)
 
 	/*
 	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
-	 *
 	 */
 	lpuartUserConfig.baudRate = gWarpUartBaudRateBps;
 	lpuartUserConfig.parityMode = kLpuartParityDisabled;
@@ -433,19 +432,32 @@ disableLPUARTpins(void)
 	 */
 	LPUART_DRV_Deinit(0);
 
-	/*	Warp KL03_UART_HCI_RX	--> PTB4 (GPIO)	*/
-	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAsGpio);
+	/*
+	 *	Set UART pin association. See, e.g., page 99 in
+	 *
+	 *		https://www.nxp.com/docs/en/reference-manual/KL03P24M48SF0RM.pdf
+	 *
+	 *	Setup:
+	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
+	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
+	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
-	/*	Warp KL03_UART_HCI_TX	--> PTB3 (GPIO) */
-	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAsGpio);
-
+	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO_UART_RTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI_UART_CTS);
-	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL_UART_TX);
-	GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA_UART_RX);
 
-	/* Disable LPUART CLOCK */
+	/*
+	 *	Disable LPUART CLOCK
+	*/
 	CLOCK_SYS_DisableLpuartClock(0);
 }
+
+
 
 WarpStatus
 sendBytesToUART(uint8_t *  bytes, size_t nbytes)
@@ -461,6 +473,8 @@ sendBytesToUART(uint8_t *  bytes, size_t nbytes)
 	return kWarpStatusOK;
 }
 
+
+
 void
 warpEnableSPIpins(void)
 {
@@ -473,10 +487,10 @@ warpEnableSPIpins(void)
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAlt3);
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		/*	kWarpPinSPI_SCK	--> PTA9	(ALT3)			*/
+		/*	kWarpPinSPI_SCK	--> PTA9	(ALT3)		*/
 		PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAlt3);
 	#else
-		/*	kWarpPinSPI_SCK	--> PTB0	(ALT3)			*/
+		/*	kWarpPinSPI_SCK	--> PTB0	(ALT3)		*/
 		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAlt3);
 	#endif
 
@@ -520,6 +534,8 @@ warpDisableSPIpins(void)
 	CLOCK_SYS_DisableSpiClock(0);
 }
 
+
+
 void
 warpDeasserAllSPIchipSelects(void)
 {
@@ -555,6 +571,8 @@ warpDeasserAllSPIchipSelects(void)
 	#endif
 }
 
+
+
 void
 debugPrintSPIsinkBuffer(void)
 {
@@ -564,15 +582,21 @@ debugPrintSPIsinkBuffer(void)
 	}
 	warpPrint("\n");
 }
+
+
+
 void
 warpEnableI2Cpins(void)
 {
 	CLOCK_SYS_EnableI2cClock(0);
 
-	/*	Warp KL03_I2C0_SCL	--> PTB3	(ALT2 == I2C)		*/
+	/*
+	 *	Setup:
+	 *
+	 *		PTB3/kWarpPinI2C0_SCL_UART_TX	-->	(ALT2 == I2C)
+	 *		PTB4/kWarpPinI2C0_SDA_UART_RX	-->	(ALT2 == I2C)
+	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt2);
-
-	/*	Warp KL03_I2C0_SDA	--> PTB4	(ALT2 == I2C)		*/
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
@@ -584,8 +608,16 @@ void
 warpDisableI2Cpins(void)
 {
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
+
+	/*
+	 *	Setup:
+	 *
+	 *		PTB3/kWarpPinI2C0_SCL_UART_TX	-->	disabled
+	 *		PTB4/kWarpPinI2C0_SDA_UART_RX	-->	disabled
+	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
+
 	CLOCK_SYS_DisableI2cClock(0);
 }
 
@@ -996,10 +1028,16 @@ setTPS62740CommonControlLines(uint16_t voltageMillivolts)
 void
 warpScaleSupplyVoltage(uint16_t voltageMillivolts)
 {
+	if (voltageMillivolts == gWarpCurrentSupplyVoltage)
+	{
+		return;
+	}
+
 	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		if (voltageMillivolts >= 1800 && voltageMillivolts <= 3300)
 		{
 			enableTPS62740(voltageMillivolts);
+			gWarpCurrentSupplyVoltage = voltageMillivolts;
 		}
 		else
 		{
@@ -1098,34 +1136,24 @@ dumpProcessorState(void)
 
 
 void
-printBootSplash(uint16_t menuSupplyVoltage, uint8_t menuRegisterAddress, WarpPowerManagerCallbackStructure *  powerManagerCallbackStructure)
+printBootSplash(uint16_t gWarpCurrentSupplyVoltage, uint8_t menuRegisterAddress, WarpPowerManagerCallbackStructure *  powerManagerCallbackStructure)
 {
 	/*
 	 *	We break up the prints with small delays to allow us to use small RTT print
 	 *	buffers without overrunning them when at max CPU speed.
 	 */
 	warpPrint("\r\n\n\n\n[ *\t\t\t\tWarp (HW revision C) / Glaux (HW revision B)\t\t\t* ]\n");
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r[  \t\t\t\t      Cambridge / Physcomplab   \t\t\t\t  ]\n\n");
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tSupply=%dmV,\tDefault Target Read Register=0x%02x\n",
-			menuSupplyVoltage, menuRegisterAddress);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			gWarpCurrentSupplyVoltage, menuRegisterAddress);
 	warpPrint("\r\tI2C=%dkb/s,\tSPI=%dkb/s,\tUART=%db/s,\tI2C Pull-Up=%d\n\n",
 			gWarpI2cBaudRateKbps, gWarpSpiBaudRateKbps, gWarpUartBaudRateBps);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tSIM->SCGC6=0x%02x\t\tRTC->SR=0x%02x\t\tRTC->TSR=0x%02x\n", SIM->SCGC6, RTC->SR, RTC->TSR);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tMCG_C1=0x%02x\t\t\tMCG_C2=0x%02x\t\tMCG_S=0x%02x\n", MCG_C1, MCG_C2, MCG_S);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tMCG_SC=0x%02x\t\t\tMCG_MC=0x%02x\t\tOSC_CR=0x%02x\n", MCG_SC, MCG_MC, OSC_CR);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tSMC_PMPROT=0x%02x\t\t\tSMC_PMCTRL=0x%02x\t\tSCB->SCR=0x%02x\n", SMC_PMPROT, SMC_PMCTRL, SCB->SCR);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\tPMC_REGSC=0x%02x\t\t\tSIM_SCGC4=0x%02x\tRTC->TPR=0x%02x\n\n", PMC_REGSC, SIM_SCGC4, RTC->TPR);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	warpPrint("\r\t%ds in RTC Handler to-date,\t%d Pmgr Errors\n", gWarpSleeptimeSeconds, powerManagerCallbackStructure->errorCount);
-	OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 }
 
 void
@@ -1172,14 +1200,19 @@ warpPrint(const char *fmt, ...)
 					WarpStatus	status;
 
 					enableLPUARTpins();
-					initBGX(&deviceBGXState);
+					initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 					status = sendBytesToUART((uint8_t *)gWarpEfmt, strlen(gWarpEfmt)+1);
 					if (status != kWarpStatusOK)
 					{
 						SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
 					}
 					disableLPUARTpins();
-					deinitBGX(&deviceBGXState);
+
+					/*
+					 *	We don't want to deInit() the BGX since that would drop
+					 *	any remote terminal connected to it.
+					 */
+					//deinitBGX();
 				}
 			#endif
 
@@ -1187,6 +1220,7 @@ warpPrint(const char *fmt, ...)
 		}
 
 		SEGGER_RTT_WriteString(0, gWarpPrintBuffer);
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		/*
 		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
@@ -1197,14 +1231,19 @@ warpPrint(const char *fmt, ...)
 				WarpStatus	status;
 
 				enableLPUARTpins();
-				initBGX(&deviceBGXState);
+				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 				status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, strlen(gWarpPrintBuffer)+1);
 				if (status != kWarpStatusOK)
 				{
 					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
 				}
 				disableLPUARTpins();
-				deinitBGX(&deviceBGXState);
+
+				/*
+				 *	We don't want to deInit() the BGX since that would drop
+				 *	any remote terminal connected to it.
+				 */
+				//deinitBGX();
 			}
 		#endif
 	#else
@@ -1223,14 +1262,19 @@ warpPrint(const char *fmt, ...)
 				WarpStatus	status;
 
 				enableLPUARTpins();
-				initBGX(&deviceBGXState);
+				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 				status = sendBytesToUART(fmt, strlen(fmt)+1);
 				if (status != kWarpStatusOK)
 				{
 					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
 				}
 				disableLPUARTpins();
-				deinitBGX(&deviceBGXState);
+
+				/*
+				 *	We don't want to deInit() the BGX since that would drop
+				 *	any remote terminal connected to it.
+				 */
+				//deinitBGX();
 			}
 		#endif
 	#endif
@@ -1257,7 +1301,7 @@ warpWaitKey(void)
 	#if (WARP_BUILD_ENABLE_DEVBGX)
 		deviceBGXState.uartRXBuffer[0] = kWarpMiscMarkerForAbsentByte;
 		enableLPUARTpins();
-		initBGX(&deviceBGXState);
+		initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 	#endif
 
 	do
@@ -1284,9 +1328,13 @@ warpWaitKey(void)
 			 *	Send a copy of incoming BLE chars to RTT
 			 */
 			SEGGER_RTT_PutChar(0, bleChar);
-
 			disableLPUARTpins();
-			deinitBGX(&deviceBGXState);
+
+			/*
+			 *	We don't want to deInit() the BGX since that would drop
+			 *	any remote terminal connected to it.
+			 */
+			//deinitBGX();
 
 			return (int)bleChar;
 		}
@@ -1301,7 +1349,12 @@ warpWaitKey(void)
 		}
 
 		disableLPUARTpins();
-		deinitBGX(&deviceBGXState);
+
+		/*
+		 *	We don't want to deInit() the BGX since that would drop
+		 *	any remote terminal connected to it.
+		 */
+		//deinitBGX();
 	#endif
 
 	return rttKey;
@@ -1315,7 +1368,6 @@ main(void)
 	WarpSensorDevice			menuTargetSensor		= kWarpSensorBMX055accel;
 	volatile WarpI2CDeviceState *		menuI2cDevice			= NULL;
 	uint8_t					menuRegisterAddress		= 0x00;
-	uint16_t				menuSupplyVoltage		= 0;
 	rtc_datetime_t				warpBootDate;
 	power_manager_user_config_t		warpPowerModeWaitConfig;
 	power_manager_user_config_t		warpPowerModeStopConfig;
@@ -1528,67 +1580,65 @@ main(void)
 	 *	Initialize all the sensors
 	 */
 	#if (WARP_BUILD_ENABLE_DEVBMX055)
-		initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState	);
-		initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState	);
-		initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState	);
+		initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState,	kWarpDefaultSupplyVoltageMillivoltsBMX055accel	);
+		initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState,		kWarpDefaultSupplyVoltageMillivoltsBMX055gyro	);
+		initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState,		kWarpDefaultSupplyVoltageMillivoltsBMX055mag	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
+		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
-		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
+		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState,		kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVHDC1000)
-		initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State	);
+		initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State,		kWarpDefaultSupplyVoltageMillivoltsHDC1000	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State	);
+		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI7021)
-		initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State	);
+		initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State,		kWarpDefaultSupplyVoltageMillivoltsSI7021	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState	);
+		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State	);
+		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
-		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State	);
+		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI4705)
-		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State	);
+		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State,		kWarpDefaultSupplyVoltageMillivoltsSI4705	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVCCS811)
-		initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State	);
+		initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State,		kWarpDefaultSupplyVoltageMillivoltsCCS811	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAMG8834)
-		initAMG8834(	0x68	/* i2cAddress */,	&deviceAMG8834State	);
+		initAMG8834(	0x68	/* i2cAddress */,	&deviceAMG8834State,		kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7262)
-		initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State	);
+		initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State,		kWarpDefaultSupplyVoltageMillivoltsAS7262	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7263)
-		initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State	);
+		initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State,		kWarpDefaultSupplyVoltageMillivoltsAS7263	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
-		warpScaleSupplyVoltage(1800);
-
-		initRV8803C7(	0x32	/* i2cAddress */,	&deviceRV8803C7State	);
+		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 		if (status != kWarpStatusOK)
 		{
@@ -1636,12 +1686,10 @@ main(void)
 	 */
 
 	#if (WARP_BUILD_ENABLE_DEVADXL362)
-		warpScaleSupplyVoltage(1800);
-
 		/*
 		 *	Only supported in main Warp variant.
 		 */
-		initADXL362(&deviceADXL362State, kWarpPinADXL362_SPI_nCS);
+		initADXL362(kWarpPinADXL362_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsADXL362	);
 
 		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
 		if (status != kWarpStatusOK)
@@ -1650,7 +1698,7 @@ main(void)
 		}
 		else
 		{
-			warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);debugPrintSPIsinkBuffer();
+			warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);//debugPrintSPIsinkBuffer();
 		}
 
 		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_MST, 1);
@@ -1660,7 +1708,7 @@ main(void)
 		}
 		else
 		{
-			warpPrint("ADXL362: DEVID_MST = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);debugPrintSPIsinkBuffer();
+			warpPrint("ADXL362: DEVID_MST = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);//debugPrintSPIsinkBuffer();
 		}
 	#endif
 
@@ -1668,7 +1716,7 @@ main(void)
 		/*
 		 *	Only supported in Glaux.
 		 */
-		initIS25xP(&deviceIS25xPState, kGlauxPinFlash_SPI_nCS);
+		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
 
 		WarpStatus status = spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
 		if (status != kWarpStatusOK)
@@ -1695,12 +1743,10 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
-		warpScaleSupplyVoltage(1800);
-
 		/*
 		 *	Only supported in main Warp variant.
 		 */
-		initISL23415(&deviceISL23415State, kWarpPinISL23415_SPI_nCS);
+		initISL23415(kWarpPinISL23415_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsISL23415	);
 
 		/*
 		 *	Take the DCPs out of shutdown by setting the SHDN bit in the ACR register
@@ -1718,7 +1764,7 @@ main(void)
 		}
 		else
 		{
-			warpPrint("ISL23415 ACR=[0x%02X], ", deviceISL23415State.spiSinkBuffer[3]);debugPrintSPIsinkBuffer();
+			warpPrint("ISL23415 ACR=[0x%02X], ", deviceISL23415State.spiSinkBuffer[3]);//debugPrintSPIsinkBuffer();
 		}
 
 		status = readDeviceRegisterISL23415(kWarpSensorConfigurationRegisterISL23415WRreadInstruction);
@@ -1728,17 +1774,15 @@ main(void)
 		}
 		else
 		{
-			warpPrint("WR=[0x%02X]\n", deviceISL23415State.spiSinkBuffer[3]);debugPrintSPIsinkBuffer();
+			warpPrint("WR=[0x%02X]\n", deviceISL23415State.spiSinkBuffer[3]);//debugPrintSPIsinkBuffer();
 		}
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAT45DB)
-		warpScaleSupplyVoltage(1800);
-
 		/*
 		 *	Only supported in main Warp variant.
 		 */
-		initAT45DB(&deviceAT45DBState, kWarpPinAT45DB_SPI_nCS);
+		initAT45DB(kWarpPinAT45DB_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsAT45DB	);
 
 		status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
 		if (status != kWarpStatusOK)
@@ -1750,7 +1794,7 @@ main(void)
 			warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
 						deviceAT45DBState.spiSinkBuffer[1],
 						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
-						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);debugPrintSPIsinkBuffer();
+						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);//debugPrintSPIsinkBuffer();
 		}
 	#endif
 
@@ -1758,7 +1802,7 @@ main(void)
 		/*
 		 *	Only supported in main Warp variant.
 		 */
-		initICE40(&deviceICE40State, kWarpPinFPGA_nCS);
+		initICE40(kWarpPinFPGA_nCS,							kWarpDefaultSupplyVoltageMillivoltsICE40	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBGX)
@@ -1767,10 +1811,17 @@ main(void)
 		enableLPUARTpins();
 		warpPrint("done.\n");
 		warpPrint("initBGX()... ");
-		initBGX(&deviceBGXState);
+		initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 		warpPrint("done.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		warpPrint("Booted Warp firmware, BGX BLE active...\n");
+
+//warpScaleSupplyVoltage(1800);
+//status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
+//warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
+//status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
+//warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
+//						deviceAT45DBState.spiSinkBuffer[1],
+//						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
+//						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
 	#endif
 
 	/*
@@ -1786,10 +1837,8 @@ main(void)
 		*	(There's no point in calling activateAllLowPowerSensorModes())
 		*/
 		warpPrint("Disabling sensor supply... \n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpDisableSupplyVoltage();
 		warpPrint("done.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	}
 
 	/*
@@ -1799,7 +1848,7 @@ main(void)
 	gWarpBooted = true;
 
 	#if (WARP_BUILD_BOOT_TO_CSVSTREAM)
-		printBootSplash(menuSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
+		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		/*
 		 *	Force to printAllSensors
@@ -1810,7 +1859,7 @@ main(void)
 		{
 			warpPrint("warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */)() failed...\n");
 		}
-		warpScaleSupplyVoltage(1800);
+		warpScaleSupplyVoltage(3300);
 		printAllSensors(true /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */);
 		/*
 		 *	Notreached
@@ -1820,7 +1869,7 @@ main(void)
 
 
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-	printBootSplash(menuSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
+	printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 	warpPrint("About to read IS25xP JEDEC ID...\n");
 	spiTransactionIS25xP(0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
@@ -1992,64 +2041,38 @@ main(void)
 		 *	want to use menu to progressiveley change the machine state with various
 		 *	commands.
 		 */
-		printBootSplash(menuSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
+		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		warpPrint("\rSelect:\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'a': set default sensor.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'b': set I2C baud rate.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'c': set SPI baud rate.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'd': set UART baud rate.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'e': set default register address.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'f': write byte to sensor.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'g': set default sensor supply voltage.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'h': powerdown command to all sensors.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'i': set pull-up enable value.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'j': repeat read reg 0x%02x on sensor #%d.\n", menuRegisterAddress, menuTargetSensor);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'k': sleep until reset.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'l': send repeated byte on I2C.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'm': send repeated byte on SPI.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'n': enable sensor supply voltage.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'o': disable sensor supply voltage.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'p': switch to VLPR mode.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'r': switch to RUN mode.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 's': power up all sensors.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 't': dump processor state.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\r- 'u': set I2C address.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 			warpPrint("\r- 'v': Enter VLLS0 low-power mode for 3s, then reset\n");
-			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		#endif
 
 		warpPrint("\r- 'x': disable SWD and spin for 10 secs.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 		warpPrint("\r- 'z': dump all sensors data.\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		warpPrint("\rEnter selection> ");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		key = warpWaitKey();
 
 		switch (key)
@@ -2067,8 +2090,6 @@ main(void)
 					warpPrint("\r\t- '1' ADXL362			(0x00--0x2D): 1.6V -- 3.5V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVBMX055)
 					warpPrint("\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V -- 3.6V\n");
 					warpPrint("\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V -- 3.6V\n");
@@ -2079,15 +2100,11 @@ main(void)
 					warpPrint("\r\t- '4' BMX055mag			(0x40--0x52): 2.4V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
 				#else
 					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVLPS25H)
 					warpPrint("\r\t- '6' LPS25H			(0x08--0x24): 1.7V -- 3.6V\n");
@@ -2095,15 +2112,11 @@ main(void)
 					warpPrint("\r\t- '6' LPS25H			(0x08--0x24): 1.7V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVMAG3110)
 					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
 				#else
 					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVHDC1000)
 					warpPrint("\r\t- '8' HDC1000			(0x00--0x1F): 3.0V -- 5.0V\n");
@@ -2111,15 +2124,11 @@ main(void)
 					warpPrint("\r\t- '8' HDC1000			(0x00--0x1F): 3.0V -- 5.0V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVSI7021)
 					warpPrint("\r\t- '9' SI7021			(0x00--0x0F): 1.9V -- 3.6V\n");
 				#else
 					warpPrint("\r\t- '9' SI7021			(0x00--0x0F): 1.9V -- 3.6V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 					warpPrint("\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V -- 3.6V\n");
@@ -2127,15 +2136,11 @@ main(void)
 					warpPrint("\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVBME680)
 					warpPrint("\r\t- 'b' BME680			(0xAA--0xF8): 1.6V -- 3.6V\n");
 				#else
 					warpPrint("\r\t- 'b' BME680			(0xAA--0xF8): 1.6V -- 3.6V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVTCS34725)
 					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V\n");
@@ -2143,15 +2148,11 @@ main(void)
 					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVSI4705)
 					warpPrint("\r\t- 'e' SI4705			(n/a):        2.7V -- 5.5V\n");
 				#else
 					warpPrint("\r\t- 'e' SI4705			(n/a):        2.7V -- 5.5V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVCCS811)
 					warpPrint("\r\t- 'g' CCS811			(0x00--0xFF): 1.8V -- 3.6V\n");
@@ -2159,15 +2160,11 @@ main(void)
 					warpPrint("\r\t- 'g' CCS811			(0x00--0xFF): 1.8V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVAMG8834)
 					warpPrint("\r\t- 'h' AMG8834			(0x00--?): 3.3V -- 3.3V\n");
 				#else
 					warpPrint("\r\t- 'h' AMG8834			(0x00--?): 3.3V -- 3.3V (compiled out) \n");
 				#endif
-
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 				#if (WARP_BUILD_ENABLE_DEVAS7262)
 					warpPrint("\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V\n");
@@ -2175,19 +2172,13 @@ main(void)
 					warpPrint("\r\t- 'j' AS7262			(0x00--0x2B): 2.7V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				#if (WARP_BUILD_ENABLE_DEVAS7263)
 					warpPrint("\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V\n");
 				#else
 					warpPrint("\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V (compiled out) \n");
 				#endif
 
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				warpPrint("\r\tEnter selection> ");
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				key = warpWaitKey();
 
 				switch(key)
@@ -2455,7 +2446,7 @@ main(void)
 						.baudRate_kbps = gWarpI2cBaudRateKbps
 					};
 
-					warpScaleSupplyVoltage(menuSupplyVoltage);
+					warpScaleSupplyVoltage(gWarpCurrentSupplyVoltage);
 					warpEnableI2Cpins();
 
 					commandByte[0] = menuRegisterAddress;
@@ -2487,8 +2478,8 @@ main(void)
 			case 'g':
 			{
 				warpPrint("\r\n\tOverride sensor supply voltage in mV (e.g., '1800')> ");
-				menuSupplyVoltage = read4digits();
-				warpPrint("\r\n\tOverride sensor supply voltage set to %d mV", menuSupplyVoltage);
+				gWarpCurrentSupplyVoltage = read4digits();
+				warpPrint("\r\n\tOverride sensor supply voltage set to %d mV", gWarpCurrentSupplyVoltage);
 
 				break;
 			}
@@ -2545,7 +2536,7 @@ main(void)
 									chatty,
 									spinDelay,
 									repetitionsPerAddress,
-									menuSupplyVoltage,
+									gWarpCurrentSupplyVoltage,
 									adaptiveSssupplyMaxMillivolts,
 									referenceByte
 								);
@@ -2583,7 +2574,7 @@ main(void)
 				if (key == 'l')
 				{
 					warpPrint("\r\n\tSending %d repetitions of [0x%02x] on I2C, sensor supply voltage=%dmV\n\n",
-						repetitions, outBuffer[0], menuSupplyVoltage);
+						repetitions, outBuffer[0], gWarpCurrentSupplyVoltage);
 					for (int i = 0; i < repetitions; i++)
 					{
 						writeByteToI2cDeviceRegister(0xFF, true /* sedCommandByte */, outBuffer[0] /* commandByte */, false /* sendPayloadByte */, 0 /* payloadByte */);
@@ -2592,7 +2583,7 @@ main(void)
 				else
 				{
 					warpPrint("\r\n\tSending %d repetitions of [0x%02x] on SPI, sensor supply voltage=%dmV\n\n",
-						repetitions, outBuffer[0], menuSupplyVoltage);
+						repetitions, outBuffer[0], gWarpCurrentSupplyVoltage);
 					for (int i = 0; i < repetitions; i++)
 					{
 						writeBytesToSpi(outBuffer /* payloadByte */, 1 /* payloadLength */);
@@ -2608,7 +2599,7 @@ main(void)
 			 */
 			case 'n':
 			{
-				warpScaleSupplyVoltage(menuSupplyVoltage);
+				warpScaleSupplyVoltage(gWarpCurrentSupplyVoltage);
 				break;
 			}
 
@@ -2722,8 +2713,6 @@ main(void)
 				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
 				uint16_t	menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
-				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-
 				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun);
 
 				/*
@@ -2807,8 +2796,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 			{
 				warpPrint("\n\n");
 			}
-
-			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		}
 	}
 	#endif
@@ -2842,54 +2829,51 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	if (printHeadersAndCalibration)
 	{
 		warpPrint("Measurement number, RTC->TSR, RTC->TPR,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+		#if (WARP_BUILD_ENABLE_DEVADXL362)
+			warpPrint(" ADXL362 x, ADXL362 y, ADXL362 z,");
+		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVAMG8834)
 		for (uint8_t i = 0; i < 64; i++)
 		{
 			warpPrint(" AMG8834 %d,", i);
-			OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		}
 		warpPrint(" AMG8834 Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		warpPrint(" MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		warpPrint(" L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVBME680)
-		warpPrint(" BME680 Press, BME680 Temp, BME680 Hum,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" BME680 Press, BME680 Temp, BME680 Hum,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVBMX055)
-		warpPrint(" BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		warpPrint(" BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
-		warpPrint(" BMX055gyro x, BMX055gyro y, BMX055gyro z,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
+			warpPrint(" BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
+			warpPrint(" BMX055gyro x, BMX055gyro y, BMX055gyro z,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVCCS811)
-		warpPrint(" CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value,");
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVHDC1000)
-		warpPrint(" HDC1000 Temp, HDC1000 Hum,");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+			warpPrint(" HDC1000 Temp, HDC1000 Hum,");
 		#endif
+
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 		warpPrint("\n\n");
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	}
 
 	while(1)
@@ -2901,30 +2885,37 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVAMG8834)
-		printSensorDataAMG8834(hexModeFlag);
+			printSensorDataAMG8834(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		printSensorDataMMA8451Q(hexModeFlag);
+			printSensorDataMMA8451Q(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		printSensorDataMAG3110(hexModeFlag);
+			printSensorDataMAG3110(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		printSensorDataL3GD20H(hexModeFlag);
+			printSensorDataL3GD20H(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVBME680)
-		printSensorDataBME680(hexModeFlag);
+			printSensorDataBME680(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVBMX055)
-		printSensorDataBMX055accel(hexModeFlag);
-		printSensorDataBMX055mag(hexModeFlag);
-		printSensorDataBMX055gyro(hexModeFlag);
+			printSensorDataBMX055accel(hexModeFlag);
+			printSensorDataBMX055mag(hexModeFlag);
+			printSensorDataBMX055gyro(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVCCS811)
-		printSensorDataCCS811(hexModeFlag);
+			printSensorDataCCS811(hexModeFlag);
 		#endif
+
 		#if (WARP_BUILD_ENABLE_DEVHDC1000)
-		printSensorDataHDC1000(hexModeFlag);
+			printSensorDataHDC1000(hexModeFlag);
 		#endif
 
 		warpPrint(" %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);

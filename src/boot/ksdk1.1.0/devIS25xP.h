@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
-WarpStatus	spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
+void		initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
+WarpStatus	spiTransactionIS25xP(uint8_t ops[], size_t opCount);

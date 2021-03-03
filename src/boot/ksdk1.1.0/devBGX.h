@@ -34,5 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void		initBGX(WarpUARTDeviceState volatile *  deviceStatePointer);
-void		deinitBGX(WarpUARTDeviceState volatile *  deviceStatePointer);
+void		initBGX(uint16_t operatingVoltageMillivolts);
+void		deinitBGX(void);

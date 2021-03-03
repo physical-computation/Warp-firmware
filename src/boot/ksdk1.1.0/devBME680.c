@@ -65,9 +65,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initBME680(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceBME680State.i2cAddress			= i2cAddress;
+	deviceBME680State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -92,6 +93,8 @@ writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload)
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 
+
+	warpScaleSupplyVoltage(deviceBME680State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -137,6 +140,7 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceBME680State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -162,6 +166,8 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	uint8_t		reg, index = 0;
 	WarpStatus	status1, status2, status3, status4 = 0;
 
+
+	warpScaleSupplyVoltage(deviceBME680State.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Hum,
 							payloadCtrl_Hum);
 
@@ -203,6 +209,8 @@ printSensorDataBME680(bool hexModeFlag)
 	uint32_t	unsignedRawAdcValue;
 	WarpStatus	triggerStatus, i2cReadStatusMSB, i2cReadStatusLSB, i2cReadStatusXLSB;
 
+
+	warpScaleSupplyVoltage(deviceBME680State.operatingVoltageMillivolts);
 
 	/*
 	 *	First, trigger a measurement

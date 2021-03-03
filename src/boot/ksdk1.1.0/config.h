@@ -82,7 +82,7 @@
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
+	#define		WARP_BUILD_ENABLE_DEVBGX		1
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
@@ -105,7 +105,7 @@ typedef enum
 {
 	kWarpDefaultI2cBaudRateKbps				= 200,
 	kWarpDefaultUartBaudRateBps				= 115200,
-	kWarpDefaultSpiBaudRateKbps				= 1000,
+	kWarpDefaultSpiBaudRateKbps				= 10000,
 	kWarpDefaultSleeptimeSeconds				= 0,
 	kWarpDefaultI2cTimeoutMilliseconds			= 5,
 	kWarpDefaultUartTimeoutMilliseconds			= 1000,
@@ -113,9 +113,33 @@ typedef enum
 	kWarpDefaultMenuPrintDelayMilliseconds			= 10,
 	kWarpDefaultSupplySettlingDelayMilliseconds		= 1,
 	kWarpDefaultPrintBufferSizeBytes			= 96,
+	kWarpDefaultSupplyVoltageMillivolts			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsHDC1000		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI7021		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBME680		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
 } WarpDefaults;
 
 typedef enum
 {
-	kWarpMemoryCommonSpiBufferBytes				= 36,
+	kWarpMemoryCommonSpiBufferBytes				= 48,
 } WarpMemory;

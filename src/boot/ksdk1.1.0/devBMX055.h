@@ -35,9 +35,9 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void		initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-void		initBMX055gyro(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
-void		initBMX055mag(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
+void		initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
+void		initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 
 WarpStatus	writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);

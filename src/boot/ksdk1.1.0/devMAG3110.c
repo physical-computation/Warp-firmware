@@ -64,9 +64,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initMAG3110(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initMAG3110(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceMAG3110State.i2cAddress			= i2cAddress;
+	deviceMAG3110State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -98,6 +99,7 @@ writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t men
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	warpScaleSupplyVoltage(deviceMAG3110State.operatingVoltageMillivolts);
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 	warpEnableI2Cpins();
@@ -122,6 +124,9 @@ WarpStatus
 configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint16_t menuI2cPullupValue)
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2, i2cWriteStatus3;
+
+
+	warpScaleSupplyVoltage(deviceMAG3110State.operatingVoltageMillivolts);
 
 	i2cWriteStatus1 = writeSensorRegisterMAG3110(kWarpSensorConfigurationRegisterMAG3110CTRL_REG1 /* register address CTRL_REG1 */,
 							payloadCTRL_REG1 /* payload */,
@@ -160,6 +165,7 @@ readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 	 *	(2) Read transaction beginning with start condition, followed by slave address, and read 1 byte payload
 	*/
 
+	warpScaleSupplyVoltage(deviceMAG3110State.operatingVoltageMillivolts);
 	cmdBuf[0] = deviceRegister;
 	warpEnableI2Cpins();
 
@@ -197,6 +203,9 @@ printSensorDataMAG3110(bool hexModeFlag)
 	int16_t		readSensorRegisterValueCombined;
 	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatus;
+
+
+	warpScaleSupplyVoltage(deviceMAG3110State.operatingVoltageMillivolts);
 
 	i2cReadStatus = readSensorRegisterMAG3110(kWarpSensorOutputRegisterMAG3110OUT_X_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMAG3110State.i2cBuffer[0];

@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initICE40(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
+void		initICE40(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 

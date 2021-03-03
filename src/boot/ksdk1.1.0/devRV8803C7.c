@@ -49,15 +49,16 @@
 #include "warp.h"
 #include "devRV8803C7.h"
 
-extern volatile WarpI2CDeviceState deviceRV8803C7State;
-extern volatile uint32_t gWarpI2cBaudRateKbps;
-extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
+extern volatile WarpI2CDeviceState	deviceRV8803C7State;
+extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 
 
 void
-initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer)
+initRV8803C7(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress = i2cAddress;
+	deviceRV8803C7State.i2cAddress			= i2cAddress;
+	deviceRV8803C7State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -81,8 +82,9 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 	};
 	
 	cmdBuff[0] = deviceRegister;
-	warpEnableI2Cpins();
 
+	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
 							&slave,
 							cmdBuff,
@@ -90,6 +92,7 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 							receiveData,
 							1,
 							gWarpI2cTimeoutMilliseconds);
+	warpDisableI2Cpins();
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -120,8 +123,9 @@ readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  
 	};
 	
 	cmdBuff[0] = deviceStartRegister;
-	warpEnableI2Cpins();
 
+	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(0 /* I2C instance */,
 							&slave,
 							cmdBuff,
@@ -129,6 +133,7 @@ readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  
 							receiveData,
 							nRegs,
 							gWarpI2cTimeoutMilliseconds);
+	warpDisableI2Cpins();
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -161,8 +166,9 @@ writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
 	
 	cmdBuff[0] = deviceRegister;
 	txBuff[0] = payload;
-	warpEnableI2Cpins();
 
+	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
 						&slave,
 						cmdBuff,
@@ -170,6 +176,7 @@ writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
 						txBuff,
 						1,
 						gWarpI2cTimeoutMilliseconds);
+	warpDisableI2Cpins();
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -200,8 +207,9 @@ writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t pa
 	};
 
 	cmdBuff[0] = deviceStartRegister;
-	warpEnableI2Cpins();
 
+	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(0 /* I2C instance */,
 						&slave,
 						cmdBuff,
@@ -209,6 +217,7 @@ writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t pa
 						payload,
 						nRegs,
 						gWarpI2cTimeoutMilliseconds);
+	warpDisableI2Cpins();
 
 	if (status != kStatus_I2C_Success)
 	{

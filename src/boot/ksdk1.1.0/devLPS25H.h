@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initLPS25H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initLPS25H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterLPS25H(uint8_t deviceRegister, int numberOfBytes);

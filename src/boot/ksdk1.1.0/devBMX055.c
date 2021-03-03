@@ -70,9 +70,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
  *	Bosch Sensortec BMX055.
  */
 void
-initBMX055accel(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceBMX055accelState.i2cAddress			= i2cAddress;
+	deviceBMX055accelState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -97,6 +98,7 @@ writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 
+	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -119,6 +121,7 @@ configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW, ui
 {
 	WarpStatus	status1, status2;
 
+	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterBMX055accel(kWarpSensorConfigurationRegisterBMX055accelPMU_RANGE /* register address PMU_RANGE */,
 							payloadPMU_RANGE /* payload */,
 							menuI2cPullupValue);
@@ -150,6 +153,7 @@ readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -169,9 +173,10 @@ readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 }
 
 void
-initBMX055mag(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceBMX055magState.i2cAddress				= i2cAddress;
+	deviceBMX055magState.operatingVoltageMillivolts		= operatingVoltageMillivolts;
 
 	return;
 }
@@ -196,6 +201,7 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t m
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 
+	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -218,6 +224,7 @@ configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode, uint16
 {
 	WarpStatus	status1, status2;
 
+	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterBMX055mag(
 							kWarpSensorConfigurationRegisterBMX055magPowerCtrl /* Power and operation modes, self-test, data output rate control registers */,
 							payloadPowerCtrl /* payload */,
@@ -251,6 +258,7 @@ readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -270,9 +278,10 @@ readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes)
 }
 
 void
-initBMX055gyro(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceBMX055gyroState.i2cAddress			= i2cAddress;
+	deviceBMX055gyroState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -297,6 +306,7 @@ writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 
+	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
@@ -319,6 +329,8 @@ configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t paylo
 {
 	WarpStatus	status1, status2, status3, status4;
 
+
+	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 
 	status1 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRANGE /* register address RANGE */,
 							payloadRANGE /* payload */, 
@@ -360,6 +372,7 @@ readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -387,6 +400,7 @@ printSensorDataBMX055accel(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_X_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055accelState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055accelState.i2cBuffer[1];
@@ -499,6 +513,7 @@ printSensorDataBMX055gyro(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_X_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055gyroState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055gyroState.i2cBuffer[1];
@@ -584,6 +599,7 @@ printSensorDataBMX055mag(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magX_LSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceBMX055magState.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceBMX055magState.i2cBuffer[1];

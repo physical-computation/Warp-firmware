@@ -63,9 +63,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceHDC1000State.i2cAddress			= i2cAddress;
+	deviceHDC1000State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -95,6 +96,8 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 		.address = deviceHDC1000State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
+
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = (payload>>8) & 0xFF; /* MSB first */
@@ -130,6 +133,7 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 
 	USED(numberOfBytes);
 
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	if (deviceRegister == 0 || deviceRegister == 1)
 	{
@@ -237,6 +241,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];

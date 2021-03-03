@@ -67,9 +67,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
  *	CCS811.
  */
 void
-initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceCCS811State.i2cAddress			= i2cAddress;
+	deviceCCS811State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -136,6 +137,7 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 
 	commandByte[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	if(payloadSize)
 	{
@@ -181,9 +183,9 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	/*
 	 *	Delay needed before start of i2c.
 	 */
-
 	OSA_TimeDelay(20);
 
+	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
 							payloadMEAS_MODE /* Dummy value */,
 							menuI2cPullupValue);
@@ -225,6 +227,7 @@ readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
@@ -253,6 +256,7 @@ printSensorDataCCS811(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	i2cReadStatus	= readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811ALG_DATA, 4 /* numberOfBytes */);
 	equivalentCO2	= (deviceCCS811State.i2cBuffer[0] << 8) | deviceCCS811State.i2cBuffer[1];
 	TVOC		= (deviceCCS811State.i2cBuffer[2] << 8) | deviceCCS811State.i2cBuffer[3];

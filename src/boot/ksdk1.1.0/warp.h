@@ -251,6 +251,7 @@ typedef struct
 
 	uint8_t			i2cAddress;
 	uint8_t			i2cBuffer[kWarpSizesI2cBufferBytes];
+	uint16_t		operatingVoltageMillivolts;
 } WarpI2CDeviceState;
 
 typedef struct
@@ -266,6 +267,7 @@ typedef struct
 	uint8_t *		spiSourceBuffer;
 	uint8_t *		spiSinkBuffer;
 	size_t			spiBufferLength;
+	uint16_t		operatingVoltageMillivolts;
 } WarpSPIDeviceState;
 
 typedef struct
@@ -273,6 +275,7 @@ typedef struct
 	bool			isInitialized;
 	uint8_t			uartTXBuffer[kWarpSizesUartBufferBytes];
 	uint8_t			uartRXBuffer[kWarpSizesUartBufferBytes];
+	uint16_t		operatingVoltageMillivolts;
 } WarpUARTDeviceState;
 
 typedef struct

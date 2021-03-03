@@ -64,12 +64,13 @@ extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
 
 void		
-initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID) 
+initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts) 
 {
-	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
-	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
-	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
+	deviceISL23415State.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceISL23415State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceISL23415State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
+	deviceISL23415State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceISL23415State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -78,6 +79,9 @@ WarpStatus
 readDeviceRegisterISL23415(uint8_t deviceRegister) 
 {
 	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceISL23415State.operatingVoltageMillivolts);
 
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices
@@ -147,6 +151,9 @@ WarpStatus
 writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue)
 {
 	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceISL23415State.operatingVoltageMillivolts);
 
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices

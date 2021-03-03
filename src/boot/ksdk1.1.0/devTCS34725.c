@@ -62,9 +62,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initTCS34725(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceTCS34725State.i2cAddress			= i2cAddress;
+	deviceTCS34725State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -87,6 +88,7 @@ readSensorRegisterTCS34725(uint8_t deviceRegister)
 	};
 
 	cmdBuf[0] = deviceRegister;
+	warpScaleSupplyVoltage(deviceTCS34725State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 
 	/*

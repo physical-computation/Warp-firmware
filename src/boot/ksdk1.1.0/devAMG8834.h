@@ -35,7 +35,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void		initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, uint16_t menuI2cPullupValue);

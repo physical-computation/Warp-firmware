@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
+void		initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readFIFObytesADXL362(void);
 WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes);

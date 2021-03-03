@@ -35,7 +35,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void		initBME680(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initBME680(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload);
 WarpStatus	configureSensorBME680(	uint8_t payloadCtrl_Hum,
 					uint8_t payloadCtrl_Meas,

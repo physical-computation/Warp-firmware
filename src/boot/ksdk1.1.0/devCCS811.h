@@ -35,7 +35,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void		initCCS811(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue);
 WarpStatus	readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes);

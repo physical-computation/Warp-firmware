@@ -58,35 +58,41 @@
 
 extern volatile lpuart_state_t		lpuartState;
 extern volatile lpuart_user_config_t	lpuartUserConfig;
+extern volatile WarpUARTDeviceState	deviceBGXState;
 
 static void	uartRxCallback(uint32_t instance, void * uartState);
 static void	powerUpBGX(void);
 static void	powerDownBGX(void);
 
 void
-initBGX(WarpUARTDeviceState volatile *  deviceStatePointer)
+initBGX(uint16_t operatingVoltageMillivolts)
 {
 	/*
 	 *	Initialize UART and setup callback function.
 	 */
-	lpuartState.txBuff = (uint8_t *)deviceStatePointer->uartTXBuffer;
-	lpuartState.rxBuff = (uint8_t *)deviceStatePointer->uartRXBuffer;
+	lpuartState.txBuff = (uint8_t *)deviceBGXState.uartTXBuffer;
+	lpuartState.rxBuff = (uint8_t *)deviceBGXState.uartRXBuffer;
 
 	LPUART_DRV_InstallRxCallback(	0,						/*	uint32_t instance		*/
 					&uartRxCallback,				/*	lpuart_rx_callback_t function	*/
-					(uint8_t *)deviceStatePointer->uartRXBuffer,	/*	uint8_t ∗ rxBuff		*/
+					(uint8_t *)deviceBGXState.uartRXBuffer,	/*	uint8_t ∗ rxBuff		*/
 					(void *)0, 					/*	void ∗callbackParam		*/
 					1						/*	bool alwaysEnableRxIrq		*/);
 
+	/*
+	 *	powerUpBGX() depends on the operating voltage configuration,
+	 *	so need to make sure to do that first.
+	 */
+	deviceBGXState.operatingVoltageMillivolts = operatingVoltageMillivolts;
 	powerUpBGX();
-	deviceStatePointer->isInitialized = true;
+	deviceBGXState.isInitialized = true;
 }
 
 void
 deinitBGX(WarpUARTDeviceState volatile *  deviceStatePointer)
 {
 	powerDownBGX();
-	deviceStatePointer->isInitialized = false;
+	deviceBGXState.isInitialized = false;
 }
 
 void
@@ -100,24 +106,37 @@ powerUpBGX(void)
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortMuxAsGpio);
 
-	/*
-	 *	Make sure regulator set to 3.3V
-	 */
-	warpScaleSupplyVoltage(3300);
+	warpScaleSupplyVoltage(deviceBGXState.operatingVoltageMillivolts);
 
 	/*
-	 *	Drive /RST on the BGX high
+	 *	The BGX datasheet says
+	 *
+	 *		"Reset input, active low. To apply an external reset source to this pin,
+	 *		it is required to only drive this pin low during reset, and let the
+	 *		internal pull-up ensure that reset is released."
+	 *
+	 *	Drive /RST on the BGX high and pulse it low
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinBGX_nRST);
+//	OSA_TimeDelay(1);
+//	GPIO_DRV_ClearPinOutput(kWarpPinBGX_nRST);
+//	OSA_TimeDelay(1);
+//	GPIO_DRV_SetPinOutput(kWarpPinBGX_nRST);
 }
 
 void
 powerDownBGX()
 {
 	/*
-	 *	Drive /RST on the BGX low
+	 *	The BGX datasheet says
+	 *
+	 *		"Reset input, active low. To apply an external reset source to this pin,
+	 *		it is required to only drive this pin low during reset, and let the
+	 *		internal pull-up ensure that reset is released."
+	 *
+	 *	Since it is not connected to an open-drain input in Warp revC
+	 *	do nothing special with kWarpPinBGX_nRST on powerdown.
 	 */
-	GPIO_DRV_ClearPinOutput(kWarpPinBGX_nRST);
 
 	return;
 }
@@ -130,7 +149,7 @@ uartRxCallback(uint32_t instance, void *  uartState)
 	 *	If we wanted to, that code would go here.
 	 */
 	//	warpPrint("In uartRxCallback(), deviceBGXState.uartRXBuffer[0] = [0x%X] ('%c')\n", deviceBGXState.uartRXBuffer[0], deviceBGXState.uartRXBuffer[0]);
-	//	SEGGER_RTT_WriteString(0, "In uartRxCallback()...\n");
+	//SEGGER_RTT_WriteString(0, "In uartRxCallback()...\n");
 
 	return;
 }

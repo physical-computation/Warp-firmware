@@ -35,6 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
+void		initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	readDeviceRegisterISL23415(uint8_t deviceRegister);
 WarpStatus	writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue);

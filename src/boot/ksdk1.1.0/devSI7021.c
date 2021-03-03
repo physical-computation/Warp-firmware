@@ -64,9 +64,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initSI7021(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
+	deviceSI7021State.i2cAddress			= i2cAddress;
+	deviceSI7021State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -93,6 +94,8 @@ readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes)
 		.address = deviceSI7021State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
+
+	warpScaleSupplyVoltage(deviceSI7021State.operatingVoltageMillivolts);
 
 	/*
 	 *	TODO: for now, we fix command code as read first byte of serial number
