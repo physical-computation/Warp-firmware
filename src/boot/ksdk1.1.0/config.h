@@ -78,24 +78,24 @@
 	/*
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware commpilation
 	 */
-	#define		WARP_BUILD_ENABLE_DEVADXL362		0
+	#define		WARP_BUILD_ENABLE_DEVADXL362		1
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		1
+	#define		WARP_BUILD_ENABLE_DEVBGX		0
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
-	#define		WARP_BUILD_ENABLE_DEVISL23415		0
+	#define		WARP_BUILD_ENABLE_DEVISL23415		1
 	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
-	#define		WARP_BUILD_ENABLE_DEVRV8803C7		1
+	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
 	#define		WARP_BUILD_ENABLE_DEVSI4705		0
 	#define		WARP_BUILD_ENABLE_DEVSI7021		0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
@@ -112,10 +112,10 @@ typedef enum
 	kWarpDefaultSpiTimeoutMicroseconds			= 5,
 	kWarpDefaultMenuPrintDelayMilliseconds			= 10,
 	kWarpDefaultSupplySettlingDelayMilliseconds		= 1,
-	kWarpDefaultPrintBufferSizeBytes			= 128,
+	kWarpDefaultPrintBufferSizeBytes			= 96,
 } WarpDefaults;
 
 typedef enum
 {
-	kWarpMemoryCommonBufferBytes				= 8,
+	kWarpMemoryCommonSpiBufferBytes				= 36,
 } WarpMemory;

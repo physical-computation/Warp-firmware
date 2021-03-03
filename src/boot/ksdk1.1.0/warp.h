@@ -147,6 +147,19 @@ typedef enum
 	kWarpSensorConfigurationRegisterBME680CalibrationRegion1End	= 0xA2,
 	kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start	= 0xE1,
 	kWarpSensorConfigurationRegisterBME680CalibrationRegion2End	= 0xF2,
+
+	/*
+	 *	See Table 4 of the ISL23415 manual. We choose to use the encoding
+	 *	where we always set R4:R0 to 0000
+	 */
+	kWarpSensorConfigurationRegisterISL23415nopInstruction		= 0x00,
+	kWarpSensorConfigurationRegisterISL23415ACRreadInstruction	= 0x20,
+	kWarpSensorConfigurationRegisterISL23415ACRwriteInstruction	= 0x60,
+	kWarpSensorConfigurationRegisterISL23415WRreadInstruction	= 0x80,
+	kWarpSensorConfigurationRegisterISL23415WRwriteInstruction	= 0xC0,
+
+	kWarpSensorConfigurationRegisterADXL362DEVID_AD			= 0x00,
+	kWarpSensorConfigurationRegisterADXL362DEVID_MST		= 0x01,
 } WarpSensorConfigurationRegister;
 
 typedef enum
@@ -216,6 +229,15 @@ typedef enum
 	kWarpSensorOutputRegisterBME680temp_xlsb			= 0x24,
 	kWarpSensorOutputRegisterBME680hum_msb				= 0x25,
 	kWarpSensorOutputRegisterBME680hum_lsb				= 0x26,
+
+	kWarpSensorOutputRegisterADXL362XDATA_L				= 0x0E,
+	kWarpSensorOutputRegisterADXL362XDATA_H				= 0x0F,
+	kWarpSensorOutputRegisterADXL362YDATA_L				= 0x10,
+	kWarpSensorOutputRegisterADXL362YDATA_H				= 0x11,
+	kWarpSensorOutputRegisterADXL362ZDATA_L				= 0x12,
+	kWarpSensorOutputRegisterADXL362ZDATA_H				= 0x13,
+	kWarpSensorOutputRegisterADXL362TEMP_L				= 0x14,
+	kWarpSensorOutputRegisterADXL362TEMP_H				= 0x15,
 } WarpSensorOutputRegister;
 
 typedef enum
@@ -265,5 +287,6 @@ void		warpEnableI2Cpins(void);
 void		warpDisableI2Cpins(void);
 void		warpEnableSPIpins(void);
 void		warpDisableSPIpins(void);
+void		warpDeasserAllSPIchipSelects(void);
 void		warpPrint(const char *fmt, ...);
 int		warpWaitKey(void);

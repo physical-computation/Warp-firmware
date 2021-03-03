@@ -57,35 +57,18 @@
 #include "warp.h"
 #include "devIS25xP.h"
 
-extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
+extern uint8_t				gWarpSpiCommonSourceBuffer[];
+extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
 
 void
 initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
 {
 	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-
-	/*
-	 *	For the IS25xP flash device, we need minimum of 6 entries per SPI transaction
-	 */
-	deviceStatePointer->spiSourceBuffer = malloc(sizeof(uint8_t)*kIS25xPminSPIbufferLength);
-	if (deviceStatePointer->spiSourceBuffer == NULL)
-	{
-		SEGGER_RTT_WriteString(0, gWarpEmalloc);
-
-		return;
-	}
-
-	deviceStatePointer->spiSinkBuffer = malloc(sizeof(uint8_t)*kIS25xPminSPIbufferLength);
-	if (deviceStatePointer->spiSinkBuffer == NULL)
-	{
-		SEGGER_RTT_WriteString(0, gWarpEmalloc);
-
-		return;
-	}
-
-	deviceStatePointer->spiBufferLength = sizeof(uint8_t)*kIS25xPminSPIbufferLength;
+	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
+	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
+	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
 
 	return;
 }
@@ -94,6 +77,12 @@ WarpStatus
 spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount)
 {
 	spi_status_t	status;
+
+	/*
+	 *	First, configure chip select pins of the various SPI slave devices
+	 *	as GPIO and drive all of them high.
+	 */
+	warpDeasserAllSPIchipSelects();
 
 	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
 	{
@@ -111,16 +100,9 @@ spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
 	 *
-	 *	Providing a device structure here is optional since it 
-	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
-	 *	so we pass in NULL.
-	 *
-	 *	TODO: the "master instance" is always 0 for the KL03 since
-	 *	there is only one SPI peripheral. We however should remove
-	 *	the '0' magic number and place this in a Warp-HWREV0 header
-	 *	file.
-	 *
-	 *	TODO: the transfer size should be the per-device sized spiSinkBuffer length, not the current magic number
+	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
+	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+	 *	the KL03 since there is only one SPI peripheral.
 	 */
 	warpEnableSPIpins();
 	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,

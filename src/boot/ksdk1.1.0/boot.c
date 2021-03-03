@@ -207,8 +207,8 @@ char							gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
 /*
  *	Since only one SPI transaction is ongoing at a time in our implementaion
  */
-uint8_t							gWarpSpiCommonSourceBuffer[kWarpMemoryCommonBufferBytes];
-uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonBufferBytes];
+uint8_t							gWarpSpiCommonSourceBuffer[kWarpMemoryCommonSpiBufferBytes];
+uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
 
 static void						sleepUntilReset(void);
 static void						lowPowerPinStates(void);
@@ -482,7 +482,6 @@ warpEnableSPIpins(void)
 
 	/*
 	 *	Initialize SPI master. See KSDK13APIRM.pdf Section 70.4
-	 *
 	 */
 	uint32_t			calculatedBaudRate;
 	spiUserConfig.polarity		= kSpiClockPolarity_ActiveHigh;
@@ -521,8 +520,50 @@ warpDisableSPIpins(void)
 	CLOCK_SYS_DisableSpiClock(0);
 }
 
+void
+warpDeasserAllSPIchipSelects(void)
+{
+	/*
+	 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
+	 *
+	 *	Drive all chip selects high to disable them. Individual drivers call this routine before
+	 *	appropriately asserting their respective chip selects.
+	 *
+	 *	Setup:
+	 *		PTA12/kWarpPinISL23415_SPI_nCS	for GPIO
+	 *		PTA9/kWarpPinAT45DB_SPI_nCS	for GPIO
+	 *		PTA8/kWarpPinADXL362_SPI_nCS	for GPIO
+	 *		PTB1/kWarpPinFPGA_nCS		for GPIO
+	 *
+	 *		On Glaux
+	 		PTB2/kGlauxPinFlash_nCS for GPIO
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortMuxAsGpio);
+	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+		PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
+	#endif
 
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinADXL362_SPI_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
+	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+		GPIO_DRV_SetPinOutput(kGlauxPinFlash_nCS);
+	#endif
+}
 
+void
+debugPrintSPIsinkBuffer(void)
+{
+	for (int i = 0; i < kWarpMemoryCommonSpiBufferBytes; i++)
+	{
+		warpPrint("\tgWarpSpiCommonSinkBuffer[%d] = [0x%02X]\n", i, gWarpSpiCommonSinkBuffer[i]);
+	}
+	warpPrint("\n");
+}
 void
 warpEnableI2Cpins(void)
 {
@@ -1118,7 +1159,6 @@ warpPrint(const char *fmt, ...)
 		 *	RTT memory region to be picked up by the RTT / SWD mechanism...
 		 */
 		va_start(arg, fmt);
-		//fmtlen = SEGGER_RTT_vprintf(0, fmt, &arg);
 		fmtlen = vsnprintf(gWarpPrintBuffer, kWarpDefaultPrintBufferSizeBytes, fmt, arg);
 		va_end(arg);
 
@@ -1126,20 +1166,22 @@ warpPrint(const char *fmt, ...)
 		{
 			SEGGER_RTT_WriteString(0, gWarpEfmt);
 
-			if (WARP_BUILD_ENABLE_DEVBGX && gWarpBooted)
-			{
-				WarpStatus	status;
-
-				enableLPUARTpins();
-				initBGX(&deviceBGXState);
-				status = sendBytesToUART((uint8_t *)gWarpEfmt, strlen(gWarpEfmt)+1);
-				if (status != kWarpStatusOK)
+			#if (WARP_BUILD_ENABLE_DEVBGX)
+				if (gWarpBooted)
 				{
-					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+					WarpStatus	status;
+
+					enableLPUARTpins();
+					initBGX(&deviceBGXState);
+					status = sendBytesToUART((uint8_t *)gWarpEfmt, strlen(gWarpEfmt)+1);
+					if (status != kWarpStatusOK)
+					{
+						SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+					}
+					disableLPUARTpins();
+					deinitBGX(&deviceBGXState);
 				}
-				disableLPUARTpins();
-				deinitBGX(&deviceBGXState);
-			}
+			#endif
 
 			return;
 		}
@@ -1149,20 +1191,22 @@ warpPrint(const char *fmt, ...)
 		/*
 		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
 		 */
-		if (WARP_BUILD_ENABLE_DEVBGX && gWarpBooted)
-		{
-			WarpStatus	status;
-
-			enableLPUARTpins();
-			initBGX(&deviceBGXState);
-			status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, strlen(gWarpPrintBuffer)+1);
-			if (status != kWarpStatusOK)
+		#if (WARP_BUILD_ENABLE_DEVBGX)
+			if (gWarpBooted)
 			{
-				SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				WarpStatus	status;
+
+				enableLPUARTpins();
+				initBGX(&deviceBGXState);
+				status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, strlen(gWarpPrintBuffer)+1);
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				}
+				disableLPUARTpins();
+				deinitBGX(&deviceBGXState);
 			}
-			disableLPUARTpins();
-			deinitBGX(&deviceBGXState);
-		}
+		#endif
 	#else
 		/*
 		 *	If we are not compiling in the SEGGER_RTT_printf,
@@ -1173,20 +1217,22 @@ warpPrint(const char *fmt, ...)
 		/*
 		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
 		 */
-		if (WARP_BUILD_ENABLE_DEVBGX && gWarpBooted)
-		{
-			WarpStatus	status;
-
-			enableLPUARTpins();
-			initBGX(&deviceBGXState);
-			status = sendBytesToUART(fmt, strlen(fmt)+1);
-			if (status != kWarpStatusOK)
+		#if (WARP_BUILD_ENABLE_DEVBGX)
+			if (gWarpBooted)
 			{
-				SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				WarpStatus	status;
+
+				enableLPUARTpins();
+				initBGX(&deviceBGXState);
+				status = sendBytesToUART(fmt, strlen(fmt)+1);
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				}
+				disableLPUARTpins();
+				deinitBGX(&deviceBGXState);
 			}
-			disableLPUARTpins();
-			deinitBGX(&deviceBGXState);
-		}
+		#endif
 	#endif
 
 	return;
@@ -1195,13 +1241,11 @@ warpPrint(const char *fmt, ...)
 int
 warpWaitKey(void)
 {
-	WarpStatus	status;
-
 	/*
 	 *	SEGGER'S implementation assumes the result of result of
 	 *	SEGGER_RTT_GetKey() is an int, so we play along.
 	 */
-	int		rttKey, bleChar;
+	int		rttKey, bleChar = kWarpMiscMarkerForAbsentByte;
 
 	/*
 	 *	Set the UART buffer to 0xFF and then wait until either the
@@ -1209,20 +1253,20 @@ warpWaitKey(void)
 	 *
 	 *	The check below on rttKey is exactly what SEGGER_RTT_WaitKey()
 	 *	does in SEGGER_RTT.c.
-	 *
 	 */
-	deviceBGXState.uartRXBuffer[0] = kWarpMiscMarkerForAbsentByte;
-
-	if (WARP_BUILD_ENABLE_DEVBGX)
-	{
+	#if (WARP_BUILD_ENABLE_DEVBGX)
+		deviceBGXState.uartRXBuffer[0] = kWarpMiscMarkerForAbsentByte;
 		enableLPUARTpins();
 		initBGX(&deviceBGXState);
-	}
+	#endif
 
 	do
 	{
 		rttKey	= SEGGER_RTT_GetKey();
-		bleChar	= deviceBGXState.uartRXBuffer[0];
+
+		#if (WARP_BUILD_ENABLE_DEVBGX)
+			bleChar	= deviceBGXState.uartRXBuffer[0];
+		#endif
 
 		/*
 		 *	Ignore '\r' coming in from BLE
@@ -1233,36 +1277,32 @@ warpWaitKey(void)
 		}
 	} while ((rttKey < 0) && (bleChar == kWarpMiscMarkerForAbsentByte));
 
-	if (bleChar != kWarpMiscMarkerForAbsentByte)
-	{
-		/*
-		 *	Send a copy of incoming BLE chars to RTT
-		 */
-		SEGGER_RTT_PutChar(0, bleChar);
-
-		if (WARP_BUILD_ENABLE_DEVBGX)
+	#if (WARP_BUILD_ENABLE_DEVBGX)
+		if (bleChar != kWarpMiscMarkerForAbsentByte)
 		{
+			/*
+			 *	Send a copy of incoming BLE chars to RTT
+			 */
+			SEGGER_RTT_PutChar(0, bleChar);
+
 			disableLPUARTpins();
 			deinitBGX(&deviceBGXState);
+
+			return (int)bleChar;
 		}
 
-		return (int)bleChar;
-	}
+		/*
+		 *	Send a copy of incoming RTT chars to BLE
+		 */
+		WarpStatus status = sendBytesToUART((uint8_t *)&rttKey, 1);
+		if (status != kWarpStatusOK)
+		{
+			SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+		}
 
-	/*
-	 *	Send a copy of incoming RTT chars to BLE
-	 */
-	status = sendBytesToUART((uint8_t *)&rttKey, 1);
-	if (status != kWarpStatusOK)
-	{
-		SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
-	}
-
-	if (WARP_BUILD_ENABLE_DEVBGX)
-	{
 		disableLPUARTpins();
 		deinitBGX(&deviceBGXState);
-	}
+	#endif
 
 	return rttKey;
 }
@@ -1546,6 +1586,8 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+		warpScaleSupplyVoltage(1800);
+
 		initRV8803C7(	0x32	/* i2cAddress */,	&deviceRV8803C7State	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 		if (status != kWarpStatusOK)
@@ -1594,12 +1636,32 @@ main(void)
 	 */
 
 	#if (WARP_BUILD_ENABLE_DEVADXL362)
-		initADXL362(&deviceADXL362State);
+		warpScaleSupplyVoltage(1800);
 
 		/*
-		 *	Only supported in mainWarp variant.
+		 *	Only supported in main Warp variant.
 		 */
-		deviceADXL362State.chipSelectIoPinID = kWarpPinADXL362_SPI_nCS;
+		initADXL362(&deviceADXL362State, kWarpPinADXL362_SPI_nCS);
+
+		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("ADXL362: SPI transaction to read DEVID_AD failed...\n");
+		}
+		else
+		{
+			warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);debugPrintSPIsinkBuffer();
+		}
+
+		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_MST, 1);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("ADXL362: SPI transaction to read DEVID_MST failed...\n");
+		}
+		else
+		{
+			warpPrint("ADXL362: DEVID_MST = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);debugPrintSPIsinkBuffer();
+		}
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVIS25xP && WARP_BUILD_ENABLE_GLAUX_VARIANT)
@@ -1608,41 +1670,93 @@ main(void)
 		 */
 		initIS25xP(&deviceIS25xPState, kGlauxPinFlash_SPI_nCS);
 
-		spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
-		warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+		WarpStatus status = spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("IS25xP: SPI transaction to read JEDEC ID failed...\n");
+		}
+		else
+		{
+			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+		}
 
 		spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
-		warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("IS25xP: SPI transaction to read Manufacturer ID failed...\n");
+		}
+		else
+		{
+			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+		}
 
 		spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
 		warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
+		warpScaleSupplyVoltage(1800);
+
 		/*
-		 *	Only supported in mainWarp variant.
+		 *	Only supported in main Warp variant.
 		 */
 		initISL23415(&deviceISL23415State, kWarpPinISL23415_SPI_nCS);
+
+		/*
+		 *	Take the DCPs out of shutdown by setting the SHDN bit in the ACR register
+		 */
+		status = writeDeviceRegisterISL23415(kWarpSensorConfigurationRegisterISL23415ACRwriteInstruction, 0x40);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("ISL23415: SPI transaction to write ACR failed...\n");
+		}
+
+		status = readDeviceRegisterISL23415(kWarpSensorConfigurationRegisterISL23415ACRreadInstruction);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("ISL23415: SPI transaction to read ACR failed...\n");
+		}
+		else
+		{
+			warpPrint("ISL23415 ACR=[0x%02X], ", deviceISL23415State.spiSinkBuffer[3]);debugPrintSPIsinkBuffer();
+		}
+
+		status = readDeviceRegisterISL23415(kWarpSensorConfigurationRegisterISL23415WRreadInstruction);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("ISL23415: SPI transaction to read WR failed...\n");
+		}
+		else
+		{
+			warpPrint("WR=[0x%02X]\n", deviceISL23415State.spiSinkBuffer[3]);debugPrintSPIsinkBuffer();
+		}
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAT45DB)
 		warpScaleSupplyVoltage(1800);
 
 		/*
-		 *	Only supported in mainWarp variant.
+		 *	Only supported in main Warp variant.
 		 */
 		initAT45DB(&deviceAT45DBState, kWarpPinAT45DB_SPI_nCS);
 
-		spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00", 5 /* opCount */);
-		warpPrint("AT45DB Manufacturer ID=[0x%X], Device ID=[0x%X][0x%X], Extended Device Information=[0x%X][0x%X]\n",
-					deviceAT45DBState.spiSinkBuffer[1],
-					deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
-					deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
+		status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("AT45DB: SPI transaction to read Manufacturer ID failed...\n");
+		}
+		else
+		{
+			warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
+						deviceAT45DBState.spiSinkBuffer[1],
+						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
+						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);debugPrintSPIsinkBuffer();
+		}
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVICE40)
 		/*
-		 *	Only supported in mainWarp variant.
+		 *	Only supported in main Warp variant.
 		 */
 		initICE40(&deviceICE40State, kWarpPinFPGA_nCS);
 	#endif
@@ -1696,7 +1810,7 @@ main(void)
 		{
 			warpPrint("warpSetLowPowerMode(kWarpPowerModeRUN, 0 /* sleep seconds : irrelevant here */)() failed...\n");
 		}
-		warpScaleSupplyVoltage(3300);
+		warpScaleSupplyVoltage(1800);
 		printAllSensors(true /* printHeadersAndCalibration */, false /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */);
 		/*
 		 *	Notreached
@@ -2320,9 +2434,10 @@ main(void)
 				{
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 					warpPrint("\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);
-					status = writeSensorRegisterADXL362(	0x0A			/* command == write register	*/,
+					status = writeSensorRegisterADXL362(	0x0A			/*	command == write register	*/,
 										menuRegisterAddress,
-										payloadByte[0]		/* writeValue			*/
+										payloadByte[0]		/*	writeValue			*/,
+										1			/*	numberOfBytes			*/
 									);
 					if (status != kWarpStatusOK)
 					{
@@ -2724,7 +2839,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					);
 	#endif
 
-
 	if (printHeadersAndCalibration)
 	{
 		warpPrint("Measurement number, RTC->TSR, RTC->TPR,");
@@ -2778,10 +2892,13 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 	}
 
-
 	while(1)
 	{
 		warpPrint("%u, %d, %d,", readingCount, RTC->TSR, RTC->TPR);
+
+		#if (WARP_BUILD_ENABLE_DEVADXL362)
+			printSensorDataADXL362(hexModeFlag);
+		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVAMG8834)
 		printSensorDataAMG8834(hexModeFlag);

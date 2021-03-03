@@ -57,9 +57,7 @@
 #include "warp.h"
 #include "devAT45DB.h"
 
-extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
-
 extern uint8_t				gWarpSpiCommonSourceBuffer[];
 extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
@@ -67,32 +65,9 @@ void
 initAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID)
 {
 	deviceStatePointer->chipSelectIoPinID	= chipSelectIoPinID;
-
-	/*
-	 *	For the IS25xP flash device, we need minimum of 6 entries per SPI transaction
-	 */
-/*
-	deviceStatePointer->spiSourceBuffer = malloc(sizeof(uint8_t)*kAT45DBminSPIbufferLength);
-	if (deviceStatePointer->spiSourceBuffer == NULL)
-	{
-		SEGGER_RTT_WriteString(0, gWarpEmalloc);
-
-		return;
-	}
-
-	deviceStatePointer->spiSinkBuffer = malloc(sizeof(uint8_t)*kAT45DBminSPIbufferLength);
-	if (deviceStatePointer->spiSinkBuffer == NULL)
-	{
-		SEGGER_RTT_WriteString(0, gWarpEmalloc);
-
-		return;
-	}
-*/
-	deviceStatePointer->spiSourceBuffer = gWarpSpiCommonSourceBuffer;
-	deviceStatePointer->spiSinkBuffer = gWarpSpiCommonSinkBuffer;
-
-//	deviceStatePointer->spiBufferLength = sizeof(uint8_t)*kAT45DBminSPIbufferLength;
-	deviceStatePointer->spiBufferLength = kWarpMemoryCommonBufferBytes;
+	deviceStatePointer->spiSourceBuffer	= gWarpSpiCommonSourceBuffer;
+	deviceStatePointer->spiSinkBuffer	= gWarpSpiCommonSinkBuffer;
+	deviceStatePointer->spiBufferLength	= kWarpMemoryCommonSpiBufferBytes;
 
 	return;
 }
@@ -102,30 +77,43 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 {
 	spi_status_t	status;
 
+	/*
+	 *	First, configure chip select pins of the various SPI slave devices
+	 *	as GPIO and drive all of them high.
+	 */
+	warpDeasserAllSPIchipSelects();
+
 	for (int i = 0; (i < opCount) && (i < deviceStatePointer->spiBufferLength); i++)
 	{
 		deviceStatePointer->spiSourceBuffer[i] = ops[i];
-		deviceStatePointer->spiSinkBuffer[i] = 0x00;
+		deviceStatePointer->spiSinkBuffer[i] = 0xFF;
 	}
 
 	/*
-	 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
+	 *	First, pulse the /CS to wake up device in case it is in Ultra-Deep Power-Down mode.
+	 *	(See Section 10.2.1 of manual). The 50 milliseconds we use here is conservative:
+	 *	the manual says the minimum time needed is 20ns. However, the datasheet also says:
 	 *
-	 *	Setup:
-	 *		PTA9/kWarpPinAT45DB_SPI_nCS for GPIO
+	 *		"After the CS pin has been deasserted, the device will exit from the 
+	 *		Ultra-Deep Power-Down mode and return to the standby mode within a 
+	 *		maximum time of tXUDPD."
+	 *
+	 *	Since txudpd is 100us, we wait another millisecond before proceeding to assert /CS
+	 *	again below.
 	 */
-	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
+	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
+	OSA_TimeDelay(1);
+	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
+	OSA_TimeDelay(1);
 
 	/*
-	 *	First, create a falling edge on chip-select.
+	 *	Next, create a falling edge on chip-select.
 	 */
-	GPIO_DRV_SetPinOutput(deviceStatePointer->chipSelectIoPinID);
-	OSA_TimeDelay(50);
 	GPIO_DRV_ClearPinOutput(deviceStatePointer->chipSelectIoPinID);
 
 	/*
 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
-	 *	Providing a device structure here is optional since it is already provided when we did
+	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
 	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
 	 *	the KL03 since there is only one SPI peripheral.
 	 */

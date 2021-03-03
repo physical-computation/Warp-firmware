@@ -35,11 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-enum
-{
-	kISL23415minSPIbufferLength = 4,
-};
-
 void		initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
-WarpStatus	readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	writeDeviceRegisterISL23415(uint8_t command, uint8_t deviceRegister, uint8_t writeValue);
+WarpStatus	readDeviceRegisterISL23415(uint8_t deviceRegister);
+WarpStatus	writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue);

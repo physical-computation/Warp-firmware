@@ -35,10 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-enum
-{
-	kIS25xPminSPIbufferLength = 6,
-};
-
 void		initIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
 WarpStatus	spiTransactionIS25xP(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);

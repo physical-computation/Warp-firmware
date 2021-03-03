@@ -38,3 +38,4 @@
 const char gWarpEfmt[]				= "\nwarpPrint(): vsnprintf() failed...\n\n";
 const char gWarpEuartSendChars[]		= "\nsendCharsToUART() failed...\n\n";
 const char gWarpEmalloc[]			= "\nmalloc() failed...\n\n";
+const char gWarpEunknownDeviceRegister[]	= "\nwrite to unknown/unhandled register indevice driver...\n\n";

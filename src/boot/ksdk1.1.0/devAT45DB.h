@@ -35,10 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-enum
-{
-	kAT45DBminSPIbufferLength = 8,
-};
-
 void		initAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, int chipSelectIoPinID);
 WarpStatus	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
