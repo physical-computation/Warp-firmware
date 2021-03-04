@@ -400,14 +400,17 @@ enableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
-	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+
+//TODO: we don't use hw flow control so don't need RTS/CTS
+ *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+ *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
+
+//TODO: we don't use hw flow control so don't need RTS/CTS
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
-
 	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
 	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 
@@ -440,11 +443,15 @@ disableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
-	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+
+//TODO: we don't use the HW flow control and that messes with the SPI any way
+ *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+ *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
+
+//TODO: we don't use flow-control
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
@@ -480,10 +487,10 @@ warpEnableSPIpins(void)
 {
 	CLOCK_SYS_EnableSpiClock(0);
 
-	/*	kWarpPinSPI_MISO_UART_RTS_UART_RTS --> PTA6	(ALT3)	*/
+	/*	kWarpPinSPI_MISO_UART_RTS_UART_RTS --> PTA6 (ALT3)	*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAlt3);
 
-	/*	kWarpPinSPI_MOSI	--> PTA7	(ALT3)		*/
+	/*	kWarpPinSPI_MOSI_UART_CTS --> PTA7 (ALT3)	*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAlt3);
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
@@ -513,10 +520,10 @@ warpDisableSPIpins(void)
 {
 	SPI_DRV_MasterDeinit(0);
 
-	/*	Warp KL03_SPI_MISO	--> PTA6	(GPI)		*/
+	/*	kWarpPinSPI_MISO_UART_RTS	--> PTA6	(GPI)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 
-	/*	Warp KL03_SPI_MOSI	--> PTA7	(GPIO)		*/
+	/*	kWarpPinSPI_MOSI_UART_CTS	--> PTA7	(GPIO)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
@@ -527,6 +534,7 @@ warpDisableSPIpins(void)
 		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
 	#endif
 
+//TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO_UART_RTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
@@ -1220,7 +1228,6 @@ warpPrint(const char *fmt, ...)
 		}
 
 		SEGGER_RTT_WriteString(0, gWarpPrintBuffer);
-		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		/*
 		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
@@ -1813,15 +1820,6 @@ main(void)
 		warpPrint("initBGX()... ");
 		initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
 		warpPrint("done.\n");
-
-//warpScaleSupplyVoltage(1800);
-//status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
-//warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
-//status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
-//warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
-//						deviceAT45DBState.spiSinkBuffer[1],
-//						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
-//						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
 	#endif
 
 	/*
@@ -2034,6 +2032,19 @@ main(void)
 	}
 #endif
 
+//gWarpBooted = false;
+while (0)
+{
+	status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
+	warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
+	status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_MST, 1);
+	warpPrint("ADXL362: DEVID_MST = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
+	status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
+	warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
+			deviceAT45DBState.spiSinkBuffer[1],
+			deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
+			deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
+}
 	while (1)
 	{
 		/*

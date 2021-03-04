@@ -94,15 +94,6 @@ typedef enum
 	kWarpModeDisableAdcOnSleep		= (1 << 0),
 } WarpModeMask;
 
-
-typedef enum
-{
-	kWarpSizesI2cBufferBytes		= 4,
-	kWarpSizesSpiBufferBytes		= 7,
-	kWarpSizesUartBufferBytes		= 4,
-	kWarpSizesBME680CalibrationValuesCount	= 41,
-} WarpSizes;
-
 typedef enum
 {
 	kWarpSensorConfigurationRegisterMMA8451QF_SETUP			= 0x09,

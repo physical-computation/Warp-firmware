@@ -274,8 +274,8 @@ readFIFObytesADXL362(void)
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
 
 	/*
-		 *	Read and print the STATUS
-		 */
+	 *	Read and print the STATUS
+	 */
 	status = readSensorRegisterADXL362(0x0B, 1 /* numberOfBytes */);
 	if (status != kWarpStatusOK)
 	{
@@ -343,8 +343,7 @@ printSensorDataADXL362(bool hexModeFlag)
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	status;
 
-readFIFObytesADXL362();
-
+//readFIFObytesADXL362();
 
 	/*
 	 *	Set MEASURE mode with AUTOSLEEP

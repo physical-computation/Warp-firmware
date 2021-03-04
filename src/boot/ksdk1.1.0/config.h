@@ -88,7 +88,7 @@
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
-	#define		WARP_BUILD_ENABLE_DEVISL23415		1
+	#define		WARP_BUILD_ENABLE_DEVISL23415		0
 	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
@@ -103,16 +103,36 @@
 
 typedef enum
 {
+	/*
+	 *	Speeds
+	 */
 	kWarpDefaultI2cBaudRateKbps				= 200,
 	kWarpDefaultUartBaudRateBps				= 115200,
 	kWarpDefaultSpiBaudRateKbps				= 10000,
+
+	/*
+	 *	Times
+	 */
 	kWarpDefaultSleeptimeSeconds				= 0,
 	kWarpDefaultI2cTimeoutMilliseconds			= 5,
 	kWarpDefaultUartTimeoutMilliseconds			= 1000,
 	kWarpDefaultSpiTimeoutMicroseconds			= 5,
 	kWarpDefaultMenuPrintDelayMilliseconds			= 10,
 	kWarpDefaultSupplySettlingDelayMilliseconds		= 1,
-	kWarpDefaultPrintBufferSizeBytes			= 96,
+
+	/*
+	 *	Sizes
+	*/
+	kWarpDefaultPrintBufferSizeBytes			= 64,
+	kWarpMemoryCommonSpiBufferBytes				= 16,
+	kWarpSizesI2cBufferBytes				= 4,
+	kWarpSizesSpiBufferBytes				= 7,
+	kWarpSizesUartBufferBytes				= 8,
+	kWarpSizesBME680CalibrationValuesCount			= 41,
+
+	/*
+	 *	Voltages
+	 */
 	kWarpDefaultSupplyVoltageMillivolts			= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 1800,
@@ -132,14 +152,9 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
 } WarpDefaults;
-
-typedef enum
-{
-	kWarpMemoryCommonSpiBufferBytes				= 48,
-} WarpMemory;

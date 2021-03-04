@@ -60,9 +60,9 @@ extern volatile lpuart_state_t		lpuartState;
 extern volatile lpuart_user_config_t	lpuartUserConfig;
 extern volatile WarpUARTDeviceState	deviceBGXState;
 
-static void	uartRxCallback(uint32_t instance, void * uartState);
-static void	powerUpBGX(void);
-static void	powerDownBGX(void);
+static void				uartRxCallback(uint32_t instance, void * uartState);
+static void				powerUpBGX(void);
+static void				powerDownBGX(void);
 
 void
 initBGX(uint16_t operatingVoltageMillivolts)
@@ -115,13 +115,9 @@ powerUpBGX(void)
 	 *		it is required to only drive this pin low during reset, and let the
 	 *		internal pull-up ensure that reset is released."
 	 *
-	 *	Drive /RST on the BGX high and pulse it low
+	 *	Drive /RST on the BGX high
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinBGX_nRST);
-//	OSA_TimeDelay(1);
-//	GPIO_DRV_ClearPinOutput(kWarpPinBGX_nRST);
-//	OSA_TimeDelay(1);
-//	GPIO_DRV_SetPinOutput(kWarpPinBGX_nRST);
 }
 
 void
@@ -148,7 +144,7 @@ uartRxCallback(uint32_t instance, void *  uartState)
 	 *	We don't do anything special upon receipt of UART bytes.
 	 *	If we wanted to, that code would go here.
 	 */
-	//	warpPrint("In uartRxCallback(), deviceBGXState.uartRXBuffer[0] = [0x%X] ('%c')\n", deviceBGXState.uartRXBuffer[0], deviceBGXState.uartRXBuffer[0]);
+	//warpPrint("In uartRxCallback(), deviceBGXState.uartRXBuffer [%s]\n", deviceBGXState.uartRXBuffer);
 	//SEGGER_RTT_WriteString(0, "In uartRxCallback()...\n");
 
 	return;
