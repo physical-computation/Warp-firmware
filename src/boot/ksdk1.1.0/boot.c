@@ -409,10 +409,10 @@ enableLPUARTpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
 
 //TODO: we don't use hw flow control so don't need RTS/CTS
-	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
-	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
-	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
+//	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
+//	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
+//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
+//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 
 	/*
 	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
@@ -1186,7 +1186,11 @@ warpPrint(const char *fmt, ...)
 	 *	all references to SEGGER_RTT_*printf if we don't want them.
 	 *
 	 *	NOTE: SEGGER_RTT_vprintf takes a va_list* rather than a va_list
-	 *	like usual vprintf.
+	 *	like usual vprintf. We modify the SEGGER_RTT_vprintf so that it
+	 *	also takes our print buffer which we will eventually send over
+	 *	BLE. Using SEGGER_RTT_vprintf() versus the libc vsnprintf saves
+	 *	2kB flash and removes the use of malloc so we can keep heap
+	 *	allocation to zero.
 	 */
 	#if (WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF)
 		/*
@@ -1195,7 +1199,7 @@ warpPrint(const char *fmt, ...)
 		 *	RTT memory region to be picked up by the RTT / SWD mechanism...
 		 */
 		va_start(arg, fmt);
-		fmtlen = vsnprintf(gWarpPrintBuffer, kWarpDefaultPrintBufferSizeBytes, fmt, arg);
+		fmtlen = SEGGER_RTT_vprintf(0, fmt, &arg, gWarpPrintBuffer, kWarpDefaultPrintBufferSizeBytes);
 		va_end(arg);
 
 		if (fmtlen < 0)
@@ -1227,8 +1231,6 @@ warpPrint(const char *fmt, ...)
 			return;
 		}
 
-		SEGGER_RTT_WriteString(0, gWarpPrintBuffer);
-
 		/*
 		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
 		 */
@@ -1239,7 +1241,7 @@ warpPrint(const char *fmt, ...)
 
 				enableLPUARTpins();
 				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
-				status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, strlen(gWarpPrintBuffer)+1);
+				status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, fmtlen);
 				if (status != kWarpStatusOK)
 				{
 					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
@@ -1270,7 +1272,7 @@ warpPrint(const char *fmt, ...)
 
 				enableLPUARTpins();
 				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
-				status = sendBytesToUART(fmt, strlen(fmt)+1);
+				status = sendBytesToUART(fmt, fmtlen);
 				if (status != kWarpStatusOK)
 				{
 					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
@@ -1320,9 +1322,9 @@ warpWaitKey(void)
 		#endif
 
 		/*
-		 *	Ignore '\r' coming in from BLE
+		 *	NOTE: We ignore all chars on BLE except '0'-'9', 'a'-'z'/'A'-Z'
 		 */
-		if (bleChar == '\r')
+		if (!(bleChar > 'a' && bleChar < 'z') && !(bleChar > 'A' && bleChar < 'Z') && !(bleChar > '0' && bleChar < '9'))
 		{
 			bleChar = kWarpMiscMarkerForAbsentByte;
 		}
@@ -1411,7 +1413,7 @@ main(void)
 							&warpPowerModeRunConfig,
 						};
 
-	WarpPowerManagerCallbackStructure			powerManagerCallbackStructure;
+	WarpPowerManagerCallbackStructure		powerManagerCallbackStructure;
 
 	/*
 	 *	Callback configuration structure for power manager
@@ -1452,11 +1454,6 @@ main(void)
 	 */
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
-	/*
-	 *	WARNING: Do NOT reduce these delays during debugging, otherwise you
-	 *	could run into a situation where SWD is disabled too early and you
-	 *	lock-out the board.
-	 */
 	warpPrint("\n\n\n\rBooting Warp, in 3... ");
 	OSA_TimeDelay(1000);
 	warpPrint("2... ");
@@ -1531,13 +1528,16 @@ main(void)
 	/*
 	 *	Switch CPU to Very Low Power Run (VLPR) mode
 	 */
-	warpPrint("About to switch CPU to VLPR mode... ");
-	status = warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* Sleep Seconds */);
-	if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
+	if (WARP_BUILD_BOOT_TO_VLPR)
 	{
-		warpPrint("warpSetLowPowerMode(kWarpPowerModeVLPR() failed...\n");
+		warpPrint("About to switch CPU to VLPR mode... ");
+		status = warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* Sleep Seconds */);
+		if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
+		{
+			warpPrint("warpSetLowPowerMode(kWarpPowerModeVLPR() failed...\n");
+		}
+		warpPrint("done.\n\r");
 	}
-	warpPrint("done.\n\r");
 
 	/*
 	 *	Initialize the GPIO pins with the appropriate pull-up, etc.,
@@ -2839,7 +2839,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	if (printHeadersAndCalibration)
 	{
-		warpPrint("Measurement number, RTC->TSR, RTC->TPR,");
+		warpPrint("Measurement number, RTC->TSR, RTC->TPR,\t\t");
 
 		#if (WARP_BUILD_ENABLE_DEVADXL362)
 			warpPrint(" ADXL362 x, ADXL362 y, ADXL362 z,");
@@ -2889,7 +2889,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	while(1)
 	{
-		warpPrint("%u, %d, %d,", readingCount, RTC->TSR, RTC->TPR);
+		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
 
 		#if (WARP_BUILD_ENABLE_DEVADXL362)
 			printSensorDataADXL362(hexModeFlag);
@@ -2929,7 +2929,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 			printSensorDataHDC1000(hexModeFlag);
 		#endif
 
-		warpPrint(" %d, %d, %d\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
+		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
 
 		if (menuDelayBetweenEachRun > 0)
 		{

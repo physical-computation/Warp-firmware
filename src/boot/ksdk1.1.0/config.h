@@ -37,6 +37,7 @@
 
 #define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
 #define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
+#define		WARP_BUILD_BOOT_TO_VLPR				1
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
@@ -82,7 +83,7 @@
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		1
+	#define		WARP_BUILD_ENABLE_DEVBGX		0
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
@@ -124,7 +125,7 @@ typedef enum
 	 *	Sizes
 	*/
 	kWarpDefaultPrintBufferSizeBytes			= 64,
-	kWarpMemoryCommonSpiBufferBytes				= 16,
+	kWarpMemoryCommonSpiBufferBytes				= 64,
 	kWarpSizesI2cBufferBytes				= 4,
 	kWarpSizesSpiBufferBytes				= 7,
 	kWarpSizesUartBufferBytes				= 8,
@@ -152,7 +153,7 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
