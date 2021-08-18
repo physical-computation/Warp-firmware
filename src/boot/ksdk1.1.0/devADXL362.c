@@ -370,7 +370,7 @@ readFIFObytesADXL362(void)
 	transferSize = ADXL362_FIFO_ENTRIES + 1;
 	GPIO_DRV_ClearPinOutput(deviceADXL362State.chipSelectIoPinID);
 	warpEnableSPIpins();
-	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
+	spi_status_t ksdkStatus = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
 						NULL /* spi_master_user_config_t */,
 						(const uint8_t *restrict)deviceADXL362State.spiSourceBuffer,
 						(uint8_t * restrict) deviceADXL362State.spiSinkBuffer,
@@ -378,6 +378,11 @@ readFIFObytesADXL362(void)
 						gWarpSpiTimeoutMicroseconds /* timeout in microseconds (unlike I2C which is ms) */);
 	warpDisableSPIpins();
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
+
+	if (ksdkStatus != kStatus_SPI_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	warpPrint("\n");
 	for (int i = 1; i < kWarpMemoryCommonSpiBufferBytes - 8; i += 8)
@@ -394,11 +399,6 @@ readFIFObytesADXL362(void)
 			);
 	}
 	warpPrint("\n");
-
-	if (status != kStatus_SPI_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
 
 	return kWarpStatusOK;
 }

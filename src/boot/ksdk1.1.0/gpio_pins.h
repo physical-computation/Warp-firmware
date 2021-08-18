@@ -92,9 +92,9 @@ enum _gpio_pins
 		kWarpPinUnusedPTA12			= GPIO_MAKE_PIN(HW_GPIOA, 12),
 	#else
 		#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-			kGlauxPinFlash_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 2),
+			kGlauxPinFlash_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOB, 2),
 		#else
-			kWarpPinSI4705_nRST			= GPIO_MAKE_PIN(HW_GPIOB, 2),
+			kWarpPinSI4705_nRST		= GPIO_MAKE_PIN(HW_GPIOB, 2),
 		#endif
 
 		kWarpPinI2C0_SCL_UART_TX		= GPIO_MAKE_PIN(HW_GPIOB, 3),

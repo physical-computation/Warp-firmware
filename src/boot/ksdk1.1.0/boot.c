@@ -63,120 +63,116 @@
 #include "SEGGER_RTT.h"
 
 
-#include "devBMX055.h"
-#include "devADXL362.h"
-#include "devMMA8451Q.h"
-#include "devLPS25H.h"
-#include "devHDC1000.h"
-#include "devMAG3110.h"
-#include "devSI7021.h"
-#include "devL3GD20H.h"
-#include "devBME680.h"
-#include "devIS25xP.h"
-#include "devISL23415.h"
-#include "devAT45DB.h"
-#include "devICE40.h"
-#include "devTCS34725.h"
-#include "devSI4705.h"
-#include "devCCS811.h"
-#include "devAMG8834.h"
-#include "devPAN1326.h"
-#include "devAS7262.h"
-#include "devAS7263.h"
-#include "devRV8803C7.h"
-#include "devBGX.h"
-
-
-
 #define							kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define							kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
+	#include "devADXL362.h"
 	volatile WarpSPIDeviceState			deviceADXL362State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
+	#include "devIS25xP.h"
 	volatile WarpSPIDeviceState			deviceIS25xPState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVISL23415)
+	#include "devISL23415.h"
 	volatile WarpSPIDeviceState			deviceISL23415State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
+	#include "devAT45DB.h"
 	volatile WarpSPIDeviceState			deviceAT45DBState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVICE40)
+	#include "devICE40.h"
 	volatile WarpSPIDeviceState			deviceICE40State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
+	#include "devBMX055.h"
 	volatile WarpI2CDeviceState			deviceBMX055accelState;
 	volatile WarpI2CDeviceState			deviceBMX055gyroState;
 	volatile WarpI2CDeviceState			deviceBMX055magState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVLPS25H)
+	#include "devLPS25H.h"
 	volatile WarpI2CDeviceState			deviceLPS25HState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
+	#include "devHDC1000.h"
 	volatile WarpI2CDeviceState			deviceHDC1000State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
+	#include "devMAG3110.h"
 	volatile WarpI2CDeviceState			deviceMAG3110State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVSI7021)
+	#include "devSI7021.h"
 	volatile WarpI2CDeviceState			deviceSI7021State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
+	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
+	#include "devBME680.h"
 	volatile WarpI2CDeviceState			deviceBME680State;
 	volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
+	#include "devTCS34725.h"
 	volatile WarpI2CDeviceState			deviceTCS34725State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVSI4705)
+	#include "devSI4705.h"
 	volatile WarpI2CDeviceState			deviceSI4705State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
+	#include "devCCS811.h"
 	olatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
+	#include "devAMG8834.h"
 	volatile WarpI2CDeviceState			deviceAMG8834State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAS7262)
+	#include "devAS7262.h"
 	volatile WarpI2CDeviceState			deviceAS7262State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAS7263)
+	#include "devAS7263.h"
 	volatile WarpI2CDeviceState			deviceAS7263State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
+	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBGX)
+	#include "devBGX.h"
 	volatile WarpUARTDeviceState			deviceBGXState;
 #endif
 
@@ -560,7 +556,7 @@ warpDeasserAllSPIchipSelects(void)
 	 *		PTB1/kWarpPinFPGA_nCS		for GPIO
 	 *
 	 *		On Glaux
-	 		PTB2/kGlauxPinFlash_nCS for GPIO
+	 		PTB2/kGlauxPinFlash_SPI_nCS for GPIO
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
@@ -570,12 +566,24 @@ warpDeasserAllSPIchipSelects(void)
 		PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
 	#endif
 
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
-	GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
-	GPIO_DRV_SetPinOutput(kWarpPinADXL362_SPI_nCS);
-	GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
+	#if (WARP_BUILD_ENABLE_DEVISL23415)
+		GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
+	#endif
+
+	#if (WARP_BUILD_ENABLE_DEVAT45DB)
+		GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
+	#endif
+
+	#if (WARP_BUILD_ENABLE_DEVADXL362)
+		GPIO_DRV_SetPinOutput(kWarpPinADXL362_SPI_nCS);
+	#endif
+
+	#if (WARP_BUILD_ENABLE_DEVICE40)
+		GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
+	#endif
+
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		GPIO_DRV_SetPinOutput(kGlauxPinFlash_nCS);
+		GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
 	#endif
 }
 
@@ -732,7 +740,7 @@ warpDisableI2Cpins(void)
 		 */
 		PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
 
-		GPIO_DRV_SetPinOutput(kGlauxPinFlash_nCS);
+		GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
 		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
 
 		return;
@@ -1581,6 +1589,10 @@ main(void)
 		blinkLED(kGlauxPinLED);
 		blinkLED(kGlauxPinLED);
 		blinkLED(kGlauxPinLED);
+
+		USED(disableTPS62740);
+		USED(enableTPS62740);
+		USED(setTPS62740CommonControlLines);
 	#endif
 
 	/*
@@ -1617,7 +1629,8 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+//		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		initBME680(	0x77	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
@@ -1725,7 +1738,8 @@ main(void)
 		 */
 		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
 
-		WarpStatus status = spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
+		uint8_t	ops1[] = {0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
+		status = spiTransactionIS25xP(ops1, sizeof(ops1)/sizeof(uint8_t) /* opCount */);
 		if (status != kWarpStatusOK)
 		{
 			warpPrint("IS25xP: SPI transaction to read JEDEC ID failed...\n");
@@ -1735,7 +1749,8 @@ main(void)
 			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
 		}
 
-		spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
+		uint8_t	ops2[] = {0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
+		status = spiTransactionIS25xP(ops2, sizeof(ops2)/sizeof(uint8_t) /* opCount */);
 		if (status != kWarpStatusOK)
 		{
 			warpPrint("IS25xP: SPI transaction to read Manufacturer ID failed...\n");
@@ -1745,15 +1760,24 @@ main(void)
 			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
 		}
 
-		spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */}, 5 /* opCount */);
-		warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
+		uint8_t	ops3[] = {0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
+		status = spiTransactionIS25xP(ops3, sizeof(ops3)/sizeof(uint8_t) /* opCount */);
+				if (status != kWarpStatusOK)
+		{
+			warpPrint("IS25xP: SPI transaction to read Flash ID failed...\n");
+		}
+		else
+		{
+			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
+		}
+		
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
 		/*
 		 *	Only supported in main Warp variant.
 		 */
-		initISL23415(kWarpPinISL23415_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsISL23415	);
+		initISL23415(kWarpPinISL23415_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsISL23415);
 
 		/*
 		 *	Take the DCPs out of shutdown by setting the SHDN bit in the ACR register
@@ -1873,15 +1897,15 @@ main(void)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		warpPrint("About to read IS25xP JEDEC ID...\n");
-		spiTransactionIS25xP(0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+		//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
 		warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
 
 		warpPrint("About to read IS25xP Manufacturer ID...\n");
-		spiTransactionIS25xP(0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+		//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
 		warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
 
 		warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
-		spiTransactionIS25xP(0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 5 /* opCount */);
+		//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
 		warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
 
 
@@ -3731,7 +3755,7 @@ activateAllLowPowerSensorModes(bool verbose)
 		 *	Put the Flash in deep power-down
 		 */
 		//TODO: move 0xB9 into a named constant
-		spiTransactionIS25xP(0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */, 1 /* opCount */);
+		//spiTransactionIS25xP({0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 1 /* opCount */);
 	#endif
 
 	/*

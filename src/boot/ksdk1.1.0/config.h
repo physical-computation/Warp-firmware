@@ -41,9 +41,9 @@
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
- *	Define this here to activate Glaux-specific pin names etc.
+ *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
  */
-#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			1
+//#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			1
 
 /*
  *	Define this here to activate FRDMKL03-specific behavior

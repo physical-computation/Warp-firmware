@@ -1,12 +1,12 @@
 include setup.conf
 
-TARGET	= build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.src
+all: warp glaux
 
-all:
+warp:
 	mkdir -p build/ksdk1.1/work
 	mkdir -p build/ksdk1.1/work/boards/Warp
 	mkdir -p build/ksdk1.1/work/demos/Warp/src
-	mkdir -p build/ksdk1.1/work/demos/Warp/src/btstack
+	mkdir -p build/ksdk1.1/work/demos/Warp/armgcc/Warp
 	cp -r tools/sdk/ksdk1.1.0/*					build/ksdk1.1/work
 	cp src/boot/ksdk1.1.0/SEGGER*					build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/demos/Warp/src/
@@ -14,6 +14,12 @@ all:
 	cp src/boot/ksdk1.1.0/errstrs*					build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/powermodes.c				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/warp.h					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/startup_MKL03Z4.S				build/ksdk1.1/work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
+	cp src/boot/ksdk1.1.0/gpio_pins.c				build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/gpio_pins.h				build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/glaux.h					build/ksdk1.1/work/boards/Warp
+	cp src/boot/ksdk1.1.0/CMakeLists-Warp.txt			build/ksdk1.1/work/demos/Warp/armgcc/Warp/CMakeLists.txt
 	cp src/boot/ksdk1.1.0/devBMX055.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devADXL362.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devMMA8451Q.*				build/ksdk1.1/work/demos/Warp/src/
@@ -32,21 +38,45 @@ all:
 	cp src/boot/ksdk1.1.0/devAS726x.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devBGX.*					build/ksdk1.1/work/demos/Warp/src/
-	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devISL23415.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devAT45DB.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devICE40.*				build/ksdk1.1/work/demos/Warp/src/
-	cp src/boot/ksdk1.1.0/CMakeLists.txt				build/ksdk1.1/work/demos/Warp/armgcc/Warp/
-	cp src/boot/ksdk1.1.0/startup_MKL03Z4.S				build/ksdk1.1/work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
-	cp src/boot/ksdk1.1.0/gpio_pins.c				build/ksdk1.1/work/boards/Warp
-	cp src/boot/ksdk1.1.0/gpio_pins.h				build/ksdk1.1/work/boards/Warp
-	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/boards/Warp
-	cp src/boot/ksdk1.1.0/glaux.h					build/ksdk1.1/work/boards/Warp
 	cd build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
 	cd build/ksdk1.1/work/demos/Warp/armgcc/Warp && ./clean.sh; ./build_release.sh
-	@echo "\n\nNow, run\n\n\tmake load\n\n"
+	@echo "\n\nNow, run\n\n\tmake load-warp\n\n"
 
-$(TARGET): all
+glaux:
+	mkdir -p build/ksdk1.1/work
+	mkdir -p build/ksdk1.1/work/boards/Glaux
+	mkdir -p build/ksdk1.1/work/demos/Glaux/src
+	mkdir -p build/ksdk1.1/work/demos/Glaux/armgcc/Glaux
+	cp -r tools/sdk/ksdk1.1.0/*					build/ksdk1.1/work
+	cp src/boot/ksdk1.1.0/SEGGER*					build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/boot.c					build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/errstrs*					build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/powermodes.c				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/warp.h					build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/startup_MKL03Z4.S				build/ksdk1.1/work/platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S
+	cp src/boot/ksdk1.1.0/gpio_pins.c				build/ksdk1.1/work/boards/Glaux
+	cp src/boot/ksdk1.1.0/gpio_pins.h				build/ksdk1.1/work/boards/Glaux
+	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/boards/Glaux
+	cp src/boot/ksdk1.1.0/glaux.h					build/ksdk1.1/work/boards/Glaux
+	cp src/boot/ksdk1.1.0/CMakeLists-Glaux.txt			build/ksdk1.1/work/demos/Glaux/armgcc/Glaux/CMakeLists.txt
+	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Glaux/src/
+	cd build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
+	cd build/ksdk1.1/work/demos/Glaux/armgcc/Glaux && ./clean.sh; ./build_release.sh
+	@echo "\n\nNow, run\n\n\tmake load-glaux\n\n"
 
-load:
-	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/jlink.commands
+load-warp:
+	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/warp.jlink.commands
+
+load-glaux:
+	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/glaux.jlink.commands
+
+clean:
+	rm -rf build/ksdk1.1/work

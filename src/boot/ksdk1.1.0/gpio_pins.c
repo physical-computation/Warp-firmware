@@ -150,7 +150,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.driveStrength = kPortLowDriveStrength,
 		},
 		{
-			.pinName = kGlauxPinFlash_nCS,
+			.pinName = kGlauxPinFlash_SPI_nCS,
 			.config.outputLogic = 1,
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
