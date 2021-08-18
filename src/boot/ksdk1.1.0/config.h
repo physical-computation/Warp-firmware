@@ -36,14 +36,14 @@
 */
 
 #define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
-#define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
+#define		WARP_BUILD_BOOT_TO_CSVSTREAM			1
 #define		WARP_BUILD_BOOT_TO_VLPR				1
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
  *	Define this here to activate Glaux-specific pin names etc.
  */
-#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			0
+#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			1
 
 /*
  *	Define this here to activate FRDMKL03-specific behavior
@@ -83,7 +83,7 @@
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
+	#define		WARP_BUILD_ENABLE_DEVBGX		1
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
@@ -153,7 +153,7 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
