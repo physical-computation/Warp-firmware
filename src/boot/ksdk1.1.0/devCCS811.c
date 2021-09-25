@@ -176,7 +176,7 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	WarpStatus	status1, status2;
 
 	/*
-	 *	See https://narcisaam.github.io/Init_Device/ for more information 
+	 *	See https://narcisaam.github.io/Init_Device/ for more information
 	 *	on how to initialize and configure CCS811
 	 */
 

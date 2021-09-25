@@ -28,7 +28,7 @@ typedef enum
 	kWarpStatusBadDeviceCommand,
 
 	/*
-	 *	Generic comms error 
+	 *	Generic comms error
 	 */
 	kWarpStatusCommsError,
 

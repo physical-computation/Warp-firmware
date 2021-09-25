@@ -181,7 +181,7 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	 *	Read the calibration registers
 	 */
 	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion1Start;
-		reg <= kWarpSensorConfigurationRegisterBME680CalibrationRegion1End;
+		reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion1End;
 		reg++)
 	{
 		status4 |= readSensorRegisterBME680(reg, 1 /* numberOfBytes */);
