@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -59,10 +64,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initSI7021(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initSI7021(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskHumidity | kWarpTypeMaskTemperature);
+	deviceSI7021State.i2cAddress			= i2cAddress;
+	deviceSI7021State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -90,11 +95,14 @@ readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	warpScaleSupplyVoltage(deviceSI7021State.operatingVoltageMillivolts);
+
 	/*
 	 *	TODO: for now, we fix command code as read first byte of serial number
 	 */
 	cmdBuf[0] = 0xFA;
 	cmdBuf[1] = 0x0F;
+	warpEnableI2Cpins();
 
 	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,

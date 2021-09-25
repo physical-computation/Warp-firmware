@@ -1,12 +1,13 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include "config.h"
 #include "gpio_pins.h"
 #include "device/fsl_device_registers.h"
 
-
-
 /*
- *	See Section 12.1.1 "GPIO instantiation information" of KL03 family reference, KL03P24M48SF0RM.pdf
+ *	Here, we configure all pins that we ever use as general-purpose output.
+ *
+ *	(A) See Section 12.1.1 "GPIO instantiation information" of KL03 family reference, KL03P24M48SF0RM.pdf
  *	for the default state of pins, pull capability, etc.:
  *
  *		PTA0 : pulled down at reset
@@ -14,199 +15,152 @@
  *		PTA1 / RESET_b : pulled up at reset
  *		PTB5 : pulled up at reset
  *
- *	See Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf) for additional hints on pin setup for low power
+ *	(B) See Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf) for additional hints on pin setup for low power.
  *
- *	Here, we configure all pins that we ever use as general-purpose output.
+ *	(C) On Glaux, PTA3, PTA4, PTA5, PTA8, PTA12, PTB5, and PTB13 are
+ *	either sacrifical or input so we don't configure them as GPIO.
  *
- *	Currently, this excludes kWarpPinKL03_VDD_ADC which we configure in inputPins
+ *	**NOTE 1**:	The semantics is that pins that are excluded are disabled (TODO: double check).
+ *
+ *	**NOTE 2**:	Empirically, adding entries for pins which we want to leave disabled on Glaux
+ *			(e.g., sacrificial pins) leads to higher power dissipation.
  *
  */
-
-
 
 gpio_output_pin_user_config_t	outputPins[] = {
 	/*
 	 *	Set unused pins as outputs
 	 */
-	{
-		.pinName = kWarpPinUnusedPTA0,				/*	Was kWarpPinLED1_TS5A3154_IN in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTA1,				/*	Was kWarpPinLED2_TS5A3154_nEN in Warp v2		*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTA2,				/*	Was kWarpPinLED3_SI4705_nRST in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740_VSEL1,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740_VSEL2,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740B_CTLEN,			/*	Was kWarpPinSPI_SCK_I2C_PULLUP_ENin Warp v2		*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinSPI_SCK,				/*	Was kWarpPinTPS82740A_CTLEN in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740_VSEL3,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTS5A3154_IN,				/*	Was kWarpPinUnusedPTB6 in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinSI4705_nRST,				/*	Was kWarpPinUnusedPTB7 in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#ifndef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-	{
-		.pinName = kWarpPinPAN1326_nSHUTD,			/*	Was kWarpPinUnusedPTB10 in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinISL23415_nCS, 			/*	Was kWarpPinTPS82675_MODE in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinCLKOUT32K,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#endif
-	{
-		.pinName = kWarpPinADXL362_CS,				/*	Was kWarpPinADXL362_CS_PAN1326_nSHUTD in Warp v2	*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinI2C0_SCL,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinI2C0_SDA,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinSPI_MISO,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinSPI_MOSI,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinTPS82740A_CTLEN,			/*	Was kWarpPinTPS82675_EN in Warp v2			*/
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#ifdef WARP_FRDMKL03
-	{
-		.pinName = kWarpPinUnusedPTB2,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinPAN1323_nSHUTD,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTB4,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTB6,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTB7,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinUnusedPTB9,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#endif
-#ifdef WARP_BUILD_ENABLE_THERMALCHAMBERANALYSIS
-	{
-		.pinName = kWarpPinFRDMKL03LED_Red,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = kWarpPinFRDMKL03LED_Green,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
+	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		{
-		.pinName = kWarpPinFRDMKL03LED_Blue,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-#endif
+			.pinName = kWarpPinBGX_nRST,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		/*	We only use these as SPI, despite being connected to RTS/CTS on revC
+		{
+			.pinName = kWarpPinSPI_MISO_UART_RTS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinSPI_MOSI_UART_CTS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		*/
+		{
+			.pinName = kWarpPinADXL362_SPI_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinAT45DB_SPI_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinISL23415_SPI_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		/*	Not GPIO, so don't configure it as GPIO
+		{
+			.pinName = kWarpPinSPI_SCK,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		*/
+		{
+			.pinName = kWarpPinFPGA_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinSI4705_nRST,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		/*	Not GPIO, so don't configure it as GPIO
+		{
+			.pinName = kWarpPinI2C0_SCL_UART_TX,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinI2C0_SDA_UART_RX,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		*/
+		{
+			.pinName = kWarpPinTPS62740_REGCTRL,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinTPS62740_VSEL4,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinTPS62740_VSEL3,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinTPS62740_VSEL2,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kWarpPinTPS62740_VSEL1,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		/*	Not GPIO, so don't configure it as GPIO
+		{
+			.pinName = kWarpPinCLKOUT32K,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		*/
+	#else
+		{
+			.pinName = kGlauxPinLED,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		{
+			.pinName = kGlauxPinFlash_SPI_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+	#endif
+
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
 	}
 };
-
 
 /*
  *	Configuration to be passed to GPIO_DRV_Init() to disable all pins.
@@ -220,12 +174,26 @@ gpio_output_pin_user_config_t	outputPins[] = {
  *
  *	like the above.
  *
- *	PTB1 is tied to VBATT. Need to configure it as an input pin.
+ *	On Warp (but not Glaux), PTB1 is tied to VBATT. Need to configure it as an input pin.
+ *	On Glaux, PTA0 (SWD_CLK) is also used as the RTC interrupt line since it is also the
+ *	LLWU_P7 source for the low-leakage wakeup unit.
  *
+ *	NOTE: The semantics is that pins that are excluded are disabled (TODO: double check).
  */
 gpio_input_pin_user_config_t	inputPins[] = {
 	{
-		.pinName = kWarpPinKL03_VDD_ADC,
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
+
+/*
+ *	This array is used to configure only the pins needed for LLWU wakeup. See AN4503 Section 3.1.6.
+ *
+ *	**NOTE**:	The semantics is that pins that are excluded are disabled (TODO: double check).
+ */
+gpio_input_pin_user_config_t	wakeupPins[] = {
+	{
+		.pinName = kWarpPinUnusedPTA0,
 		.config.isPullEnable = true,
 		.config.pullSelect = kPortPullUp,
 		.config.isPassiveFilterEnabled = false,

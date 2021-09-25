@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -59,10 +64,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initLPS25H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initLPS25H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskPressure | kWarpTypeMaskTemperature);
+	deviceLPS25HState.i2cAddress			= i2cAddress;
+	deviceLPS25HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -80,16 +85,15 @@ readSensorRegisterLPS25H(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusBadDeviceCommand;
 	}
 
-
 	i2c_device_t slave =
 	{
 		.address = deviceLPS25HState.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-
+	warpScaleSupplyVoltage(deviceLPS25HState.operatingVoltageMillivolts);
 	cmdBuf[0] = deviceRegister;
-
+	warpEnableI2Cpins();
 
 	/*
 	 *	Steps (Repeated single-byte read. See Table 13. and Table 14 of LPS25H manual.):
@@ -98,7 +102,6 @@ readSensorRegisterLPS25H(uint8_t deviceRegister, int numberOfBytes)
 	 *
 	 *	(2) Read transaction beginning with start condition, followed by slave address, and read 1 byte payload
 	 */
-
 
 	status1 = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,

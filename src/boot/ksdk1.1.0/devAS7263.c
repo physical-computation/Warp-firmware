@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Rae Zhao.
+	Authored 2018. Rae Zhao. Additional contributors 2018-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -36,6 +37,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -51,26 +57,17 @@
 #include "warp.h"
 #include "devAS726x.h"
 
-
 extern volatile WarpI2CDeviceState	deviceAS7263State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 
 
-
 void
-initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initAS7263(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (
-						kWarpTypeMaskTemperature|
-						kWarpTypeMaskLambda610R |
-						kWarpTypeMaskLambda680S |
-						kWarpTypeMaskLambda730T |
-						kWarpTypeMaskLambda760U |
-						kWarpTypeMaskLambda810V |
-						kWarpTypeMaskLambda860W
-					);
+	deviceAS7263State.i2cAddress			= i2cAddress;
+	deviceAS7263State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	return;
 }
 
@@ -100,9 +97,10 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	warpScaleSupplyVoltage(deviceAS7263State.operatingVoltageMillivolts);
 
 	cmdBuf_write[1] = deviceRegister;
-
+	warpEnableI2Cpins();
 
 	/*
 	 *	The LED control register details can be found in Figure 27 of AS7263 detailed descriptions on page 24.
@@ -120,8 +118,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
-
 	/*
 	 *	This turns on the LED before reading the data
 	 */
@@ -137,8 +133,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-
-
 
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
@@ -157,8 +151,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
-
 	/*
 	 *	Read transaction which reads from the READ register 0x02.
 	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
@@ -176,8 +168,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
-
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -191,8 +181,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
-
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -205,8 +193,6 @@ readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-
-
 
 	/*
 	 *	This turns off the LED after finish reading the data

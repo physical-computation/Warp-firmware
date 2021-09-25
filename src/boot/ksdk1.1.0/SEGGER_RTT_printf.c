@@ -324,17 +324,16 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC * pBufferDesc, int v, unsigned Base
 *    >= 0:  Number of bytes which have been stored in the "Up"-buffer.
 *     < 0:  Error
 */
-int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pParamList) {
+int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pParamList, char warpPrintBuffer[], int warpPrintBufferLength) {
   char c;
   SEGGER_RTT_PRINTF_DESC BufferDesc;
   int v;
   unsigned NumDigits;
   unsigned FormatFlags;
   unsigned FieldWidth;
-  char acBuffer[SEGGER_RTT_PRINTF_BUFFER_SIZE];
 
-  BufferDesc.pBuffer        = acBuffer;
-  BufferDesc.BufferSize     = SEGGER_RTT_PRINTF_BUFFER_SIZE;
+  BufferDesc.pBuffer        = warpPrintBuffer;
+  BufferDesc.BufferSize     = warpPrintBufferLength;
   BufferDesc.Cnt            = 0u;
   BufferDesc.RTTBufferIndex = BufferIndex;
   BufferDesc.ReturnValue    = 0;
@@ -460,7 +459,7 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pPa
     // Write remaining data, if any
     //
     if (BufferDesc.Cnt != 0u) {
-      SEGGER_RTT_Write(BufferIndex, acBuffer, BufferDesc.Cnt);
+      SEGGER_RTT_Write(BufferIndex, warpPrintBuffer, BufferDesc.Cnt);
     }
     BufferDesc.ReturnValue += (int)BufferDesc.Cnt;
   }
@@ -498,6 +497,7 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pPa
 *          s: Print the string pointed to by the argument
 *          p: Print the argument as an 8-digit hexadecimal integer. (Argument shall be a pointer to void.)
 */
+/*
 int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...) {
   int r;
   va_list ParamList;
@@ -507,4 +507,5 @@ int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...) {
   va_end(ParamList);
   return r;
 }
+*/
 /*************************** End of file ****************************/

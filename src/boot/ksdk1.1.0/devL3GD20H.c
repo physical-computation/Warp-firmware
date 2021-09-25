@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -36,6 +37,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -59,14 +65,11 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (	kWarpTypeMaskAngularRateX |
-						kWarpTypeMaskAngularRateY |
-						kWarpTypeMaskAngularRateZ |
-						kWarpTypeMaskTemperature
-					);
+	deviceL3GD20HState.i2cAddress			= i2cAddress;
+	deviceL3GD20HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	return;
 }
 
@@ -99,8 +102,12 @@ writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t men
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
+
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
+	warpEnableI2Cpins();
+
 	status = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
 							&slave,
@@ -121,6 +128,9 @@ WarpStatus
 configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint16_t menuI2cPullupValue)
 {
 	WarpStatus	status1, status2, status3;
+
+
+	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 
 	status1 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL1 /* register address CTRL1 */,
 							payloadCTRL1 /* payload */,
@@ -156,9 +166,9 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-
+	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 	cmdBuf[0] = deviceRegister;
-
+	warpEnableI2Cpins();
 
 	/*
 	 *	Steps (Repeated single-byte read. See STable 15 and Table 16 of L3GD20H manual.):
@@ -205,6 +215,8 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
 
 
+	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
+
 	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_L, 1 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
@@ -217,17 +229,17 @@ printSensorDataL3GD20H(bool hexModeFlag)
 
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
 
@@ -243,17 +255,17 @@ printSensorDataL3GD20H(bool hexModeFlag)
 
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
 
@@ -269,17 +281,17 @@ printSensorDataL3GD20H(bool hexModeFlag)
 
 	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
 
@@ -292,17 +304,17 @@ printSensorDataL3GD20H(bool hexModeFlag)
 
 	if (i2cReadStatusLow != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x,", deviceL3GD20HState.i2cBuffer[0]);
+			warpPrint(" 0x%02x,", deviceL3GD20HState.i2cBuffer[0]);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterSignedByte);
+			warpPrint(" %d,", readSensorRegisterSignedByte);
 		}
 	}
 }

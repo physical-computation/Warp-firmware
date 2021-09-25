@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -59,10 +64,10 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
 void
-initSI4705(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initSI4705(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress 	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskFMStationID | kWarpTypeMaskTemperature);
+	deviceSI4705State.i2cAddress			= i2cAddress;
+	deviceSI4705State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -81,7 +86,6 @@ readSensorRegisterSI4705(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-
 	/*
 	 *	TODO: for the SI4705, there aren't registers per se,
 	 *	but rather a suite of commands we can send and responses
@@ -90,12 +94,13 @@ readSensorRegisterSI4705(uint8_t deviceRegister, int numberOfBytes)
 	 */
 	cmdBuf[0] = deviceRegister;
 
+	warpScaleSupplyVoltage(deviceSI4705State.operatingVoltageMillivolts);
 
 	/*
 	 *	Enable the SI4705: drive nRST high
 	 */
 	GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-
+	warpEnableI2Cpins();
 
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,

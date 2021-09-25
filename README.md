@@ -4,39 +4,21 @@ This is the firmware for the [Warp hardware](https://github.com/physical-computa
 **Prerequisites:** You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., via `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
 
 ## 1.  Compiling the Warp firmware
-First, make sure the environment variable `ARMGCC_DIR` is set correctly (you can check whether this is set correctly, e.g., via `echo $ARMGCC_DIR`; if this is unfamiliar, see [here](http://homepages.uc.edu/~thomam/Intro_Unix_Text/Env_Vars.html) or [here](https://www2.cs.duke.edu/csl/docs/csh.html)). If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. If your shell is `tcsh`:
-```
-  setenv ARMGCC_DIR <full path to the directory containing bin/arm-none-eabi-gcc>
-```
-Alternatively, if your shell is `bash`
-```
-  export ARMGCC_DIR=<full path to the directory containing bin/arm-none-eabi-gcc>
-```
-(You can check what your shell is, e.g., via `echo $SHELL`.) Second, edit the jlink command file, `tools/scripts/jlink.commands` to include the correct path.
+First, edit [setup.conf](setup.conf) to set the variable `ARMGCC_DIR`. If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. In the following, this `README.md` will refer to the top of the repository as `$TREEROOT`.
 
-Third, you should be able to build the Warp firmware by
+Third, build the Warp firmware by
 
-	cd build/ksdk1.1/
-	./build.sh
+	make warp
 
-This copies the files from `Warp/src/boot/ksdk1.1.0/` into the KSDK tree, builds, and converts the binary to SREC. See 	`Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `Warp/src/boot/ksdk1.1.0/`, not the files in the build location, since the latter are overwritten during each build._
+Fourth, load the Warp firmware to hardware by
 
-> **NOTE:** If you run into a compile error such as `/usr/lib/gcc/arm-none-eabi/6.3.1/../../../arm-none-eabi/bin/ld: region
-m_data overflowed by 112 bytes`, the error is that the firmware image size exceeded the KL03 memory size. Some arm-gcc cross compilers, particularly on Linux, generate firmware images that are quite large. Easiest fixes are either:
->
-> - Comment out some of the driver includes in the list between lines 64 and 71 (these trigger the instantiation of various driver data structures which take up memory)
->
-> or
->
-> - Modify src/boot/ksdk1.1.0/CMakeLists.txt and reduce the default stack size, e.g., by changing all occurrences of "__stack_size__=0x300” to, e.g., "__stack_size__=0x100"
+	make load-warp
 
+To build for the Glaux variant, use `make glaux` and `make load-glaux` in steps three and four instead.
 
+The build process copies files from `src/boot/ksdk1.1.0/` into the `build/`, builds, and converts the binary to SREC. See `Warp/src/boot/ksdk1.1.0/README.md` for more. _When editing source, edit the files in `src/boot/ksdk1.1.0/`, not the files in `build` location, since the latter are overwritten during each build._
 
-Fourth, you will need two terminal windows. In one shell window, run the firmware downloader:
-```
-  JLinkExe -device MKL03Z32XXX4 -if SWD -speed 100000 -CommanderScript ../../tools/scripts/jlink.commands
-```
-In the other shell window, launch the JLink RTT client<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>:
+To connect to the running hardware to see output, you will need two terminal windows. In a separate shell window from the one in which you ran `make load-warp` (or its variants), launch the JLink RTT client<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>:
 
 	JLinkRTTClient
 
@@ -94,7 +76,7 @@ The firmware is currently all in `src/boot/ksdk1.1.0/`, in particular, see `src/
 
 The firmware builds on the Kinetis SDK. You can find more documentation on the Kinetis SDK in the document [doc/Kinetis SDK v.1.1 API Reference Manual.pdf](https://github.com/physical-computation/Warp-firmware/blob/master/doc/Kinetis%20SDK%20v.1.1%20API%20Reference%20Manual.pdf).
 
-The firmware is designed for the Warp hardware platform, but will also run on the Freeacale FRDM KL03 development board. In that case, the only driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [src/boot/ksdk1.1.0/README.md](src/boot/ksdk1.1.0/README.md).
+The firmware is designed for the Warp and Glaux hardware platforms, but will also run on the Freescale FRDM KL03 development board. In that case, the only sensor driver which is relevant is the one for the MMA8451Q. For more details about the structure of the firmware, see [src/boot/ksdk1.1.0/README.md](src/boot/ksdk1.1.0/README.md).
 
 ## 4.  Interacting with the boot menu
 When the firmware boots, you will be dropped into a menu with a rich set of commands. The Warp boot menu allows you to conduct most of the experiments you will likely need without modifying the firmware:
@@ -156,6 +138,8 @@ You can probe around the menu to figure out what to do. In brief, you will likel
 5. Menu item `z` to repeatedly read from all the sensors whose drivers are compiled into the build.
 
 *NOTE: In many cases, the menu expects you to type a fixed number of characters (e.g., 0000 or 0009 for zero and nine)<sup>&nbsp;<a href="#Notes">See note 1 below</a></sup>. If using the `JLinkRTTClient`, the menu interface eats your characters as you type them, and you should not hit RETURN after typing in text. On the other hand, if using `telnet` you have to hit return.*
+
+If you see repeated characters, you can set your terminal to not echo typed characters using `stty -echo`.
 
 ### Example 1: Dump all registers for a single sensor
 -	`b` (set the I2C baud rate to `0300` for 300 kb/s).

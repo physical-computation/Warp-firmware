@@ -35,16 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVADXL362
-#define WARP_BUILD_ENABLE_DEVADXL362
-#endif
-
-
-void		initADXL362(WarpSPIDeviceState volatile *  deviceStatePointer);
+void		initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue);
-WarpStatus	readSensorSignalADXL362(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
+WarpStatus	readFIFObytesADXL362(void);
+WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes);
+void		printSensorDataADXL362(bool hexModeFlag);

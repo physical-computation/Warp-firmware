@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Rae Zhao.
+	Authored 2018. Rae Zhao. Additional contributors 2018-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -34,15 +35,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVAS7263
-#define WARP_BUILD_ENABLE_DEVAS7263
-#endif
-
-void		initAS7263(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initAS7263(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterAS7263(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	readSensorSignalAS7263(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);

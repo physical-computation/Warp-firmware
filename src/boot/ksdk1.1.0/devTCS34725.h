@@ -35,14 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVTCS34725
-#define WARP_BUILD_ENABLE_DEVTCS34725
-#endif
-
-void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterTCS34725(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	readSensorSignalTCS34725(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);

@@ -1,5 +1,6 @@
 /*
-	Authored 2019. Sam Willis.
+	Authored 2019. Sam Willis. Additional contributions, 2019-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -35,33 +36,94 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVRV8803C7
-#define WARP_BUILD_ENABLE_DEVRV8803C7
-#endif
+typedef enum
+{
+	kWarpRV8803ExtTD_4kHZ	= 0,
+	kWarpRV8803ExtTD_64HZ	= 1,
+	kWarpRV8803ExtTD_1HZ	= 2,
+	kWarpRV8803ExtTD_60S	= 3
+} WarpRV8803ExtTD;
 
-typedef enum {TD_4kHZ=0, TD_64HZ=1, TD_1HZ=2, TD_60S=3} WarpRV8803ExtTD_t;
-typedef enum {FD_32kHZ=0, FD_1kHZ=4, FD_1HZ=8} WarpRV8803ExtFD_t;
+typedef enum
+{
+	kWarpRV8803ExtFD_32kHZ	= 0,
+	kWarpRV8803ExtFD_1kHZ	= 4,
+	kWarpRV8803ExtFD_1HZ	= 8
+} WarpRV8803ExtFD;
 
-void initRV8803C7(const uint8_t i2cAddress, WarpI2CDeviceState volatile * deviceStatePointer);
+typedef enum
+{
+	kWarpRV8803RegSec			= 0x00,
+	kWarpRV8803RegMin			= 0x01,
+	kWarpRV8803RegHour			= 0x02,
+	kWarpRV8803RegWeekday			= 0x03,
+	kWarpRV8803RegDate			= 0x04,
+	kWarpRV8803RegMonth			= 0x05,
+	kWarpRV8803RegYear			= 0x06,
+	kWarpRV8803RegRAM			= 0x07,
+	kWarpRV8803RegMinAlarm			= 0x08,
+	kWarpRV8803RegHourAlarm			= 0x09,
+	kWarpRV8803RegWeekdayOrDateAlarm	= 0x0A,
+	kWarpRV8803RegTimerCounter0		= 0x0B,
+	kWarpRV8803RegTimerCounter1		= 0x0C,
+	kWarpRV8803RegExt			= 0x0D,
+	kWarpRV8803RegFlag			= 0x0E,
+	kWarpRV8803RegCtrl			= 0x0F,
+} WarpRV8803Reg;
 
-WarpStatus readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
-WarpStatus readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);
+#define BIT(n) (uint8_t)1U << n
 
-WarpStatus writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload);
-WarpStatus writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]);
+typedef enum
+{
+	kWarpRV8803ExtClrTD			= 0xFC,
+	kWarpRV8803ExtClrFD			= 0xF3,
+} WarpRV8803ExtClr;
 
-WarpStatus setRTCTimeRV8803C7(rtc_datetime_t *tm);
-WarpStatus setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD_t clk_freq, bool interupt_enable);
+typedef enum
+{
+	kWarpRV8803ExtTE			= BIT(4),
+	kWarpRV8803ExtUSEL			= BIT(5),
+	kWarpRV8803ExtWADA			= BIT(6),
+	kWarpRV8803ExtTEST			= BIT(7),
+} WarpRV8803ExtFlag;
+
+typedef enum
+{
+	kWarpRV8803FlagV1F			= BIT(0),
+	kWarpRV8803FlagV2F			= BIT(1),
+	kWarpRV8803FlagEVF			= BIT(2),
+	kWarpRV8803FlagAF			= BIT(3),
+	kWarpRV8803FlagTF			= BIT(4),
+	kWarpRV8803FlagUF			= BIT(5),
+} WarpRV8803FlagFlag;
+
+typedef enum
+{
+	kWarpRV8803CtrlRESET			= BIT(0),
+	kWarpRV8803CtrlEIE			= BIT(2),
+	kWarpRV8803CtrlAIE			= BIT(3),
+	kWarpRV8803CtrlTIE			= BIT(4),
+	kWarpRV8803CtrlUIE			= BIT(5),
+} WarpRV8803CtrlFlag;
+
+void		initRV8803C7(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
+WarpStatus	readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData);
+WarpStatus	readRTCRegistersRV8803C7(uint8_t deviceRegister, uint8_t nRegs, uint8_t receiveData[]);
+WarpStatus	writeRTCRegisterRV8803C7(uint8_t deviceStartRegister, uint8_t payload);
+WarpStatus	writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t payload[]);
+WarpStatus	setRTCTimeRV8803C7(rtc_datetime_t *  tm);
+WarpStatus	setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool interupt_enable);
 
 /*
- *	TODO: Impalement other functions
- *	handle_irq
- *	gettime
- *	time_update_irq_enable
- *	set_countdown
- *	get_countdown
- *	countdown_irq_enable
- *	getalarm
- *	setalarm
- *	alarm_irq_enable
+ *	TODO: Implement other functions:
+ *
+ *		handle_irq
+ *		gettime
+ *		time_update_irq_enable
+ *		set_countdown
+ *		get_countdown
+ *		countdown_irq_enable
+ *		getalarm
+ *		setalarm
+ *		larm_irq_enable
  */

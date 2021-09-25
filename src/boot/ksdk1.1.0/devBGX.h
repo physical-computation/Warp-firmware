@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2021, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -34,21 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-#include <stdlib.h>
-
-#include "fsl_misc_utilities.h"
-#include "fsl_device_registers.h"
-#include "fsl_i2c_master_driver.h"
-#include "fsl_spi_master_driver.h"
-#include "fsl_rtc_driver.h"
-#include "fsl_clock_manager.h"
-#include "fsl_power_manager.h"
-#include "fsl_mcglite_hal.h"
-#include "fsl_port_hal.h"
-
-#include "gpio_pins.h"
-#include "SEGGER_RTT.h"
-#include "warp.h"
-
-
-
+void		initBGX(uint16_t operatingVoltageMillivolts);
+void		deinitBGX(void);

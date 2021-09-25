@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards. See git log.
 
 	All rights reserved.
 
@@ -36,6 +37,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -62,12 +68,11 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
  *	AMG8834.
  */
 void
-initAMG8834(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (
-						kWarpTypeMaskTemperature
-					);
+	deviceAMG8834State.i2cAddress			= i2cAddress;
+	deviceAMG8834State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	return;
 }
 
@@ -76,6 +81,9 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t men
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	returnValue;
+
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 
 	switch (deviceRegister)
 	{
@@ -101,6 +109,7 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t men
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
+	warpEnableI2Cpins();
 	returnValue = I2C_DRV_MasterSendDataBlocking(
 							0 /* I2C instance */,
 							&slave,
@@ -122,6 +131,9 @@ configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg, ui
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
 
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
+
 	i2cWriteStatus1 = writeSensorRegisterAMG8834(kWarpSensorConfigurationRegisterAMG8834RST /* register address configuration register */,
 							payloadConfigReg,
 							menuI2cPullupValue);
@@ -141,6 +153,10 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 
 
 	USED(numberOfBytes);
+
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
+
 	if (deviceRegister > 0xFF)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -154,6 +170,7 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 
 	cmdBuf[0] = deviceRegister;
 
+	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave,
@@ -179,6 +196,9 @@ printSensorDataAMG8834(bool hexModeFlag)
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
+
+	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
+
 	for (uint16_t bufAddress = kWarpSensorOutputRegisterAMG8834T01L; bufAddress <= kWarpSensorOutputRegisterAMG8834T64H; bufAddress = bufAddress + 2)
 	{
 		i2cReadStatus			= readSensorRegisterAMG8834(bufAddress, 2 /* numberOfBytes */);
@@ -198,17 +218,17 @@ printSensorDataAMG8834(bool hexModeFlag)
 
 		if (i2cReadStatus != kWarpStatusOK)
 		{
-			SEGGER_RTT_WriteString(0, " ----,");
+			warpPrint(" ----,");
 		}
 		else
 		{
 			if (hexModeFlag)
 			{
-				SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+				warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 			}
 			else
 			{
-				SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+				warpPrint(" %d,", readSensorRegisterValueCombined);
 			}
 		}
 	}
@@ -230,17 +250,17 @@ printSensorDataAMG8834(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
-			SEGGER_RTT_printf(0, " %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
 }

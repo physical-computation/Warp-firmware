@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Rae Zhao.
+	Authored 2018. Rae Zhao. Additional contributors 2018-onwards,
+	see git log.
 
 	All rights reserved.
 
@@ -35,8 +36,12 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <stdlib.h>
+
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
 
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
@@ -58,21 +63,12 @@ extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 
 
-
-
 void
-initAS7262(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initAS7262(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (	
-						kWarpTypeMaskTemperature|
-						kWarpTypeMaskLambda450V |
-						kWarpTypeMaskLambda500B |
-						kWarpTypeMaskLambda550G |
-						kWarpTypeMaskLambda570Y |
-						kWarpTypeMaskLambda600O |
-						kWarpTypeMaskLambda650R
-					);
+	deviceAS7262State.i2cAddress			= i2cAddress;
+	deviceAS7262State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	return;
 }
 
@@ -86,11 +82,9 @@ readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 	uint8_t		cmdBuf_read[1]		= {kWarpI2C_AS726x_SLAVE_READ_REG};
 	i2c_status_t	returnValue;
 
-
 	USED(numberOfBytes);
 	if (deviceRegister > 0x2B)
 	{
-		// SEGGER_RTT_WriteString(0, "\t\t AS7262 Driver : Bad Command");
 		return kWarpStatusBadDeviceCommand;
 	}
 
@@ -100,8 +94,10 @@ readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
+	warpScaleSupplyVoltage(deviceAS7262State.operatingVoltageMillivolts);
 
 	cmdBuf_write[1] = deviceRegister;
+	warpEnableI2Cpins();
 
 	/*
 	 *	See Page 8 to Page 11 of AS726X Design Considerations for writing to and reading from virtual registers.
@@ -121,8 +117,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
-
 	/*
 	 *	Read transaction which reads from the READ register 0x02.
 	 *	The read transaction requires one to first write to the register address one wants to focus on and then read from that address.
@@ -141,7 +135,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 		return kWarpStatusDeviceCommunicationFailed;
 	}
 
-
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
@@ -150,101 +143,6 @@ readSensorRegisterAS7262(uint8_t deviceRegister, int numberOfBytes)
 							(uint8_t *)deviceAS7262State.i2cBuffer /* The pointer to the data to be transferred */,
 							numberOfBytes /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
 							gWarpI2cTimeoutMilliseconds);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-	return kWarpStatusOK;
-}
-
-
-WarpStatus
-LedOnAS7262(void) {
-	i2c_status_t	returnValue;
-	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
-	uint8_t		cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
-	
-
-	i2c_device_t slave =
-	{ 
-		.address = deviceAS7262State.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-
-	/*
-	 *	The LED control register details can be found in Figure 26 of AS7262 detailed descriptions on page 26.
-	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
-							2 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							gWarpI2cTimeoutMilliseconds);
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-
-
-	/*
-	 *	This turns on the LED before reading the data
-	 */
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_LEDON /* The pointer to the commands to be transferred */,
-							2 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							gWarpI2cTimeoutMilliseconds);
-
-	if (returnValue != kStatus_I2C_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
-
-	return kWarpStatusOK;
-}
-
-WarpStatus
-LedOffAS7262(void) {
-
-	i2c_status_t	returnValue;
-	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
-	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
-
-	i2c_device_t slave =
-	{ 
-		.address = deviceAS7262State.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
-
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-					0 /* I2C peripheral instance */,
-					&slave /* The pointer to the I2C device information structure */,
-					cmdBuf_LEDCTRL /* The pointer to the commands to be transferred */,
-					2 /* The length in bytes of the commands to be transferred */,
-					NULL /* The pointer to the data to be transferred */,
-					0 /* The length in bytes of the data to be transferred */,
-					gWarpI2cTimeoutMilliseconds);
-
-	/*
-	 *	This turns off the LED after finish reading the data
-	*/
-
-	returnValue = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_LEDOFF /* The pointer to the commands to be transferred */,
-							2 /* The length in bytes of the commands to be transferred */,
-							NULL /* The pointer to the data to be transferred */,
-							0 /* The length in bytes of the data to be transferred */,
-							gWarpI2cTimeoutMilliseconds);
-
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;

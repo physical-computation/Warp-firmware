@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -50,19 +55,17 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-
 extern volatile WarpI2CDeviceState	deviceTCS34725State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
-
 void
-initTCS34725(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initTCS34725(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskColor | kWarpTypeMaskTemperature);
+	deviceTCS34725State.i2cAddress			= i2cAddress;
+	deviceTCS34725State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -72,7 +75,6 @@ readSensorRegisterTCS34725(uint8_t deviceRegister)
 {
 	uint8_t		cmdBuf[1] = {0xFF};
 	i2c_status_t	status1, status2;
-
 
 	if (deviceRegister > 0x1D)
 	{
@@ -85,9 +87,9 @@ readSensorRegisterTCS34725(uint8_t deviceRegister)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 
-
 	cmdBuf[0] = deviceRegister;
-
+	warpScaleSupplyVoltage(deviceTCS34725State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 
 	/*
 	 *	From manual, page 17 (bottom): First write to specify register address, then read.

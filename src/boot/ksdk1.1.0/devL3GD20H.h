@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -35,17 +36,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WARP_BUILD_ENABLE_DEVL3GD20H
-#define WARP_BUILD_ENABLE_DEVL3GD20H
-#endif
-
-void		initL3GD20H(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer);
+void		initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 WarpStatus	readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes);
-WarpStatus	readSensorSignalL3GD20H(WarpTypeMask signal,
-					WarpSignalPrecision precision,
-					WarpSignalAccuracy accuracy,
-					WarpSignalReliability reliability,
-					WarpSignalNoise noise);
 WarpStatus	writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
 WarpStatus	configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint16_t menuI2cPullupValue);
 void		printSensorDataL3GD20H(bool hexModeFlag);

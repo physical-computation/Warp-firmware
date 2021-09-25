@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2021. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -34,10 +34,3 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#ifndef WARP_BUILD_ENABLE_DEVPAN1326
-#define WARP_BUILD_ENABLE_DEVPAN1326
-#endif
-
-void	initPAN1326B(WarpUARTDeviceState volatile *  deviceStatePointer);
-void	initPAN1323ETU(WarpUARTDeviceState volatile *  deviceStatePointer);

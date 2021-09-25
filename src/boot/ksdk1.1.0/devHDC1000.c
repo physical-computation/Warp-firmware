@@ -1,5 +1,6 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
 	All rights reserved.
 
@@ -36,6 +37,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -50,19 +56,17 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-
 extern volatile WarpI2CDeviceState	deviceHDC1000State;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
-
 void
-initHDC1000(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceStatePointer)
+initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceStatePointer->i2cAddress	= i2cAddress;
-	deviceStatePointer->signalType	= (kWarpTypeMaskHumidity | kWarpTypeMaskTemperature);
+	deviceHDC1000State.i2cAddress			= i2cAddress;
+	deviceHDC1000State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -92,6 +96,8 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t me
 		.address = deviceHDC1000State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
+
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = (payload>>8) & 0xFF; /* MSB first */
@@ -126,6 +132,9 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 	};
 
 	USED(numberOfBytes);
+
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
 	if (deviceRegister == 0 || deviceRegister == 1)
 	{
 		/*
@@ -232,6 +241,7 @@ printSensorDataHDC1000(bool hexModeFlag)
 	WarpStatus	i2cReadStatus;
 
 
+	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
@@ -243,20 +253,20 @@ printSensorDataHDC1000(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
 			/*
 			 *	See Section 8.6.1 of the HDC1000 manual for the conversion to temperature.
 			 */
-			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined*165 / (1u << 16)) - 40);
+			warpPrint(" %d,", (readSensorRegisterValueCombined*165 / (1u << 16)) - 40);
 		}
 	}
 
@@ -271,20 +281,20 @@ printSensorDataHDC1000(bool hexModeFlag)
 
 	if (i2cReadStatus != kWarpStatusOK)
 	{
-		SEGGER_RTT_WriteString(0, " ----,");
+		warpPrint(" ----,");
 	}
 	else
 	{
 		if (hexModeFlag)
 		{
-			SEGGER_RTT_printf(0, " 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
+			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
 		}
 		else
 		{
 			/*
 			 *	See Section 8.6.2 of the HDC1000 manual for the conversion to temperature.
 			 */
-			SEGGER_RTT_printf(0, " %d,", (readSensorRegisterValueCombined*100 / (1u << 16)));
+			warpPrint(" %d,", (readSensorRegisterValueCombined*100 / (1u << 16)));
 		}
 	}
 }

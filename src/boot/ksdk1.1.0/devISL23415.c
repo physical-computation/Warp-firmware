@@ -36,6 +36,11 @@
 */
 #include <stdlib.h>
 
+/*
+ *	config.h needs to come first
+ */
+#include "config.h"
+
 #include "fsl_misc_utilities.h"
 #include "fsl_device_registers.h"
 #include "fsl_i2c_master_driver.h"
@@ -46,219 +51,173 @@
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
 
+#include "errstrs.h"
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
 #include "devISL23415.h"
 
 extern volatile WarpSPIDeviceState	deviceISL23415State;
-extern volatile uint32_t		gWarpSPIBaudRateKbps;
 extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
+extern uint8_t				gWarpSpiCommonSourceBuffer[];
+extern uint8_t				gWarpSpiCommonSinkBuffer[];
 
-/*
- *	From device manual, Rev. B, Page 19 of 44:
- *
- *		"
- *		The ISL23415 contains two volatile 8-bit registers: the Wiper
- *		Register (WR) and the Access Control Register (ACR).
- *
- *		-	0x10: ACR - DEFAULT SETTING: 0x40
- *		-	0x00: WR - DEFAULT SETTING: 0x80
- *		"
- */
+
 void		
-initISL23415(WarpSPIDeviceState volatile *  deviceStatePointer) 
+initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts) 
 {
-	deviceStatePointer->signalType	= (
-					kWarpTypeMaskMax
-				); /* FIXME */
+	deviceISL23415State.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceISL23415State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceISL23415State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
+	deviceISL23415State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceISL23415State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	return;
 }
 
 WarpStatus	
-readDeviceRegisterISL23415(uint8_t deviceRegister, int numberOfBytes) 
+readDeviceRegisterISL23415(uint8_t deviceRegister) 
 {
-	/*
-	 *	Two ISL23415 configured in Daisy Chain Configuration.
-	 */
+	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceISL23415State.operatingVoltageMillivolts);
 
 	/*
-	 *	Populate the shift-out register with the read-register command,
-	 *	followed by the register to be read, followed by a zero byte.
+	 *	First, configure chip select pins of the various SPI slave devices
+	 *	as GPIO and drive all of them high.
 	 */
-	if (deviceRegister == kWarpISL23415RegACR) 
-	{
-		//deviceISL23415State.spiSourceBuffer[0] = 0b00100000; /* ACR READ */
-		deviceISL23415State.spiSourceBuffer[0] = 0b10010000; /* ACR READ of DCP1 */
-		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
-		deviceISL23415State.spiSourceBuffer[2] = 0b10010000; /* ACR READ of DCP0 */
-		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
+	warpDeasserAllSPIchipSelects();
 
-	} 
-	else if (deviceRegister == kWarpISL23415RegWR) 
-	{
-		deviceISL23415State.spiSourceBuffer[0] = 0b10000000; /* WR0 READ of DCP1 */
-		deviceISL23415State.spiSourceBuffer[1] = 0x00; /* Dummy data - NOP */
-		deviceISL23415State.spiSourceBuffer[2] = 0b10000000; /* WR0 READ of DCP0 */
-		deviceISL23415State.spiSourceBuffer[3] = 0x00; /* Dummy data - NOP */
-	} 
-	else 
-	{
-		/* FIXME */
-	}
+	/*
+	 *	Send the register/instruction, followed by a dummy byte (DCP will shift out value during the
+	 *	send of this dummy byte), followed by NOP byte, followed by another dummy byte.
+	 *
+	 *	Read operations on the ISL23415, unlike write operations, require a NOP instruction to be
+	 *	sent (after the two-byte register+dummy sequence used to indicate what register to read).
+	 *	See Figure 28 of the ISL23415 manual.
+	 */
+	deviceISL23415State.spiSourceBuffer[0] = deviceRegister						/*	See Table 4 of manual	*/;
+	deviceISL23415State.spiSourceBuffer[1] = 0x00							/*	Dummy byte		*/;
+	deviceISL23415State.spiSourceBuffer[2] = kWarpSensorConfigurationRegisterISL23415nopInstruction	/*	NOP byte		*/;
+	deviceISL23415State.spiSourceBuffer[3] = 0x00							/*	Dummy byte		*/;
 
 	deviceISL23415State.spiSinkBuffer[0] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[1] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[2] = 0xFF;
 	deviceISL23415State.spiSinkBuffer[3] = 0xFF;
 
-	enableSPIpins();
 	/*
 	 *	Drive /CS low.
 	 *
 	 *	Make sure there is a high-to-low transition by first driving high, delay, then drive low.
 	 */
-	
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
 	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_SPI_nCS);
 	
 	/*
 	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
 	 *
-	 *	Providing a device structure here is optional since it 
-	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
-	 *	so we pass in NULL.
-	 *
-	 *	TODO: the "master instance" is always 0 for the KL03 since
-	 *	there is only one SPI peripheral. We however should remove
-	 *	the '0' magic number and place this in a Warp-HWREV0 header
-	 *	file.
+	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
+	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+	 *	the KL03 since there is only one SPI peripheral.
 	 */
-	
-	deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(
-					0 /* master instance */, 	
-					NULL /* spi_master_user_config_t */,
+	warpEnableSPIpins();
+	status = SPI_DRV_MasterTransferBlocking(
+					0								/*	master instance			*/,
+					NULL								/*	spi_master_user_config_t	*/,
 					(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
 					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
-					numberOfBytes /* transfer size */,
+					4								/*	reg ID + dummy + NOP + dummy	*/,
 					gWarpSpiTimeoutMicroseconds);
+	warpDisableSPIpins();
 
-	/* Drive /CS up. */
-	OSA_TimeDelay(50);
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
-
-	deviceISL23415State.spiSourceBuffer[0] = 0x00; /* NOP */
-	deviceISL23415State.spiSourceBuffer[1] = 0x00; /* NOP */
-	deviceISL23415State.spiSourceBuffer[2] = 0x00; /* NOP */
-	deviceISL23415State.spiSourceBuffer[3] = 0x00; /* NOP */
-
-	deviceISL23415State.spiSinkBuffer[0] = 0xFF;
-	deviceISL23415State.spiSinkBuffer[1] = 0xFF;
-	deviceISL23415State.spiSinkBuffer[2] = 0xFF;
-	deviceISL23415State.spiSinkBuffer[3] = 0xFF;
-
-	/* Drive /CS down. */
-	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
-	
 	/*
-	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
-	 *
-	 *	Providing a device structure here is optional since it 
-	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
-	 *	so we pass in NULL.
-	 *
-	 *	TODO: the "master instance" is always 0 for the KL03 since
-	 *	there is only one SPI peripheral. We however should remove
-	 *	the '0' magic number and place this in a Warp-HWREV0 header
-	 *	file.
+	 *	Drive /CS high
 	 */
-	
-	deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(
-					0 /* master instance */, 	
-					NULL /* spi_master_user_config_t */,
-					(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
-					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
-					numberOfBytes /* transfer size */,
-					gWarpSpiTimeoutMicroseconds);
-	
-	/* Drive /CS up. */
 	OSA_TimeDelay(50);
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
 
-	disableSPIpins();	
-
+	if (status != kStatus_SPI_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	return kWarpStatusOK;
 }
 
 WarpStatus	
-writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue[2], int numberOfBytes)
+writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue)
 {
+	spi_status_t	status;
+
+
+	warpScaleSupplyVoltage(deviceISL23415State.operatingVoltageMillivolts);
+
 	/*
-	 *	Populate the shift-out register with the read-register command,
-	 *	followed by the register to be read, followed by a zero byte XXX.
+	 *	First, configure chip select pins of the various SPI slave devices
+	 *	as GPIO and drive all of them high.
 	 */
-	if (deviceRegister == kWarpISL23415RegACR) 
-	{
-		deviceISL23415State.spiSourceBuffer[0] = 0b01100000; /* ACR WRITE of DCP 1 */
-		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
-		deviceISL23415State.spiSourceBuffer[2] = 0b01100000; /* ACR WRITE of DCP 0 */
-		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
-	} 
-	else if (deviceRegister == kWarpISL23415RegWR) 
-	{
-		deviceISL23415State.spiSourceBuffer[0] = 0b11000000; /* WR0 WRITE of DCP 1 */
-		deviceISL23415State.spiSourceBuffer[1] = writeValue[0];//writeValue;
-		deviceISL23415State.spiSourceBuffer[2] = 0b11000000; /* WR0 WRITE of DCP 0 */
-		deviceISL23415State.spiSourceBuffer[3] = writeValue[1];
-	} 
-	else 
-	{
-		/* FIXME */
-	}
-	
+	warpDeasserAllSPIchipSelects();
+
+	/*
+	 *	Configure the four ISL23415 DCPs over SPI.
+	 *
+	 *	It takes two bytes (16 bit clocks) to complete a write transaction. The ISL23415 at 1.8V can
+	 *	operate at bit clocks of up to 5MHz and so can change value in principle at rates of up to 312.5k
+	 *	times a second. This rate is in principle fast enough for changing  the pull-up resistor values
+	 *	at I2C line speeds.
+	 */
+
+	/*
+	 *	Send the register/instruction, followed by the payload byte.
+	 *
+	 *	Write operations on the ISL23415, unlike read operations, are two-byte sequences.
+	 *	See Figure 27 of the ISL23415 manual.
+	 */
+	deviceISL23415State.spiSourceBuffer[0] = deviceRegister						/*	See Table 4 of manual	*/;
+	deviceISL23415State.spiSourceBuffer[1] = writeValue						/*	Register value to set	*/;
+
 	deviceISL23415State.spiSinkBuffer[0] = 0x00;
 	deviceISL23415State.spiSinkBuffer[1] = 0x00;
-	deviceISL23415State.spiSinkBuffer[2] = 0x00;
-	deviceISL23415State.spiSinkBuffer[3] = 0x00;
 
 	/*
 	 *	Drive /CS low.
 	 *
 	 *	Make sure there is a high-to-low transition by first driving high, delay, then drive low.
 	 */
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
 	OSA_TimeDelay(50);
-	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_SPI_nCS);
 
 	/*
-	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
+	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
 	 *
-	 *	Providing a device structure here is optional since it 
-	 *	is already provided when we did SPI_DRV_MasterConfigureBus(),
-	 *	so we pass in NULL.
-	 *
-	 *	TODO: the "master instance" is always 0 for the KL03 since
-	 *	there is only one SPI peripheral. We however should remove
-	 *	the '0' magic number and place this in a Warp-HWREV0 header
-	 *	file.
+	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
+	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+	 *	the KL03 since there is only one SPI peripheral.
 	 */
-	enableSPIpins();
-	deviceISL23415State.ksdk_spi_status = SPI_DRV_MasterTransferBlocking(0 /* master instance */, 	
-					NULL /* spi_master_user_config_t */,
+	warpEnableSPIpins();
+	status = SPI_DRV_MasterTransferBlocking(
+					0								/*	master instance			*/,
+					NULL								/*	spi_master_user_config_t	*/,
 					(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
 					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
-					numberOfBytes /* transfer size */,
+					2								/*	reg ID + payload		*/,
 					gWarpSpiTimeoutMicroseconds);
+	warpDisableSPIpins();
 
-	/* Drive /CS up. */
+	/*
+	 *	Drive /CS high
+	 */
 	OSA_TimeDelay(50);
-	GPIO_DRV_SetPinOutput(kWarpPinISL23415_nCS);
+	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
 
-	disableSPIpins();
+	if (status != kStatus_SPI_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
 	return kWarpStatusOK;
 }
-
