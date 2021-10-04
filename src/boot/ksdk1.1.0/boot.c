@@ -199,7 +199,7 @@ volatile uint16_t					gWarpCurrentSupplyVoltage		= kWarpDefaultSupplyVoltageMill
 char							gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
 
 /*
- *	Since only one SPI transaction is ongoing at a time in our implementaion
+ *	Since only one SPI transaction is ongoing at a time in our implementation
  */
 uint8_t							gWarpSpiCommonSourceBuffer[kWarpMemoryCommonSpiBufferBytes];
 uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
@@ -219,7 +219,7 @@ static void						activateAllLowPowerSensorModes(bool verbose);
 static void						powerupAllSensors(void);
 static uint8_t						readHexByte(void);
 static int						read4digits(void);
-static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun);
+static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
 
 /*
  *	TODO: change the following to take byte arrays
@@ -1681,7 +1681,7 @@ main(void)
 		}
 		else
 		{
-			warpPrint("readRTCRegisterRV8803C7() failed...\n");
+			warpPrint("readRTCRegisterRV8803C7() succeeded.\n");
 		}
 
 		/*
@@ -1698,7 +1698,6 @@ main(void)
 		{
 			warpPrint("writeRTCRegisterRV8803C7() succeeded.\n");
 		}
-		warpDisableI2Cpins();
 	#endif
 
 	/*
@@ -1851,8 +1850,7 @@ main(void)
 	 *	below which also means that the console via BLE will be disabled as
 	 *	the BLE module will be turned off by default.
 	 */
-	if (WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT)
-	{
+	#if (WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT)
 		/*
 		*	Make sure sensor supplies are off.
 		*
@@ -1861,13 +1859,14 @@ main(void)
 		warpPrint("Disabling sensor supply... \n");
 		warpDisableSupplyVoltage();
 		warpPrint("done.\n");
-	}
+	#endif
 
 	/*
 	 *	At this point, we consider the system "booted" and, e.g., warpPrint()s
 	 *	will also be sent to the BLE if that is compiled in.
 	 */
 	gWarpBooted = true;
+	warpPrint("Boot done.\n");
 
 	#if (WARP_BUILD_BOOT_TO_CSVSTREAM)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
@@ -1887,7 +1886,7 @@ main(void)
 		}
 
 		warpScaleSupplyVoltage(3300);
-		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */);
+		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 		/*
 		 *	Notreached
 		 */
@@ -1896,18 +1895,19 @@ main(void)
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
-		warpPrint("About to read IS25xP JEDEC ID...\n");
-		//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+		#if (WARP_BUILD_ENABLE_DEVIS25xP)
+			warpPrint("About to read IS25xP JEDEC ID...\n");
+			//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
 
-		warpPrint("About to read IS25xP Manufacturer ID...\n");
-		//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+			warpPrint("About to read IS25xP Manufacturer ID...\n");
+			//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
 
-		warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
-		//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-
+			warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
+			//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
+		#endif
 
 		warpPrint("About to activate low-power modes (including IS25xP Flash)...\n");
 		activateAllLowPowerSensorModes(true /* verbose */);
@@ -1991,8 +1991,7 @@ main(void)
 			blinkLED(kGlauxPinLED);
 			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 			{
-				printSensorDataBME680(false /* hexModeFlag */);
-				warpPrint(" done.\n");
+				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 			}
 
 			warpPrint("About to configureSensorBME680() for sleep...\n");
@@ -2008,7 +2007,7 @@ main(void)
 			blinkLED(kGlauxPinLED);
 
 			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
-			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 30/* sleep seconds */);
+			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
 			if (status != kWarpStatusOK)
 			{
 				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
@@ -2705,7 +2704,7 @@ main(void)
 				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
 				uint16_t	menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
-				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun);
+				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, true /* loopForever */);
 
 				/*
 				 *	Not reached (printAllSensors() does not return)
@@ -2776,7 +2775,7 @@ main(void)
 
 
 void
-printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun)
+printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever)
 {
 	/*
 	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling at 60fps
@@ -2906,7 +2905,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		warpPrint("\n\n");
 	}
 
-	while(1)
+	do
 	{
 		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
 
@@ -2956,7 +2955,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		}
 
 		readingCount++;
-	}
+	} while (loopForever);
 }
 
 

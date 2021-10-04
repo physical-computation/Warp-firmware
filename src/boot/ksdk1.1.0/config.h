@@ -36,14 +36,14 @@
 */
 
 #define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
-#define		WARP_BUILD_BOOT_TO_CSVSTREAM			1
+#define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
 #define		WARP_BUILD_BOOT_TO_VLPR				1
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
  *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
  */
-//#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			1
+#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			0
 
 /*
  *	Define this here to activate FRDMKL03-specific behavior
@@ -63,7 +63,7 @@
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
-	#define		WARP_BUILD_ENABLE_DEVIS25xP		1
+	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
 	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
@@ -77,7 +77,7 @@
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #else
 	/*
-	 *	Otherwise: Edit these to set which code paths are activated in the firmware commpilation
+	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
 	#define		WARP_BUILD_ENABLE_DEVADXL362		1
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
