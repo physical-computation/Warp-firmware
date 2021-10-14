@@ -1,6 +1,6 @@
 include setup.conf
 
-all: warp glaux
+all: warp
 
 warp:
 	mkdir -p build/ksdk1.1/work
