@@ -1605,7 +1605,8 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+//		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+		initMMA8451Q(	0x1C	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
@@ -2791,7 +2792,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+					0x01/* Normal read 8bit, 800Hz, normal, active mode */
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
@@ -2802,7 +2803,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 	numberOfConfigErrors += configureSensorL3GD20H(	0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
 					0b00100000,
-					0b00000000,/* normal mode, disable FIFO, disable high pass filter */
+					0b00000000/* normal mode, disable FIFO, disable high pass filter */
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVBME680)
