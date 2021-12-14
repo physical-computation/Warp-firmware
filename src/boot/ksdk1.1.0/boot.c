@@ -2677,6 +2677,8 @@ main(void)
 				}
 
 				warpPrint("\r\n\tThis should never happen...\n");
+
+				break;
 			}
 #endif
 			/*
@@ -2725,6 +2727,8 @@ main(void)
 
 				warpPrint("\r\n\tEnd address (e.g., '0000')> ");
 				//xx = read4digits();
+
+				break;
 			}
 
 			/*
@@ -2739,6 +2743,8 @@ main(void)
 				//xx = read4digits();
 
 				warpPrint("\r\n\tEnter [%d] raw bytes > ");
+
+				break;
 			}
 
 			/*
@@ -2751,6 +2757,8 @@ main(void)
 
 				warpPrint("\r\n\tNumber of bytes to use (e.g., '0000')> ");
 				//xx = read4digits();
+
+				break;
 			}
 
 
