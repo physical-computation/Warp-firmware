@@ -18,41 +18,6 @@
 #include "glaux.h"
 #include "warp.h"
 #include "gpio_pins.h"
-#include "devRV8803C7.h"
-
-
-
-/*
- *	From KSDK power_manager_demo.c BEGIN>>>
- */
-#if (!WARP_BUILD_ENABLE_DEVRV8803C7)
-	static void
-	setSleepRtcAlarm(uint32_t offsetSec)
-	{
-		rtc_datetime_t date;
-		uint32_t seconds;
-
-		// get date time and convert to seconds
-		RTC_DRV_GetDatetime(0, &date);
-
-		// convert to sec and add offset
-		RTC_HAL_ConvertDatetimeToSecs(&date, &seconds);
-
-		//TODO: should check for overflow...
-		seconds += offsetSec;
-		RTC_HAL_ConvertSecsToDatetime(&seconds, &date);
-
-		// set the datetime for alarm
-		if (RTC_DRV_SetAlarm(0, &date, true))
-		{
-			//...
-		}
-		else
-		{
-			return;
-		}
-	}
-#endif
 
 void
 gpioDisableWakeUp(void)
@@ -122,7 +87,7 @@ gpioEnableWakeUp(void)
 	INT_SYS_EnableIRQ(BOARD_SW_LLWU_IRQ_NUM);
 
 	/*
-	 *	Redundant? Check. 
+	 *	Redundant? Check.
 	 */
 	INT_SYS_EnableIRQ(LLWU_IRQn);
 
@@ -134,7 +99,7 @@ gpioEnableWakeUp(void)
 	 *	See
 	 *
 	 *		Kinetis SDK v.1.1 API Reference Manual Chapter 33.
-	 *	
+	 *
 	 *	and
 	 *		KL03 Sub-Family Reference Manual, Rev. 4, August, 2014, Chapter 19.
 	 *
@@ -240,7 +205,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 			 *	For now, always go to VLPR upon completion of prior mode
 			 */
 			CLOCK_SYS_UpdateConfiguration(CLOCK_CONFIG_INDEX_FOR_VLPR, kClockManagerPolicyForcible);
-			
+
 
 			if (status != kPowerManagerSuccess)
 			{
@@ -405,7 +370,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 				 *	For now, always go to VLPR upon completion of prior mode
 				 */
 				CLOCK_SYS_UpdateConfiguration(CLOCK_CONFIG_INDEX_FOR_VLPR, kClockManagerPolicyForcible);
-				
+
 			}
 
 			if (status != kPowerManagerSuccess)
@@ -419,7 +384,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 		case kWarpPowerModeRUN:
 		{
 			status = POWER_SYS_SetMode(powerMode, kPowerManagerPolicyAgreement);
-			
+
 			/*
 			 *	In this case, we should return from POWER_SYS_SetMode() immediately
 			 *	since we don't go to sleep.
@@ -468,7 +433,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
-			 *	(soft) reset once their wakeup source fires. See, e.g., 
+			 *	(soft) reset once their wakeup source fires. See, e.g.,
 			 *	AN4503 Figure 11.  Therefore, if we get here, it must be that
 			 *	POWER_SYS_SetMode() failed.
 			 */
@@ -508,7 +473,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
-			 *	(soft) reset once their wakeup source fires. See, e.g., 
+			 *	(soft) reset once their wakeup source fires. See, e.g.,
 			 *	AN4503 Figure 11.  Therefore, if we get here, it must be that
 			 *	POWER_SYS_SetMode() failed.
 			 */
@@ -547,7 +512,7 @@ warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds)
 
 			/*
 			 *	All the VLLSx sleeps can only wake up via a transition to
-			 *	(soft) reset once their wakeup source fires. See, e.g., 
+			 *	(soft) reset once their wakeup source fires. See, e.g.,
 			 *	AN4503 Figure 11.  Therefore, if we get here, it must be that
 			 *	POWER_SYS_SetMode() failed.
 			 */
