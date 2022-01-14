@@ -61,6 +61,9 @@
 #include "errstrs.h"
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
+
+// Include global variables and function prototypes from
+// devSSD1331.h and adc16_Waterlevel.h
 #include "devSSD1331.h"
 #include "adc16_Waterlevel.h"
 
@@ -71,6 +74,11 @@
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVINA219)
+	#include "devINA219.h"
+	volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
 volatile i2c_master_state_t				i2cMasterState;
@@ -122,10 +130,7 @@ static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFl
 WarpStatus						writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t commandByte, bool sendPayloadByte, uint8_t payloadByte);
 WarpStatus						writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
 
-
 void							warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
-
-
 
 /*
  *	Derived from KSDK power_manager_demo.c BEGIN>>>
@@ -253,8 +258,6 @@ callback0(power_manager_notify_struct_t *  notify, power_manager_callback_data_t
  *	Derived from KSDK power_manager_demo.c <<END
  */
 
-
-
 void
 sleepUntilReset(void)
 {
@@ -266,7 +269,6 @@ sleepUntilReset(void)
 		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */);
 	}
 }
-
 
 void
 enableLPUARTpins(void)
@@ -290,7 +292,6 @@ enableLPUARTpins(void)
 
 	LPUART_DRV_Init(0,(lpuart_state_t *)&lpuartState,(lpuart_user_config_t *)&lpuartUserConfig);
 }
-
 
 void
 disableLPUARTpins(void)
@@ -317,7 +318,6 @@ disableLPUARTpins(void)
 }
 
 
-
 WarpStatus
 sendBytesToUART(uint8_t *  bytes, size_t nbytes)
 {
@@ -331,7 +331,6 @@ sendBytesToUART(uint8_t *  bytes, size_t nbytes)
 
 	return kWarpStatusOK;
 }
-
 
 
 void
@@ -1305,6 +1304,9 @@ main(void)
 		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
+  // Sets the i2cAddress of the INA219 sensor
+  initINA219(	0x40	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsINA219	);
+
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
 		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState,		kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
 	#endif
@@ -1355,12 +1357,24 @@ main(void)
 		 */
 	#endif
 
-	devSSD1331init();
+	//////////////////////////////////////////////////////////////////////////////
+	/////////////////Main Functionality gor my project////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+  // Get values from the sensor that is connected to the ADC pin  and depending
+	// on their values change the OLED screen
+	// Once this is done 3000 times (can be changed here to the value you want)
+	// Warp functionality resumes and can get readings from the INA219 sensor for example
+
 	int k = 1;
-  for (k = 1; k < 1000; k++){
-	  ADC16_Blocking();
+  for (k = 1; k < 3000; k++){
+		OSA_TimeDelay(500);
+		// Main functionality Function
+		// Gets value from the ADC pin and calls the change OLED colour functions
+		// depending on the value
+		ADC16_Blocking();
 	}
 
+  /////////////////////////////Warp Functionality Continues/////////////////////
 	while (1)
 	{
 		/*
@@ -1425,6 +1439,12 @@ main(void)
 					warpPrint("\r\t- '8' HDC1000			(0x00--0x1F): 3.0V -- 5.0V (compiled out) \n");
 				#endif
 
+				#if (WARP_BUILD_ENABLE_DEVINA219)
+					warpPrint("\r\t- 'p' INA219			(0x00--0x05): 3V -- 5.5V\n");
+				#else
+					warpPrint("\r\t- 'p' INA219			(0x00--0x05): 3V -- 5.5V (compiled out) \n");
+				#endif
+
 				warpPrint("\r\tEnter selection> ");
 				key = warpWaitKey();
 
@@ -1436,6 +1456,15 @@ main(void)
 						{
 							menuTargetSensor = kWarpSensorMMA8451Q;
 							menuI2cDevice = &deviceMMA8451QState;
+							break;
+						}
+					#endif
+					// Pick 'p' to chose the INA219 sensor
+				  #if (WARP_BUILD_ENABLE_DEVINA219)
+						case 'p':
+						{
+							menuTargetSensor = kWarpSensorINA219;
+							menuI2cDevice = &deviceINA219State;
 							break;
 						}
 					#endif
@@ -1883,6 +1912,11 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#endif
 
+	#if (WARP_BUILD_ENABLE_DEVINA219)
+  numberOfConfigErrors += configureSensorINA219();
+
+  #endif
+
 	#if (WARP_BUILD_ENABLE_DEVHDC1000)
 	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
 					(0b1010000<<8),
@@ -1896,6 +1930,10 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
 		#endif
+
+		#if (WARP_BUILD_ENABLE_DEVINA219)
+			warpPrint("INA219 Current uA");
+    #endif
 
 		#if (WARP_BUILD_ENABLE_DEVHDC1000)
 			warpPrint(" HDC1000 Temp, HDC1000 Hum,");
@@ -1911,6 +1949,11 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			printSensorDataMMA8451Q(hexModeFlag);
+		#endif
+
+		// Prints the INA219 sensor data
+		#if (WARP_BUILD_ENABLE_DEVINA219)
+			printSensorDataINA219(hexModeFlag);
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVHDC1000)
@@ -2098,6 +2141,35 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 						);
 			#else
 				warpPrint("\r\n\tMMA8451Q Read Aborted. Device Disabled :(");
+			#endif
+
+			break;
+		}
+
+		case kWarpSensorINA219:
+		{
+			/*
+			 *	MMA8451Q: VDD 1.95--3.6
+			 */
+			#if (WARP_BUILD_ENABLE_DEVINA219)
+				loopForSensor(	"\r\nINA219:\n\r",		/*	tagString			*/
+						&readSensorRegisterINA219,	/*	readSensorRegisterFunction	*/
+						&deviceINA219State,		/*	i2cDeviceState			*/
+						NULL,				/*	spiDeviceState			*/
+						baseAddress,			/*	baseAddress			*/
+						0x00,				/*	minAddress			*/
+						0x05,				/*	maxAddress			*/
+						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+						spinDelay,			/*	spinDelay			*/
+						autoIncrement,			/*	autoIncrement			*/
+						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+						referenceByte,			/*	referenceByte			*/
+						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+						chatty				/*	chatty				*/
+						);
+			#else
+				warpPrint("\r\n\tINA219 Read Aborted. Device Disabled :(");
 			#endif
 
 			break;

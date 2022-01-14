@@ -12,32 +12,16 @@
 // Definitions
 ///////////////////////////////////////////////////////////////////////////////
 
-//#define ADC_0                   (0U)
-//#define CHANNEL_0               (0U)
-//#define CHANNEL_1               (1U)
-
-///////////////////////////////////////////////////////////////////////////////
-// Variables
-///////////////////////////////////////////////////////////////////////////////
-
-//static uint32_t adcValue = 0;               /*! ADC value */
-//volatile bool conversionCompleted = false;  /*! Conversion is completed Flag */
-//const uint32_t gSimBaseAddr[] = SIM_BASE_ADDRS;
-//static smc_power_mode_config_t smcConfig;
+#define ADC_0                   (0U)
+#define CHANNEL_0               (0U)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Code
 ///////////////////////////////////////////////////////////////////////////////
 
-/* ADC Interrupt Handler
-void ADC0IRQHandler(void)
-{
-    // Get current ADC value
-    adcValue = ADC_TEST_GetConvValueRAWInt (ADC_0, CHANNEL_0);
-    // Set conversionCompleted flag. This prevents an wrong conversion in main function
-    conversionCompleted = true;
-}
-*/
+// ADC initialisation Function
+// Includes conversion of values and printing of the ADC16 values
+// Modified from Kinetis SDK v.1.1 API Reference Manual
 int ADC16_TEST_Blocking(uint32_t instance, uint32_t chnGroup, uint8_t chn)
 {
   #if FSL_FEATURE_ADC16_HAS_CALIBRATION
@@ -49,7 +33,7 @@ int ADC16_TEST_Blocking(uint32_t instance, uint32_t chnGroup, uint8_t chn)
     //uint32_t i;
 
   #if FSL_FEATURE_ADC16_HAS_CALIBRATION
-    // Auto calibraion. //
+    // Auto calibration. //
     ADC16_DRV_GetAutoCalibrationParam(instance, &MyAdcCalibraitionParam);
     ADC16_DRV_SetCalibrationParam(instance, &MyAdcCalibraitionParam);
   #endif // FSL_FEATURE_ADC16_HAS_CALIBRATION //
@@ -65,74 +49,46 @@ int ADC16_TEST_Blocking(uint32_t instance, uint32_t chnGroup, uint8_t chn)
   MyChnConfig.intEnable = false;
   MyChnConfig.chnMux = kAdcChnMuxOfA;
   ADC16_DRV_ConfigConvChn(instance, chnGroup, &MyChnConfig);
-  //for (i = 0U; i < 4U; i++)
-  //{
+
     // Wait for the most recent conversion.//
   ADC16_DRV_WaitConvDone(instance, chnGroup);
 
-  //warpPrint("\r\tADC16_Blocking After ConvDone\n");
   // Fetch the conversion value and format it. //
   MyAdcValue = ADC16_DRV_GetConvValueRAW(instance, chnGroup);
 
-  //warpPrint("\r\tADC16_Blocking After ConvValueRaw [%d] \n", MyAdcValue);
-
-  //printf("ADC16_DRV_GetConvValueRAW: 0x%X\t", MyAdcValue);
-  //printf("ADC16_DRV_ConvRAWData: %ld\r\n", ADC16_DRV_ConvRAWData(MyAdcValue, false,kAdcResolutionBitOfSingleEndAs12) );
-
-  uint16_t WaterlevelValue; // 32?
+  // Get value and print the output of the ADC //
+  uint16_t WaterlevelValue;
   WaterlevelValue = ADC16_DRV_ConvRAWData(MyAdcValue, false, kAdcResolutionBitOfSingleEndAs12);
-
   warpPrint("%u, ", WaterlevelValue);
 
-  //OSA_TimeDelay(20);
   return WaterlevelValue;
-  //}
-  warpPrint("\r\tADC16_Blocking Before PauseConv\n");
+}
+
+// Disable ADC Function
+int Disable_ADC(uint32_t instance, uint32_t chnGroup){
   // Pause the conversion after testing. //
   ADC16_DRV_PauseConv(instance, chnGroup);
   // Disable the ADC. //
   ADC16_DRV_Deinit(instance);
+
+  return 0;
 }
 
-/*!
- * @brief main function
- */
+// Main functionality Function
+// Turn screen flashing green if the output of the water level sensor < 200
+// Orange if the output is between 200 and 2000
+// Red if the output is > 2200
 int ADC16_Blocking(void){
-
-//warpPrint("\r\tADC16_Blocking Start...\n");
-  //uint16_t WaterlevelValue = 1;
-
-  //uint32_t updateBoundariesCounter = 0;
-  //int32_t tempArray[UPDATE_BOUNDARIES_TIME * 2];
-  //lowPowerAdcBoundaries_t boundaries;
-
-  // Init hardware
-  //hardware_init();
-
-  // Call this function to initialize the console UART.  This function
-  // enables the use of STDIO functions (printf, scanf, etc.)
-  //dbg_uart_init();
-
-  // Initialize GPIO pins
-  //GPIO_DRV_Init(accelIntPins, ledPins);
-  //ADCPin = GPIO_MAKE_PIN(HW_GPIOB, 1);
-
-
-  // PORT_HAL_SetMuxMode(PORTB_BASE, 1, 0U);
-  // or PORT_HAL_SetMuxMode(PORTB_BASE, 1u, kPortMuxAsGpio);
-
-
-  // Initialize ADC
+  // Initialize ADC and get converted value from the ADC
   uint16_t Value;
-  Value  = ADC16_TEST_Blocking(0U, 0U, 8U);  // 0 all?
-  //warpPrint("\r\n\tADC16_Blocking After ADC...\n");
-  /*if (Value < 1500)
+  Value  = ADC16_TEST_Blocking(ADC_0, CHANNEL_0, 8U); // 8th channel PTB1 -
+
+  if (Value < 200)
     {devSSD1331Green();}
-  else if(Value >= 1500 && Value < 1800)
+  else if(Value >= 200 && Value < 2200)
     {devSSD1331Orange();}
-  else if(Value >= 1800)
+  else if(Value >= 2200)
     {devSSD1331Red();}
-    */
-  OSA_TimeDelay(10);
-  return Value;
+
+  return 0;
 }

@@ -18,6 +18,41 @@
 #include "glaux.h"
 #include "warp.h"
 #include "gpio_pins.h"
+#include "devRV8803C7.h"
+
+
+
+/*
+ *	From KSDK power_manager_demo.c BEGIN>>>
+ */
+#if (!WARP_BUILD_ENABLE_DEVRV8803C7)
+	static void
+	setSleepRtcAlarm(uint32_t offsetSec)
+	{
+		rtc_datetime_t date;
+		uint32_t seconds;
+
+		// get date time and convert to seconds
+		RTC_DRV_GetDatetime(0, &date);
+
+		// convert to sec and add offset
+		RTC_HAL_ConvertDatetimeToSecs(&date, &seconds);
+
+		//TODO: should check for overflow...
+		seconds += offsetSec;
+		RTC_HAL_ConvertSecsToDatetime(&seconds, &date);
+
+		// set the datetime for alarm
+		if (RTC_DRV_SetAlarm(0, &date, true))
+		{
+			//...
+		}
+		else
+		{
+			return;
+		}
+	}
+#endif
 
 void
 gpioDisableWakeUp(void)
