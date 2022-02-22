@@ -1635,8 +1635,8 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-//		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		initBME680(	0b00011111	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
