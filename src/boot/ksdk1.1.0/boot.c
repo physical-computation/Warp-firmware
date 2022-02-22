@@ -63,10 +63,10 @@
 #include "SEGGER_RTT.h"
 
 
+
 #define							kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define							kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
-
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 	#include "devADXL362.h"
@@ -134,6 +134,11 @@
 	#include "devBME680.h"
 	volatile WarpI2CDeviceState			deviceBME680State;
 	volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+	#include "devRF430CL331H.h"
+	volatile WarpI2CDeviceState			deviceRF430CL331HState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
@@ -1631,7 +1636,7 @@ main(void)
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
 //		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		initBME680(	0x77	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		initBME680(	0b00011111	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
@@ -1887,7 +1892,7 @@ main(void)
 		}
 
 		warpScaleSupplyVoltage(3300);
-		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
+		//printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 		/*
 		 *	Notreached
 		 */
@@ -1987,34 +1992,52 @@ main(void)
 		warpDisableI2Cpins();
 
 		warpPrint("About to loop with printSensorDataBME680()...\n");
-		while (1)
-		{
-			blinkLED(kGlauxPinLED);
-			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
-			{
-				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
-			}
-
-			warpPrint("About to configureSensorBME680() for sleep...\n");
-			status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
-							0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
-							0b00001000	/*	payloadGas_0: Turn off heater						*/
-						);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("configureSensorBME680() failed...\n");
-			}
-			warpDisableI2Cpins();
-			blinkLED(kGlauxPinLED);
-
-			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
-			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
-			}
-			warpPrint("Should not get here...");
+	
+		WarpStatus	i2cReadStatus;
+		initRF430CL331H(0b00011111);
+		while(1){
+			
+			//i2cReadStatus = readSensorRegisterRF430CL331H(0xFF,0xFC, 2);
+			//uint8_t readSensorRegisterValueMSB = deviceRF430CL331HState.i2cBuffer[0];
+			//uint8_t readSensorRegisterValueLSB = deviceRF430CL331HState.i2cBuffer[1];
+			//uint16_t readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+			//warpPrint("\r\n\t[0x%02x].\n", readSensorRegisterValueCombined);
+			i2cReadStatus = writeSensorRegisterHRF430CL331H(0xFF, 0xE0, 0x004E);
+			warpPrint("\nDelay\n");
+			i2cReadStatus = readSensorRegisterRF430CL331H(0xFF, 0xE0, 2);
+			uint8_t readSensorRegisterValueMSB = deviceRF430CL331HState.i2cBuffer[0];
+			uint8_t readSensorRegisterValueLSB = deviceRF430CL331HState.i2cBuffer[1];
+			uint16_t readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+			warpPrint("\r\n\t[0x%02x].\n", readSensorRegisterValueCombined);
 		}
+		//while (1)
+		//{
+			//blinkLED(kGlauxPinLED);
+			//for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
+			//{
+				//printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
+			//}
+
+			//warpPrint("About to configureSensorBME680() for sleep...\n");
+			//status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
+							//0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
+							//0b00001000	/*	payloadGas_0: Turn off heater						*/
+						//);
+			//if (status != kWarpStatusOK)
+			//{
+				//warpPrint("configureSensorBME680() failed...\n");
+			//}
+			//warpDisableI2Cpins();
+			//blinkLED(kGlauxPinLED);
+
+			//warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwards)...\n");
+			//status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+			//if (status != kWarpStatusOK)
+			//{
+				//warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
+			//}
+			//warpPrint("Should not get here...");
+		//}
 	#endif
 
 	while (1)
