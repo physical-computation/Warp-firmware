@@ -1635,8 +1635,7 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		
+		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
@@ -2008,7 +2007,7 @@ main(void)
 			uint8_t readSensorRegisterValueMSB = deviceRF430CL331HState.i2cBuffer[0];
 			uint8_t readSensorRegisterValueLSB = deviceRF430CL331HState.i2cBuffer[1];
 			uint16_t readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
-			warpPrint("\r\n\t[0x%02x].\n", readSensorRegisterValueCombined);
+			warpPrint("\r\n\t[0x%04x].\n", readSensorRegisterValueCombined);
 		}
 		//while (1)
 		//{

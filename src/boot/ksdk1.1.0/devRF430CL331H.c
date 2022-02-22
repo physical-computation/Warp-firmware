@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2022. James T. Meech.
 
 	All rights reserved.
 
@@ -105,11 +105,10 @@ readSensorRegisterRF430CL331H(uint8_t deviceRegisterMSB, uint8_t deviceRegisterL
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
 							0 /* I2C peripheral instance */,
 							&slave /* The pointer to the I2C device information structure */,
-							cmdBuf_read /* The pointer to the commands to be transferred */,
+							NULL /* The pointer to the commands to be transferred */,
 							0 /* The length in bytes of the commands to be transferred */,
 							(uint8_t *)deviceRF430CL331HState.i2cBuffer /* The pointer to the data to be transferred */,
 							numberOfBytes /* The length in bytes of the data to be transferred and data is transferred from the sensor to master via bus */,
