@@ -1297,6 +1297,10 @@ warpPrint(const char *fmt, ...)
 		#endif
 	#endif
 
+	/*
+	 *	Without this RUN mode printing misses lines.
+	 */
+	OSA_TimeDelay(5);
 	return;
 }
 
