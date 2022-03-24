@@ -36,4 +36,28 @@
 */
 
 void		initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
+
+/**
+ * @brief Perform a transaction with the Flash device.
+ *
+ * This function performs a blocking transaction with the Flash device using the
+ * provided operation command bytes.
+ * 
+ * @param ops Array pointing to bytes making up the command.
+ * @param opCount The number of bytes making up the command (including dummies for receive).
+ */
 WarpStatus	spiTransactionIS25xP(uint8_t ops[], size_t opCount);
+
+/**
+ * @brief Perform a contiguous read of the flash memory starting from an offset
+ * address.
+ *
+ * This function performs a blocking read of the device.
+ *
+ * @param startAddress Flash memory address to start reading from. Width is actually 24 bits.
+ * @param nbyte Number of bytes to read from the flash memory.
+ * @param buf Buffer to place the read values in. Must fit `nbyte` bytes.
+ */
+WarpStatus	readMemoryIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
+
+WarpStatus	programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
