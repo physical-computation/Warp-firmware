@@ -52,6 +52,8 @@ enum _gpio_pins
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOA, 9),
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		kWarpPinIS25xP_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOA, 9),
 	#else
 		kWarpPinAT45DB_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOA, 9),
 	#endif

@@ -1737,40 +1737,8 @@ main(void)
 		 *	Only supported in Glaux.
 		 */
 		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
-
-		uint8_t	ops1[] = {0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops1, sizeof(ops1)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read JEDEC ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
-		}
-
-		uint8_t	ops2[] = {0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops2, sizeof(ops2)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Manufacturer ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
-		}
-
-		uint8_t	ops3[] = {0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops3, sizeof(ops3)/sizeof(uint8_t) /* opCount */);
-				if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Flash ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-		}
-		
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		initIS25xP(kWarpPinIS25xP_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
