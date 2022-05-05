@@ -1740,7 +1740,7 @@ main(void)
 		/*
 		 *	Only supported in Glaux.
 		 */
-		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
+		initIS25xP(kGlauxPinFlash_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
 		initIS25xP(kWarpPinIS25xP_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 	#endif
@@ -1865,7 +1865,7 @@ main(void)
 		 */
 	#endif
 
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		#if (WARP_BUILD_ENABLE_DEVIS25xP)
@@ -2713,13 +2713,14 @@ main(void)
 			{
 				warpPrint(
 					"\r\n\tDevice: IS25xP"
-					"\r\n\t'1' - Dump info registers"
-					"\r\n\t'2' - Read"
+					"\r\n\t'1' - Info and status registers"
+					"\r\n\t'2' - Dump JEDEC Table"
+					"\r\n\t'3' - Read"
 				);
 				warpPrint(
-					"\r\n\t'3' - Write"
 					"\r\n\t'4' - Write Enable"
-					"\r\n\t'5' - Dump JEDEC Table"
+					"\r\n\t'5' - Write"
+					"\r\n\t'6' - Chip Erase"
 				);
 				warpPrint("\r\n\tEnter selection> ");
 				key = warpWaitKey();
@@ -2727,6 +2728,10 @@ main(void)
 
 				switch(key)
 				{
+					
+				/*
+				 *	Read informational and status registers
+				 */
 				case '1':
 				{
 					uint8_t	ops1[] = {	/* Read JEDEC ID Command */
@@ -2858,77 +2863,11 @@ main(void)
 					break;
 				}
 
+				
+				/*
+				 *	Dump first 0xF addresses from JEDEC table
+				 */
 				case '2':
-				{
-					WarpStatus 	status;
-					uint8_t		buf[32] = {0};
-
-					status = readMemoryIS25xP(0, 32, buf);
-					if (status != kWarpStatusOK)
-					{
-						warpPrint("\r\n\tCommunication failed: %d", status);
-					}
-					else
-					{
-						warpPrint("\n");
-						for (size_t i = 0; i < 32; i++)
-						{
-							warpPrint("0x%08x:\t%x\n", i, buf[i]);
-							OSA_TimeDelay(5);
-							
-						}
-					}
-
-					
-					break;
-				}
-
-				case '3':
-				{
-					WarpStatus 	status;
-					uint8_t		buf[32] = {0};
-					
-					for (size_t i = 0; i < 32; i++)
-					{
-						buf[i] = i;
-					}
-					
-
-					status = programPageIS25xP(0, 32, buf);
-					if (status != kWarpStatusOK)
-					{
-						warpPrint("\r\n\tCommunication failed: %d", status);
-					}
-					else
-					{
-						warpPrint("OK.\n");
-					}
-
-					
-					break;
-				}
-
-				case '4':
-				{
-					WarpStatus 	status;
-					uint8_t		ops[] = {
-						0x06,	/* WREN */
-					};					
-
-					status = spiTransactionIS25xP(ops, 1);
-					if (status != kWarpStatusOK)
-					{
-						warpPrint("\r\n\tCommunication failed: %d", status);
-					}
-					else
-					{
-						warpPrint("OK.\n");
-					}
-					
-					break;
-				}
-
-				case '5':
 				{
 					uint8_t	ops[] = {	/* Read JEDEC Discoverable Params */
 						0x5A,	/* RDSFDP */  
@@ -2980,6 +2919,107 @@ main(void)
 					break;
 				}
 
+				/*
+				 *	Perform a read
+				 */
+				case '3':
+				{
+					WarpStatus 	status;
+					uint8_t		buf[32] = {0};
+
+					status = readMemoryIS25xP(0, 32, buf);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("\n");
+						for (size_t i = 0; i < 32; i++)
+						{
+							warpPrint("0x%08x:\t%x\n", i, buf[i]);
+							OSA_TimeDelay(5);
+							
+						}
+					}
+
+					
+					break;
+				}
+
+				
+				/*
+				 *	Write Enable
+				 */
+				case '4':
+				{
+					WarpStatus 	status;
+					uint8_t		ops[] = {
+						0x06,	/* WREN */
+					};					
+
+					status = spiTransactionIS25xP(ops, 1);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+					
+					break;
+				}
+
+
+				/*
+				 *	Perform a write
+				 */
+				case '5':
+				{
+					WarpStatus 	status;
+					uint8_t		buf[32] = {0};
+					
+					for (size_t i = 0; i < 32; i++)
+					{
+						buf[i] = i;
+					}
+					
+
+					status = programPageIS25xP(0, 32, buf);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+
+					
+					break;
+				}
+
+
+				/*
+				 *	Erase chip (reset to 0xFF)
+				 */
+				case '6':
+				{
+					WarpStatus 	status;			
+
+					status = chipEraseIS25xP();
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+
+					break;
+				}
 				default:
 				{
 					warpPrint("\r\n\tInvalid selection.");
