@@ -58,12 +58,21 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+		#if (WARP_BUILD_ENABLE_DEVIS25xP)
+		{
+			.pinName = kWarpPinIS25xP_SPI_nCS,
+			.config.outputLogic = 1,
+			.config.slewRate = kPortSlowSlewRate,
+			.config.driveStrength = kPortLowDriveStrength,
+		},
+		#else
 		{
 			.pinName = kWarpPinAT45DB_SPI_nCS,
 			.config.outputLogic = 1,
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+		#endif
 		{
 			.pinName = kWarpPinISL23415_SPI_nCS,
 			.config.outputLogic = 1,
