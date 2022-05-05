@@ -61,3 +61,8 @@ WarpStatus	spiTransactionIS25xP(uint8_t ops[], size_t opCount);
 WarpStatus	readMemoryIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
 
 WarpStatus	programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
+
+WarpStatus	eraseSectorIS25xP(uint32_t address);
+WarpStatus	erase32kBlockIS25xP(uint32_t address);
+WarpStatus	erase64kBlockIS25xP(uint32_t address);
+WarpStatus	chipEraseIS25xP();
