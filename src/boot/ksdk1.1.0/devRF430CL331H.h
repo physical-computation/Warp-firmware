@@ -40,4 +40,4 @@ initRF430CL331H(const uint8_t i2cAddress);
 WarpStatus
 readSensorRegisterRF430CL331H(uint8_t deviceRegisterMSB, uint8_t deviceRegisterLSB, int numberOfBytes);
 WarpStatus
-writeSensorRegisterHRF430CL331H(uint8_t deviceRegisterMSB, uint8_t deviceRegisterLSB, uint16_t payload);
+writeSensorRegisterRF430CL331H(uint8_t deviceRegisterMSB, uint8_t deviceRegisterLSB, uint16_t payload);

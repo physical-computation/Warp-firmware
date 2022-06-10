@@ -2001,7 +2001,7 @@ main(void)
 			//uint8_t readSensorRegisterValueLSB = deviceRF430CL331HState.i2cBuffer[1];
 			//uint16_t readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 			//warpPrint("\r\n\t[0x%02x].\n", readSensorRegisterValueCombined);
-			i2cReadStatus = writeSensorRegisterHRF430CL331H(0xFF, 0xE0, 0x004E);
+			i2cReadStatus = writeSensorRegisterRF430CL331H(0xFF, 0xE0, 0x004E);
 			warpPrint("\nDelay\n");
 			i2cReadStatus = readSensorRegisterRF430CL331H(0xFF, 0xE0, 2);
 			uint8_t readSensorRegisterValueMSB = deviceRF430CL331HState.i2cBuffer[0];

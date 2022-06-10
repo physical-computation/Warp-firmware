@@ -1,7 +1,5 @@
 #!/bin/sh
-	
-	# Uncomment this to set ARMGCC_DIR correctly: export ARMGCC_DIR=<full path to arm-gcc directory>
-
+	export ARMGCC_DIR=/Users/jamesmeech/Desktop/bare-metal-arm/gcc-arm-none-eabi-4_8-2014q1
 	mkdir -p work
 	mkdir -p work/boards/Warp
 	mkdir -p work/demos/Warp/src
