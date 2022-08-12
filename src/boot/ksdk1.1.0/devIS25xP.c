@@ -71,7 +71,8 @@ initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	deviceIS25xPState.spiSinkBuffer			= gWarpSpiCommonSinkBuffer;
 	deviceIS25xPState.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
 	deviceIS25xPState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
-
+	// PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
 	return;
 }
 
@@ -80,6 +81,10 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 {
 	spi_status_t	status;
 
+	if (opCount > deviceIS25xPState.spiBufferLength)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
 
 	warpScaleSupplyVoltage(deviceIS25xPState.operatingVoltageMillivolts);
 
@@ -96,8 +101,9 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 	}
 
 	/*
-	 *	First, create a falling edge on chip-select.
+	 *	Create a falling edge on chip-select.
 	 */
+	// PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
 	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
 	OSA_TimeDelay(50);
 	GPIO_DRV_ClearPinOutput(deviceIS25xPState.chipSelectIoPinID);
@@ -129,4 +135,124 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 	}
 
 	return kWarpStatusOK;
+}
+
+WarpStatus
+readMemoryIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
+{
+	WarpStatus	status;
+
+	// if (NOT RUN MODE)
+	// {
+	// 	return kWarpStatusBadPowerModeSpecified;
+	// }
+
+	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	ops[0] = 0x03;	/* NORD */
+	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((startAddress & 0x000F));
+
+	status = spiTransactionIS25xP(ops, nbyte+4);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	for (size_t i = 0; i < nbyte; i++)
+	{
+		((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+4];
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
+programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
+{
+	WarpStatus	status;
+
+	// if (NOT RUN MODE)
+	// {
+	// 	return kWarpStatusBadPowerModeSpecified;
+	// }
+
+	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	ops[0] = 0x02;	/* PP */
+	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((startAddress & 0x000F));
+	for (size_t i = 0; i < nbyte; i++)
+	{
+		ops[i+4] = ((uint8_t*)buf)[i];
+	}
+
+	return spiTransactionIS25xP(ops, nbyte+4);
+}
+
+WarpStatus
+eraseSectorIS25xP(uint32_t address)
+{
+	WarpStatus	status;
+
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0xD7;	/* SER (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionIS25xP(ops, 4);
+}
+
+WarpStatus
+erase32kBlockIS25xP(uint32_t address)
+{
+	WarpStatus	status;
+
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0x52;	/* BER32K (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionIS25xP(ops, 4);
+}
+
+WarpStatus
+erase64kBlockIS25xP(uint32_t address)
+{
+	WarpStatus	status;
+
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0xD8;	/* BER64K (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionIS25xP(ops, 4);
+}
+
+WarpStatus
+chipEraseIS25xP()
+{
+	WarpStatus	status;
+
+	uint8_t	ops[1] = {0};
+
+	ops[0] = 0xC7;	/* CER (SPI Mode) */
+
+	return spiTransactionIS25xP(ops, 1);
 }
