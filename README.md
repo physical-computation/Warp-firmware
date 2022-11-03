@@ -1,10 +1,12 @@
 # Baseline firmware for the [Warp](https://github.com/physical-computation/Warp-hardware) family of hardware platforms
 This is the firmware for the [Warp hardware](https://github.com/physical-computation/Warp-hardware) and its publicly available and unpublished derivatives. This firmware also runs on the Freescale/NXP FRDM KL03 evaluation board which we use for teaching at the University of Cambridge. When running on platforms other than Warp, only the sensors available in the corresponding hardware platform are accessible.
 
-**Prerequisites:** You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., via `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
+**Prerequisites:** You need an arm cross-compiler such as `arm-none-eabi-gcc` installed as well as a working `cmake` (installed, e.g., via `apt-get` on Linux or via [MacPorts](https://www.macports.org) on macOS). On Ubuntu, the package you need is `gcc-arm-none-eabi`. You will also need an installed copy of the SEGGER [JLink commander](https://www.segger.com/downloads/jlink/), `JlinkExe`, which is available for Linux, macOS, and Windows (here are direct links for downloading it for [macOS](https://www.segger.com/downloads/jlink/JLink_MacOSX.pkg), and [Linux tgz 64-bit](https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.tgz)).
 
 ## 1.  Compiling the Warp firmware
-First, edit [setup.conf](setup.conf) to set the variable `ARMGCC_DIR`. If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. In the following, this `README.md` will refer to the top of the repository as `$TREEROOT`.
+First, edit [setup.conf](setup.conf) to set the variable `ARMGCC_DIR` and `JLINKPATH`. If your `arm-none-eabi-gcc` is in `/usr/local/bin/arm-none-eabi-gcc`, then you want to set  `ARMGCC_DIR` to `/usr/local`. In the following, this `README.md` will refer to the top of the repository as `$TREEROOT`. On some platforms, you might need to also, in addition, set the `ARMGCC_DIR` environment variable in your shell (using `setenv` or `export` as appropriate), to point to the same path as you set in [setup.conf](setup.conf).
+
+Second, edit [`tools/scripts/glaux.jlink.commands`](tools/scripts/glaux.jlink.commands) and [`tools/scripts/warp.jlink.commands`](tools/scripts/warp.jlink.commands) to replace `<full-path-to-warp-firmware>` with the full path to your Warp firmware directory.
 
 Third, build the Warp firmware by
 
@@ -25,50 +27,7 @@ To connect to the running hardware to see output, you will need two terminal win
 ## 2. Using the Warp firmware on the Freescale FRDMKL03 Board
 The SEGGER firmware allows you to use SEGGER’s JLink software to load your own firmware to the board, even without using their specialized JLink programming cables. You can find the SEGGER firmware at the SEGGER Page for [OpenSDA firmware](https://www.segger.com/products/debug-probes/j-link/models/other-j-links/opensda-sda-v2/).
 
-To build the Warp firmware for the FRDM KL03, you will need to uncomment the `#define WARP_FRDMKL03` define in `src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c`. When building for the FRDMKL03 board, you can also disable drivers for sensors that are not on the FRDMKL03 (i.e., disable all sensors except the MMA8451Q). The full set of diffs is:
-```diff
-diff --git a/src/boot/ksdk1.1.0/CMakeLists.txt b/src/boot/ksdk1.1.0/CMakeLists.txt
-index 5cd6996..197e0a5 100755
---- a/src/boot/ksdk1.1.0/CMakeLists.txt
-+++ b/src/boot/ksdk1.1.0/CMakeLists.txt
-@@ -89,19 +89,19 @@ ADD_EXECUTABLE(Warp
-     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S"
-     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-boot.c"
-     "${ProjDirPath}/../../src/warp-kl03-ksdk1.1-powermodes.c"
--    "${ProjDirPath}/../../src/devBMX055.c"
-+#    "${ProjDirPath}/../../src/devBMX055.c"
- #    "${ProjDirPath}/../../src/devADXL362.c"
-     "${ProjDirPath}/../../src/devMMA8451Q.c"
- #    "${ProjDirPath}/../../src/devLPS25H.c"
--    "${ProjDirPath}/../../src/devHDC1000.c"
--    "${ProjDirPath}/../../src/devMAG3110.c"
-+#    "${ProjDirPath}/../../src/devHDC1000.c"
-+#    "${ProjDirPath}/../../src/devMAG3110.c"
- #    "${ProjDirPath}/../../src/devSI7021.c"
--    "${ProjDirPath}/../../src/devL3GD20H.c"
--    "${ProjDirPath}/../../src/devBME680.c"
-+#    "${ProjDirPath}/../../src/devL3GD20H.c"
-+#    "${ProjDirPath}/../../src/devBME680.c"
- #    "${ProjDirPath}/../../src/devTCS34725.c"
- #    "${ProjDirPath}/../../src/devSI4705.c"
--    "${ProjDirPath}/../../src/devCCS811.c"
--    "${ProjDirPath}/../../src/devAMG8834.c"
-+#    "${ProjDirPath}/../../src/devCCS811.c"
-+#    "${ProjDirPath}/../../src/devAMG8834.c"
- #    "${ProjDirPath}/../../src/devRV8803C7.c"
- #    "${ProjDirPath}/../../src/devPAN1326.c"
- #    "${ProjDirPath}/../../src/devAS7262.c"
-diff --git a/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c b/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
-index 87a27e1..42ce458 100755
---- a/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
-+++ b/src/boot/ksdk1.1.0/warp-kl03-ksdk1.1-boot.c
-@@ -55,7 +55,7 @@
- #include "SEGGER_RTT.h"
- #include "warp.h"
- 
--//#define WARP_FRDMKL03
-+#define WARP_FRDMKL03
-```
+To build the Warp firmware for the FRDM KL03, you will need to modify [this line in `src/boot/ksdk1.1.0/config.h`](https://github.com/physical-computation/Warp-firmware/blob/9e7f9e5e3f3c039cc98cbd1e6dfeb6b8fd78c86a/src/boot/ksdk1.1.0/config.h#L55).
 
 
 ## 3.  Editing the firmware

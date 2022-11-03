@@ -219,7 +219,7 @@ static void						activateAllLowPowerSensorModes(bool verbose);
 static void						powerupAllSensors(void);
 static uint8_t						readHexByte(void);
 static int						read4digits(void);
-static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun);
+static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
 
 /*
  *	TODO: change the following to take byte arrays
@@ -396,19 +396,19 @@ enableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-
-//TODO: we don't use hw flow control so don't need RTS/CTS
- *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
- *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+	 *
+	 *	TODO: we don't use hw flow control so don't need RTS/CTS
+ 	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+ 	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
 
-//TODO: we don't use hw flow control so don't need RTS/CTS
-//	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
-//	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
-//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
-//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
+	//TODO: we don't use hw flow control so don't need RTS/CTS
+	//	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
+	//	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
+	//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
+	//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 
 	/*
 	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
@@ -439,15 +439,15 @@ disableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-
-//TODO: we don't use the HW flow control and that messes with the SPI any way
- *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
- *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
-//TODO: we don't use flow-control
+	/*
+	 * We don't use the HW flow control and that messes with the SPI any way
+	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
@@ -456,7 +456,7 @@ disableLPUARTpins(void)
 
 	/*
 	 *	Disable LPUART CLOCK
-	*/
+	 */
 	CLOCK_SYS_DisableLpuartClock(0);
 }
 
@@ -530,7 +530,7 @@ warpDisableSPIpins(void)
 		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
 	#endif
 
-//TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
+	//TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO_UART_RTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
@@ -1297,6 +1297,12 @@ warpPrint(const char *fmt, ...)
 		#endif
 	#endif
 
+
+	/*
+	 *	Throttle to enable SEGGER to grab output, otherwise "run" mode may miss lines.
+	 */
+	OSA_TimeDelay(5);
+
 	return;
 }
 
@@ -1605,56 +1611,55 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+		initMMA8451Q(	0x1C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
-		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState,		kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
+		initLPS25H(	0x5C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVHDC1000)
-		initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State,		kWarpDefaultSupplyVoltageMillivoltsHDC1000	);
+		initHDC1000(	0x43	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsHDC1000	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
+		initMAG3110(	0x0E	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI7021)
-		initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State,		kWarpDefaultSupplyVoltageMillivoltsSI7021	);
+		initSI7021(	0x40	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI7021	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
+		initL3GD20H(	0x6A	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-//		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		initBME680(	0x77	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		initBME680(	0x77	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBME680	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
-		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
+		initTCS34725(	0x29	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI4705)
-		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State,		kWarpDefaultSupplyVoltageMillivoltsSI4705	);
+		initSI4705(	0x11	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI4705	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVCCS811)
-		initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State,		kWarpDefaultSupplyVoltageMillivoltsCCS811	);
+		initCCS811(	0x5A	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsCCS811	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAMG8834)
-		initAMG8834(	0x68	/* i2cAddress */,	&deviceAMG8834State,		kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
+		initAMG8834(	0x68	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7262)
-		initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State,		kWarpDefaultSupplyVoltageMillivoltsAS7262	);
+		initAS7262(	0x49	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAS7262	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7263)
-		initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State,		kWarpDefaultSupplyVoltageMillivoltsAS7263	);
+		initAS7263(	0x49	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAS7263	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
@@ -1681,7 +1686,7 @@ main(void)
 		}
 		else
 		{
-			warpPrint("readRTCRegisterRV8803C7() failed...\n");
+			warpPrint("readRTCRegisterRV8803C7() succeeded.\n");
 		}
 
 		/*
@@ -1698,7 +1703,6 @@ main(void)
 		{
 			warpPrint("writeRTCRegisterRV8803C7() succeeded.\n");
 		}
-		warpDisableI2Cpins();
 	#endif
 
 	/*
@@ -1736,41 +1740,10 @@ main(void)
 		/*
 		 *	Only supported in Glaux.
 		 */
-		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
+		initIS25xP(kGlauxPinFlash_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 
-		uint8_t	ops1[] = {0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops1, sizeof(ops1)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read JEDEC ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
-		}
-
-		uint8_t	ops2[] = {0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops2, sizeof(ops2)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Manufacturer ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
-		}
-
-		uint8_t	ops3[] = {0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops3, sizeof(ops3)/sizeof(uint8_t) /* opCount */);
-				if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Flash ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-		}
-		
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		initIS25xP(kWarpPinIS25xP_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
@@ -1851,8 +1824,8 @@ main(void)
 	 *	below which also means that the console via BLE will be disabled as
 	 *	the BLE module will be turned off by default.
 	 */
-	if (WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT)
-	{
+
+	#if (WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT)
 		/*
 		*	Make sure sensor supplies are off.
 		*
@@ -1861,13 +1834,14 @@ main(void)
 		warpPrint("Disabling sensor supply... \n");
 		warpDisableSupplyVoltage();
 		warpPrint("done.\n");
-	}
+	#endif
 
 	/*
 	 *	At this point, we consider the system "booted" and, e.g., warpPrint()s
 	 *	will also be sent to the BLE if that is compiled in.
 	 */
 	gWarpBooted = true;
+	warpPrint("Boot done.\n");
 
 	#if (WARP_BUILD_BOOT_TO_CSVSTREAM)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
@@ -1887,27 +1861,29 @@ main(void)
 		}
 
 		warpScaleSupplyVoltage(3300);
-		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */);
+		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
+
 		/*
 		 *	Notreached
 		 */
 	#endif
 
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
-		warpPrint("About to read IS25xP JEDEC ID...\n");
-		//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+		#if (WARP_BUILD_ENABLE_DEVIS25xP)
+			warpPrint("About to read IS25xP JEDEC ID...\n");
+			//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
 
-		warpPrint("About to read IS25xP Manufacturer ID...\n");
-		//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+			warpPrint("About to read IS25xP Manufacturer ID...\n");
+			//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
 
-		warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
-		//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-		warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-
+			warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
+			//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
+			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
+		#endif
 
 		warpPrint("About to activate low-power modes (including IS25xP Flash)...\n");
 		activateAllLowPowerSensorModes(true /* verbose */);
@@ -1991,8 +1967,7 @@ main(void)
 			blinkLED(kGlauxPinLED);
 			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 			{
-				printSensorDataBME680(false /* hexModeFlag */);
-				warpPrint(" done.\n");
+				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 			}
 
 			warpPrint("About to configureSensorBME680() for sleep...\n");
@@ -2008,7 +1983,8 @@ main(void)
 			blinkLED(kGlauxPinLED);
 
 			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
-			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, 30/* sleep seconds */);
+			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+
 			if (status != kWarpStatusOK)
 			{
 				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
@@ -2051,6 +2027,8 @@ main(void)
 		#if (WARP_BUILD_ENABLE_DEVAT45DB)
 			warpPrint("\r- 'R': read bytes from Flash.\n");
 			warpPrint("\r- 'F': write bytes to Flash.\n");
+		#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+			warpPrint("\r- 'F': Open Flash menu.\n");
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVICE40)
@@ -2677,6 +2655,8 @@ main(void)
 				}
 
 				warpPrint("\r\n\tThis should never happen...\n");
+
+				break;
 			}
 #endif
 			/*
@@ -2705,7 +2685,7 @@ main(void)
 				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
 				uint16_t	menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
-				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun);
+				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, true /* loopForever */);
 
 				/*
 				 *	Not reached (printAllSensors() does not return)
@@ -2725,21 +2705,343 @@ main(void)
 
 				warpPrint("\r\n\tEnd address (e.g., '0000')> ");
 				//xx = read4digits();
+
+				break;
 			}
 
 			/*
 			 *	Write raw bytes read from console to Flash
 			 */
+			#if (WARP_BUILD_ENABLE_DEVIS25xP)
 			case 'F':
 			{
-				warpPrint("\r\n\tStart address (e.g., '0000')> ");
-				//xx = read4digits();
+				warpPrint(
+					"\r\n\tDevice: IS25xP"
+					"\r\n\t'1' - Info and status registers"
+					"\r\n\t'2' - Dump JEDEC Table"
+					"\r\n\t'3' - Read"
+				);
+				warpPrint(
+					"\r\n\t'4' - Write Enable"
+					"\r\n\t'5' - Write"
+					"\r\n\t'6' - Chip Erase"
+				);
+				warpPrint("\r\n\tEnter selection> ");
+				key = warpWaitKey();
+				warpPrint("\n");
 
-				warpPrint("\r\n\tNumber of bytes to read from console (e.g., '0000')> ");
-				//xx = read4digits();
+				switch(key)
+				{
+					
+				/*
+				 *	Read informational and status registers
+				 */
+				case '1':
+				{
+					uint8_t	ops1[] = {	/* Read JEDEC ID Command */
+						0x9F,	/* Instruction Code */
+						0x00,	/* Dummy Receive Byte */
+						0x00,	/* Dummy Receive Byte */
+						0x00,	/* Dummy Receive Byte */
+					};
+					status = spiTransactionIS25xP(ops1, sizeof(ops1)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read JEDEC ID failed...\n");
+					}
+					else
+					{
+						warpPrint("JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
+					}
+					
 
-				warpPrint("\r\n\tEnter [%d] raw bytes > ");
+					uint8_t	ops2[] = {	/* Read Manufacturer & Device ID */
+						0x90,	/* Instruction Code */
+						0x00,	/* Dummy Byte 1	    */ 
+						0x00,	/* Dummy Byte 2     */ 
+						0x00,	/* Control. 00h: First MFID then ID. 01h: First ID then MFID. */
+						0x00,	/* Dummy Receive Byte */
+						0x00,	/* Dummy Receive Byte */
+					};
+					status = spiTransactionIS25xP(ops2, sizeof(ops2)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Manufacturer ID failed...\n");
+					}
+					else
+					{
+						warpPrint("Manufacturer & Device ID = [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
+					}
+
+					uint8_t	ops3[] = {	/* Read ID / Release Power Down */
+						0xAB,	/* Instruction Code */  
+						0x00,	/* Dummy Byte */  
+						0x00,	/* Dummy Byte */ 
+						0x00,	/* Dummy Byte */ 
+						0x00,	/* Dummy Receive Byte */
+					};
+					status = spiTransactionIS25xP(ops3, sizeof(ops3)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("Flash ID = [0x%x]\n", deviceIS25xPState.spiSinkBuffer[4]);
+					}
+
+					uint8_t	ops4[] = {	/* Read Status Register */
+						0x05,	/* Byte0 */  
+						0x00,	/* Dummy Byte1 */
+					};
+					status = spiTransactionIS25xP(ops4, sizeof(ops4)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("Status = ["BYTE_TO_BINARY_PATTERN"]\n", BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
+					}
+
+					uint8_t	ops5[] = {	/* Read Function Register */
+						0x48,	/* RDFR */  
+						0x00,	/* Dummy Byte1 */
+					};
+					status = spiTransactionIS25xP(ops5, sizeof(ops5)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("RDFR = ["BYTE_TO_BINARY_PATTERN"]\n", BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
+					}
+
+					uint8_t	ops6[] = {	/* Read Read Parameters */
+						0x61,	/* RDRP */  
+						0x00,	/* Dummy Byte1 */
+					};
+					status = spiTransactionIS25xP(ops6, sizeof(ops6)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("ReadParam = ["BYTE_TO_BINARY_PATTERN"]\n", BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
+					}
+
+					uint8_t	ops7[] = {	/* Read Extended Read Parameters */
+						0x81,	/* RDERP */  
+						0x00,	/* Dummy Byte1 */
+					};
+					status = spiTransactionIS25xP(ops7, sizeof(ops7)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("ExtReadParam = ["BYTE_TO_BINARY_PATTERN"]\n", BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
+					}
+
+					uint8_t	ops8[] = {	/* Read Unique ID */
+						0x4B,	/* RDUID */  
+						0x00,	/* Dummy Byte */
+						0x00,	/* Dummy Byte */
+						0x00,	/* Dummy Byte */
+						0x00,	/* Dummy Byte */
+						0x00,	/* Receive */
+					};
+					status = spiTransactionIS25xP(ops8, sizeof(ops8)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("UID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5]);
+					}
+
+					break;
+				}
+
+				
+				/*
+				 *	Dump first 0xF addresses from JEDEC table
+				 */
+				case '2':
+				{
+					uint8_t	ops[] = {	/* Read JEDEC Discoverable Params */
+						0x5A,	/* RDSFDP */  
+						0x00,	/* Address Byte */
+						0x00,	/* Address Byte */
+						0x00,	/* Address Byte */
+						0x00,	/* Dummy Byte */
+						0x00,	/* Receive 0x00 */
+						0x00,	/* Receive 0x01 */
+						0x00,	/* Receive 0x02 */
+						0x00,	/* Receive 0x03 */
+						0x00,	/* Receive 0x04 */
+						0x00,	/* Receive 0x05 */
+						0x00,	/* Receive 0x06 */
+						0x00,	/* Receive 0x07 */
+						0x00,	/* Receive 0x08 */
+						0x00,	/* Receive 0x09 */
+						0x00,	/* Receive 0x0A */
+						0x00,	/* Receive 0x0B */
+						0x00,	/* Receive 0x0C */
+						0x00,	/* Receive 0x0D */
+						0x00,	/* Receive 0x0E */
+						0x00,	/* Receive 0x0F */
+					};
+					status = spiTransactionIS25xP(ops, sizeof(ops)/sizeof(uint8_t) /* opCount */);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("SPI transaction to read Flash ID failed...\n");
+					}
+					else
+					{
+						warpPrint("SFDP[0x00] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x00]);
+						warpPrint("SFDP[0x01] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x01]);
+						warpPrint("SFDP[0x02] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x02]);
+						warpPrint("SFDP[0x03] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x03]);
+						warpPrint("SFDP[0x04] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x04]);
+						warpPrint("SFDP[0x05] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x05]);
+						warpPrint("SFDP[0x06] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x06]);
+						warpPrint("SFDP[0x07] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x07]);
+						warpPrint("SFDP[0x08] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x08]);
+						warpPrint("SFDP[0x09] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x09]);
+						warpPrint("SFDP[0x0A] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0A]);
+						warpPrint("SFDP[0x0B] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0B]);
+						warpPrint("SFDP[0x0C] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0C]);
+						warpPrint("SFDP[0x0D] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0D]);
+						warpPrint("SFDP[0x0E] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0E]);
+						warpPrint("SFDP[0x0F] = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5 + 0x0F]);
+					}
+					break;
+				}
+
+				/*
+				 *	Perform a read
+				 */
+				case '3':
+				{
+					WarpStatus 	status;
+					uint8_t		buf[32] = {0};
+
+					status = readMemoryIS25xP(0, 32, buf);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("\n");
+						for (size_t i = 0; i < 32; i++)
+						{
+							warpPrint("0x%08x:\t%x\n", i, buf[i]);
+							OSA_TimeDelay(5);
+							
+						}
+					}
+
+					
+					break;
+				}
+
+				
+				/*
+				 *	Write Enable
+				 */
+				case '4':
+				{
+					WarpStatus 	status;
+					uint8_t		ops[] = {
+						0x06,	/* WREN */
+					};					
+
+					status = spiTransactionIS25xP(ops, 1);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+					
+					break;
+				}
+
+
+				/*
+				 *	Perform a write
+				 */
+				case '5':
+				{
+					WarpStatus 	status;
+					uint8_t		buf[32] = {0};
+					
+					for (size_t i = 0; i < 32; i++)
+					{
+						buf[i] = i;
+					}
+					
+
+					status = programPageIS25xP(0, 32, buf);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+
+					
+					break;
+				}
+
+
+				/*
+				 *	Erase chip (reset to 0xFF)
+				 */
+				case '6':
+				{
+					WarpStatus 	status;			
+
+					status = chipEraseIS25xP();
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						warpPrint("OK.\n");
+					}
+
+					break;
+				}
+				default:
+				{
+					warpPrint("\r\n\tInvalid selection.");
+					break;
+
+				}
+				}
+				// warpPrint("\r\n\tStart address (e.g., '0000')> ");
+				// //xx = read4digits();
+
+				// warpPrint("\r\n\tNumber of bytes to read from console (e.g., '0000')> ");
+				// //xx = read4digits();
+
+				// warpPrint("\r\n\tEnter [%d] raw bytes > ");
+
+				break;
 			}
+			#endif
 
 			/*
 			 *	Use data from Flash to program FPGA
@@ -2751,6 +3053,8 @@ main(void)
 
 				warpPrint("\r\n\tNumber of bytes to use (e.g., '0000')> ");
 				//xx = read4digits();
+
+				break;
 			}
 
 
@@ -2776,7 +3080,7 @@ main(void)
 
 
 void
-printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun)
+printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever)
 {
 	/*
 	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling at 60fps
@@ -2792,7 +3096,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-					0x01,/* Normal read 8bit, 800Hz, normal, active mode */
+					0x01/* Normal read 8bit, 800Hz, normal, active mode */
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
@@ -2803,7 +3107,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 	numberOfConfigErrors += configureSensorL3GD20H(	0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
 					0b00100000,
-					0b00000000,/* normal mode, disable FIFO, disable high pass filter */
+					0b00000000/* normal mode, disable FIFO, disable high pass filter */
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVBME680)
@@ -2906,7 +3210,8 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		warpPrint("\n\n");
 	}
 
-	while(1)
+
+	do
 	{
 		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
 
@@ -2956,7 +3261,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		}
 
 		readingCount++;
-	}
+	} while (loopForever);
 }
 
 

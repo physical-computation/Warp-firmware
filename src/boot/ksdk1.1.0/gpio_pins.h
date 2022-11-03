@@ -34,36 +34,38 @@
 
 enum _gpio_pins
 {
-	kWarpPinUnusedPTA0				= GPIO_MAKE_PIN(HW_GPIOA, 0),		/*	PTA0: Reserved for SWD CLK		*/
-	kWarpPinUnusedPTA1				= GPIO_MAKE_PIN(HW_GPIOA, 1),		/*	PTA1: Reserved for SWD RESET_B		*/
-	kWarpPinUnusedPTA2				= GPIO_MAKE_PIN(HW_GPIOA, 2),		/*	PTA2: Reserved for SWD DIO		*/
-	kWarpPinEXTAL0					= GPIO_MAKE_PIN(HW_GPIOA, 3),		/*	PTA3: Reserved for EXTAL0		*/
-	kWarpPinXTAL0					= GPIO_MAKE_PIN(HW_GPIOA, 4),		/*	PTA4: Reserved for XTAL0		*/
-	
+	kWarpPinUnusedPTA0			= GPIO_MAKE_PIN(HW_GPIOA, 0),	/*	PTA0: Reserved for SWD CLK	*/
+	kWarpPinUnusedPTA1			= GPIO_MAKE_PIN(HW_GPIOA, 1),	/*	PTA1: Reserved for SWD RESET_B	*/
+	kWarpPinUnusedPTA2			= GPIO_MAKE_PIN(HW_GPIOA, 2),	/*	PTA2: Reserved for SWD DIO	*/
+	kWarpPinEXTAL0				= GPIO_MAKE_PIN(HW_GPIOA, 3),	/*	PTA3: Reserved for EXTAL0	*/
+	kWarpPinXTAL0				= GPIO_MAKE_PIN(HW_GPIOA, 4),	/*	PTA4: Reserved for XTAL0	*/
+
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		kWarpPinRTC_CLKIN			= GPIO_MAKE_PIN(HW_GPIOA, 5),
+		kWarpPinRTC_CLKIN		= GPIO_MAKE_PIN(HW_GPIOA, 5),
 	#else
-		kWarpPinBGX_nRST			= GPIO_MAKE_PIN(HW_GPIOA, 5),
+		kWarpPinBGX_nRST		= GPIO_MAKE_PIN(HW_GPIOA, 5),
 	#endif
 
-	kWarpPinSPI_MISO_UART_RTS			= GPIO_MAKE_PIN(HW_GPIOA, 6),
-	kWarpPinSPI_MOSI_UART_CTS			= GPIO_MAKE_PIN(HW_GPIOA, 7),
-	kWarpPinADXL362_SPI_nCS				= GPIO_MAKE_PIN(HW_GPIOA, 8),
+	kWarpPinSPI_MISO_UART_RTS		= GPIO_MAKE_PIN(HW_GPIOA, 6),
+	kWarpPinSPI_MOSI_UART_CTS		= GPIO_MAKE_PIN(HW_GPIOA, 7),
+	kWarpPinADXL362_SPI_nCS			= GPIO_MAKE_PIN(HW_GPIOA, 8),
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		kWarpPinSPI_SCK				= GPIO_MAKE_PIN(HW_GPIOA, 9),
+		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOA, 9),
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		kWarpPinIS25xP_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOA, 9),
 	#else
-		kWarpPinAT45DB_SPI_nCS			= GPIO_MAKE_PIN(HW_GPIOA, 9),
+		kWarpPinAT45DB_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOA, 9),
 	#endif
 
-	kWarpPinISL23415_SPI_nCS			= GPIO_MAKE_PIN(HW_GPIOA, 12),
+	kWarpPinISL23415_SPI_nCS		= GPIO_MAKE_PIN(HW_GPIOA, 12),
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		kGlauxPinLED				= GPIO_MAKE_PIN(HW_GPIOB, 0),
-		kGlauxPinUnusedPTB1			= GPIO_MAKE_PIN(HW_GPIOB, 1),
+		kGlauxPinLED			= GPIO_MAKE_PIN(HW_GPIOB, 0),
+		kGlauxPinUnusedPTB1		= GPIO_MAKE_PIN(HW_GPIOB, 1),
 	#else
-		kWarpPinSPI_SCK				= GPIO_MAKE_PIN(HW_GPIOB, 0),
-		kWarpPinFPGA_nCS			= GPIO_MAKE_PIN(HW_GPIOB, 1),
+		kWarpPinSPI_SCK			= GPIO_MAKE_PIN(HW_GPIOB, 0),
+		kWarpPinFPGA_nCS		= GPIO_MAKE_PIN(HW_GPIOB, 1),
 	#endif
 
 	#if (WARP_BUILD_ENABLE_FRDMKL03)

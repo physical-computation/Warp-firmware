@@ -74,7 +74,7 @@ initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -128,7 +128,7 @@ writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload, uint16_t me
 }
 
 WarpStatus
-configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint16_t menuI2cPullupValue)
+configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1)
 {
 	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
 
@@ -136,12 +136,12 @@ configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1, uint16
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
 
 	i2cWriteStatus1 = writeSensorRegisterMMA8451Q(kWarpSensorConfigurationRegisterMMA8451QF_SETUP /* register address F_SETUP */,
-							payloadF_SETUP /* payload: Disable FIFO */,
-							menuI2cPullupValue);
+							payloadF_SETUP /* payload: Disable FIFO */
+							);
 
 	i2cWriteStatus2 = writeSensorRegisterMMA8451Q(kWarpSensorConfigurationRegisterMMA8451QCTRL_REG1 /* register address CTRL_REG1 */,
-							payloadCTRL_REG1 /* payload */,
-							menuI2cPullupValue);
+							payloadCTRL_REG1 /* payload */
+							);
 
 	return (i2cWriteStatus1 | i2cWriteStatus2);
 }

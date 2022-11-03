@@ -332,6 +332,11 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pPa
   unsigned FormatFlags;
   unsigned FieldWidth;
 
+  /*
+   *  First, zero-out the Warp buffer:
+   */
+  bzero(warpPrintBuffer, warpPrintBufferLength);
+
   BufferDesc.pBuffer        = warpPrintBuffer;
   BufferDesc.BufferSize     = warpPrintBufferLength;
   BufferDesc.Cnt            = 0u;
