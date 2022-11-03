@@ -199,7 +199,7 @@ volatile uint16_t					gWarpCurrentSupplyVoltage		= kWarpDefaultSupplyVoltageMill
 char							gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
 
 /*
- *	Since only one SPI transaction is ongoing at a time in our implementation
+ *	Since only one SPI transaction is ongoing at a time in our implementaion
  */
 uint8_t							gWarpSpiCommonSourceBuffer[kWarpMemoryCommonSpiBufferBytes];
 uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
@@ -396,19 +396,19 @@ enableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-
-//TODO: we don't use hw flow control so don't need RTS/CTS
- *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
- *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+	 *
+	 *	TODO: we don't use hw flow control so don't need RTS/CTS
+ 	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+ 	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt3);
 
-//TODO: we don't use hw flow control so don't need RTS/CTS
-//	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
-//	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
-//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
-//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
+	//TODO: we don't use hw flow control so don't need RTS/CTS
+	//	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
+	//	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
+	//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MISO_UART_RTS);
+	//	GPIO_DRV_SetPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 
 	/*
 	 *	Initialize LPUART0. See KSDK13APIRM.pdf section 40.4.3, page 1353
@@ -439,15 +439,15 @@ disableLPUARTpins(void)
 	 *	Setup:
 	 *		PTB3/kWarpPinI2C0_SCL_UART_TX for UART TX
 	 *		PTB4/kWarpPinI2C0_SCL_UART_RX for UART RX
-
-//TODO: we don't use the HW flow control and that messes with the SPI any way
- *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
- *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
+	 *		PTA6/kWarpPinSPI_MISO_UART_RTS for UART RTS
+	 *		PTA7/kWarpPinSPI_MOSI_UART_CTS for UART CTS
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
-//TODO: we don't use flow-control
+	/*
+	 * We don't use the HW flow control and that messes with the SPI any way
+	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
@@ -456,7 +456,7 @@ disableLPUARTpins(void)
 
 	/*
 	 *	Disable LPUART CLOCK
-	*/
+	 */
 	CLOCK_SYS_DisableLpuartClock(0);
 }
 
@@ -530,7 +530,7 @@ warpDisableSPIpins(void)
 		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
 	#endif
 
-//TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
+	//TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI_UART_CTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MISO_UART_RTS);
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_SCK);
@@ -1297,10 +1297,12 @@ warpPrint(const char *fmt, ...)
 		#endif
 	#endif
 
+
 	/*
-	 *	Without this RUN mode printing misses lines.
+	 *	Throttle to enable SEGGER to grab output, otherwise "run" mode may miss lines.
 	 */
 	OSA_TimeDelay(5);
+
 	return;
 }
 
@@ -1609,57 +1611,55 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-//		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
-		initMMA8451Q(	0x1C	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+		initMMA8451Q(	0x1C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
-		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState,		kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
+		initLPS25H(	0x5C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVHDC1000)
-		initHDC1000(	0x43	/* i2cAddress */,	&deviceHDC1000State,		kWarpDefaultSupplyVoltageMillivoltsHDC1000	);
+		initHDC1000(	0x43	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsHDC1000	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
+		initMAG3110(	0x0E	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI7021)
-		initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State,		kWarpDefaultSupplyVoltageMillivoltsSI7021	);
+		initSI7021(	0x40	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI7021	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
+		initL3GD20H(	0x6A	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVBME680)
-//		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		initBME680(	0x77	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
+		initBME680(	0x77	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBME680	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
-		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
+		initTCS34725(	0x29	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVSI4705)
-		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State,		kWarpDefaultSupplyVoltageMillivoltsSI4705	);
+		initSI4705(	0x11	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI4705	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVCCS811)
-		initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State,		kWarpDefaultSupplyVoltageMillivoltsCCS811	);
+		initCCS811(	0x5A	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsCCS811	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAMG8834)
-		initAMG8834(	0x68	/* i2cAddress */,	&deviceAMG8834State,		kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
+		initAMG8834(	0x68	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7262)
-		initAS7262(	0x49	/* i2cAddress */,	&deviceAS7262State,		kWarpDefaultSupplyVoltageMillivoltsAS7262	);
+		initAS7262(	0x49	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAS7262	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7263)
-		initAS7263(	0x49	/* i2cAddress */,	&deviceAS7263State,		kWarpDefaultSupplyVoltageMillivoltsAS7263	);
+		initAS7263(	0x49	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAS7263	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
@@ -1741,6 +1741,7 @@ main(void)
 		 *	Only supported in Glaux.
 		 */
 		initIS25xP(kGlauxPinFlash_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
+
 	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
 		initIS25xP(kWarpPinIS25xP_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
 	#endif
@@ -1823,6 +1824,7 @@ main(void)
 	 *	below which also means that the console via BLE will be disabled as
 	 *	the BLE module will be turned off by default.
 	 */
+
 	#if (WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT)
 		/*
 		*	Make sure sensor supplies are off.
@@ -1860,6 +1862,7 @@ main(void)
 
 		warpScaleSupplyVoltage(3300);
 		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
+
 		/*
 		 *	Notreached
 		 */
@@ -1981,6 +1984,7 @@ main(void)
 
 			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
 			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+
 			if (status != kWarpStatusOK)
 			{
 				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
@@ -3205,6 +3209,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
 		warpPrint("\n\n");
 	}
+
 
 	do
 	{

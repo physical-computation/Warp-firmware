@@ -1,5 +1,5 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2020-2022. Phillip Stanley-Marbell, Orestis Kaparounakis.
 
 	All rights reserved.
 
@@ -71,6 +71,7 @@ initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	deviceIS25xPState.spiSinkBuffer			= gWarpSpiCommonSinkBuffer;
 	deviceIS25xPState.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
 	deviceIS25xPState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
 	// PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
 	return;
@@ -136,6 +137,7 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 
 	return kWarpStatusOK;
 }
+
 
 WarpStatus
 readMemoryIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
