@@ -41,18 +41,22 @@
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
- *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules.
+ *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
+ *	(via the CMakeList-*).
+ *
  *	The commented line below should never be uncommented. It is just here to stress a point that
  *	you shouldn't try to enable the Glaux build in this way.
  */
 //#define		WARP_BUILD_ENABLE_GLAUX_VARIANT			0
 
 /*
- *	Define this here to activate FRDMKL03-specific behavior. Unlike the Glaux
- *	build variant above, we currently require users wanting to build for the
- *	KL03 to manually set this here.
+ *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
+ *	(via the CMakeList-*).
+ *
+ *	The commented line below should never be uncommented. It is just here to stress a point that
+ *	you shouldn't try to enable the Glaux build in this way.
  */
-#define		WARP_BUILD_ENABLE_FRDMKL03			0
+//#define		WARP_BUILD_ENABLE_FRDMKL03			0
 
 /*
  *	Force the required configuration if WARP_BUILD_ENABLE_GLAUX_VARIANT is set
