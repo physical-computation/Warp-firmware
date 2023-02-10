@@ -1,0 +1,14 @@
+/**
+*****************************************************************************
+**
+**  File        : syscalls.c
+**
+**  Abstract    : Atollic TrueSTUDIO Minimal System calls file
+**
+**                For more information about which c-functions
+**                need which of these lowlevel functions
+**                please consult the Newlib libc-manual
+**
+**  Environment : Atollic TrueSTUDIO
+**
+**  Distribution: The file is distributed 
