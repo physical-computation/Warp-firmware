@@ -1,0 +1,31 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "master"]
+  pull_request:
+    branches: [ "master"]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install cmake and gcc-arm-none-eabi
+      run: sudo apt-get install -y cmake gcc-arm-none-eabi
+
+    - name: Setup setup.conf
+      run: echo "ARMGCC_DIR=/usr" > setup.conf
+      
+    - name: Export ARMGCC_DIR
+      run: export ARMGCC_DIR=/usr
+    
+    - name: Make Warp
+      # Build your program with the given configuration
+      run: ARMGCC_DIR=/usr make warp
