@@ -68,7 +68,7 @@ int _isatty (int fd)
 #endif
 
 #if (defined(__GNUC__) && (!defined(KDS)) && (!defined(ATOLLIC)))
-caddr_t
+void *
 _sbrk (int incr)
 {
   extern char   end asm ("end");
@@ -84,12 +84,12 @@ _sbrk (int incr)
   if (heap_end + incr > &heap_limit)
     {
       errno = ENOMEM;
-      return (caddr_t) -1;
+      return (void *) -1;
     }
 
   heap_end += incr;
 
-  return (caddr_t) prev_heap_end;
+  return (void *) prev_heap_end;
 }
 #endif
 

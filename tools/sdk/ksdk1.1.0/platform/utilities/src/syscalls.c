@@ -77,7 +77,7 @@ int _write(int32_t file, uint8_t *ptr, int32_t len)
     return len;
 }
 
-caddr_t _sbrk(int32_t incr)
+void * _sbrk(int32_t incr)
 {
     extern uint8_t end asm("end");
     static uint8_t *heap_end;
@@ -93,12 +93,12 @@ caddr_t _sbrk(int32_t incr)
 //      write(1, "Heap and stack collision\n", 25);
 //      abort();
         errno = ENOMEM;
-        return (caddr_t) -1;
+        return (void *) -1;
     }
 
     heap_end += incr;
 
-    return (caddr_t) prev_heap_end;
+    return (void *) prev_heap_end;
 }
 
 int _close(int32_t file)
