@@ -1994,6 +1994,11 @@ main(void)
 			warpPrint("Should not get here...");
 		}
 	#endif
+//warpPrint("About to call printAllSensors()\n");
+//printAllSensors(true /* printHeadersAndCalibration */, 1, 1000, false /* loopForever */);
+//while (1) ;
+
+
 
 	while (1)
 	{

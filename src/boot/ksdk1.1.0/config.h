@@ -109,18 +109,18 @@
 	/*
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
-	#define		WARP_BUILD_ENABLE_DEVADXL362		1
+	#define		WARP_BUILD_ENABLE_DEVADXL362		0
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		1
+	#define		WARP_BUILD_ENABLE_DEVBGX		0
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
+	#define		WARP_BUILD_ENABLE_DEVBMX055		1
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
+	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
@@ -166,10 +166,10 @@ typedef enum
 	 */
 	kWarpDefaultSupplyVoltageMillivolts			= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 2700,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 2700,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 2700,
+	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1900,
 	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsHDC1000		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
