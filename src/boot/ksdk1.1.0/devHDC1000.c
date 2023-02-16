@@ -72,7 +72,7 @@ initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload)
 {
 	uint8_t		payloadByte[2], commandByte[1];
 	i2c_status_t	returnValue;

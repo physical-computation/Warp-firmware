@@ -74,7 +74,7 @@ initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -125,7 +125,7 @@ writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload, uint16_t men
 }
 
 WarpStatus
-configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5, uint16_t menuI2cPullupValue)
+configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5)
 {
 	WarpStatus	status1, status2, status3;
 
@@ -133,16 +133,16 @@ configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t paylo
 	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 
 	status1 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL1 /* register address CTRL1 */,
-							payloadCTRL1 /* payload */,
-							menuI2cPullupValue);
+							payloadCTRL1 /* payload */
+							);
 
 	status2 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL2 /* register address CTRL2 */,
-							payloadCTRL2 /* payload */,
-							menuI2cPullupValue);
+							payloadCTRL2 /* payload */
+							);
 
 	status3 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL5 /* register address CTRL5 */,
-							payloadCTRL5 /* payload */,
-							menuI2cPullupValue);
+							payloadCTRL5 /* payload */
+							);
 
 	return (status1 | status2 | status3);
 }

@@ -76,7 +76,7 @@ initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload)
 {
 	uint8_t		commandByte[1];
 	uint8_t		payloadSize;
@@ -171,7 +171,7 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 }
 
 WarpStatus
-configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
+configureSensorCCS811(uint8_t *payloadMEAS_MODE)
 {
 	WarpStatus	status1, status2;
 
@@ -187,8 +187,8 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
-							payloadMEAS_MODE /* Dummy value */,
-							menuI2cPullupValue);
+							payloadMEAS_MODE /* Dummy value */
+							);
 
 	/*
 	 *	Wait for the sensor to change to application mode
@@ -196,8 +196,8 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	OSA_TimeDelay(500);
 
 	status2 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811MEAS_MODE /* register address MEAS_MODE */,
-							payloadMEAS_MODE /* payload: 3F initial reset */,
-							menuI2cPullupValue);
+							payloadMEAS_MODE /* payload: 3F initial reset */
+							);
 
 	/*
 	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4,

@@ -69,6 +69,8 @@ initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
 	deviceMMA8451QState.i2cAddress			= i2cAddress;
 	deviceMMA8451QState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+	//warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
+	//warpPrint("MMA84 V: %u\n", deviceMMA8451QState.operatingVoltageMillivolts);
 
 	return;
 }
