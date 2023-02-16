@@ -148,7 +148,7 @@
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
 	#include "devCCS811.h"
-	olatile WarpI2CDeviceState			deviceCCS811State;
+	volatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
@@ -1653,7 +1653,7 @@ main(void)
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAMG8834)
-		initAMG8834(	0x68	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
+		initAMG8834(	0x69	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsAMG8834	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVAS7262)
@@ -3093,7 +3093,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#if (WARP_BUILD_ENABLE_DEVAMG8834)
 	numberOfConfigErrors += configureSensorAMG8834(	0x3F,/* Initial reset */
-					0x01,/* Frame rate 1 FPS */
+					0x01/* Frame rate 1 FPS */
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
@@ -3104,7 +3104,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
 	numberOfConfigErrors += configureSensorMAG3110(	0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
 					0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
-					);
+					0x10);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 	numberOfConfigErrors += configureSensorL3GD20H(	0b11111111,/* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z enable */
@@ -3138,27 +3138,27 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#if (WARP_BUILD_ENABLE_DEVHDC1000)
 	numberOfConfigErrors += writeSensorRegisterHDC1000(kWarpSensorConfigurationRegisterHDC1000Configuration,/* Configuration register	*/
-					(0b1010000<<8),
+					(0b1010000<<8)
 					);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVCCS811)
 	uint8_t		payloadCCS811[1];
 	payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
-	numberOfConfigErrors += configureSensorCCS811(payloadCCS811,
+	numberOfConfigErrors += configureSensorCCS811(payloadCCS811
 					);
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVBMX055)
 	numberOfConfigErrors += configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
-					0b10000000,/* Payload:unfiltered data, shadowing enabled */
+					0b10000000/* Payload:unfiltered data, shadowing enabled */
 					);
 	numberOfConfigErrors += configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
-					0b00000001,/* Default 10Hz data rate, forced mode*/
+					0b00000001/* Default 10Hz data rate, forced mode*/
 					);
 	numberOfConfigErrors += configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
 					0b00000000,/* ODR 2000 Hz, unfiltered */
 					0b00000000,/* normal mode */
-					0b10000000,/* unfiltered data, shadowing enabled */
+					0b10000000/* unfiltered data, shadowing enabled */
 					);
 	#endif
 
