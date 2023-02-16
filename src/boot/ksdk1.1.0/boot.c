@@ -1607,9 +1607,9 @@ main(void)
 	 *	Initialize all the sensors
 	 */
 	#if (WARP_BUILD_ENABLE_DEVBMX055)
-		initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState,	kWarpDefaultSupplyVoltageMillivoltsBMX055accel	);
-		initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState,		kWarpDefaultSupplyVoltageMillivoltsBMX055gyro	);
-		initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState,		kWarpDefaultSupplyVoltageMillivoltsBMX055mag	);
+		initBMX055accel(0x18	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBMX055accel	);
+		initBMX055gyro(	0x68	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro	);
+		initBMX055mag(	0x10	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBMX055mag	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
