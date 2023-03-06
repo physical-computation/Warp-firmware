@@ -196,8 +196,7 @@ volatile uint32_t					gWarpUartTimeoutMilliseconds		= kWarpDefaultUartTimeoutMil
 volatile uint32_t					gWarpMenuPrintDelayMilliseconds		= kWarpDefaultMenuPrintDelayMilliseconds;
 volatile uint32_t					gWarpSupplySettlingDelayMilliseconds	= kWarpDefaultSupplySettlingDelayMilliseconds;
 volatile uint16_t					gWarpCurrentSupplyVoltage		= kWarpDefaultSupplyVoltageMillivolts;
-char							gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
-
+char								gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
 /*
  *	Since only one SPI transaction is ongoing at a time in our implementaion
  */
@@ -856,8 +855,9 @@ enableTPS62740(uint16_t voltageMillivolts)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 7, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 11, kPortMuxAsGpio);
-
+	//warpPrint("voltageMillivoltsq, kWarpDefaultSupplyVoltageMillivolts, %d, %d\n", voltageMillivolts, kWarpDefaultSupplyVoltageMillivolts);
 	setTPS62740CommonControlLines(voltageMillivolts);
+    //setTPS62740CommonControlLines(kWarpDefaultSupplyVoltageMillivolts);
 	GPIO_DRV_SetPinOutput(kWarpPinTPS62740_REGCTRL);
 }
 #endif
@@ -867,6 +867,8 @@ enableTPS62740(uint16_t voltageMillivolts)
 void
 setTPS62740CommonControlLines(uint16_t voltageMillivolts)
 {
+	//warpPrint("voltageMillivoltsw = %d\n", voltageMillivolts);
+	
 		switch(voltageMillivolts)
 		{
 			case 1800:
@@ -1050,6 +1052,7 @@ setTPS62740CommonControlLines(uint16_t voltageMillivolts)
 void
 warpScaleSupplyVoltage(uint16_t voltageMillivolts)
 {
+	
 	if (voltageMillivolts == gWarpCurrentSupplyVoltage)
 	{
 		return;
@@ -3157,14 +3160,17 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	numberOfConfigErrors += configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
 					0b10000000/* Payload:unfiltered data, shadowing enabled */
 					);
+	warpPrint("acc config error: %d\n", numberOfConfigErrors);
 	numberOfConfigErrors += configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
 					0b00000001/* Default 10Hz data rate, forced mode*/
 					);
+	warpPrint("mag config error: %d\n", numberOfConfigErrors);
 	numberOfConfigErrors += configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
 					0b00000000,/* ODR 2000 Hz, unfiltered */
 					0b00000000,/* normal mode */
 					0b10000000/* unfiltered data, shadowing enabled */
 					);
+	warpPrint("gyro config error: %d\n", numberOfConfigErrors);
 	#endif
 
 	if (printHeadersAndCalibration)
@@ -3998,8 +4004,7 @@ writeByteToI2cDeviceRegister(uint8_t i2cAddress, bool sendCommandByte, uint8_t c
 						(sendCommandByte ? 1 : 0),
 						payloadBuffer,
 						(sendPayloadByte ? 1 : 0),
-						gWarpI2cTimeoutMilliseconds);
-
+						gWarpI2cTimeoutMilliseconds);	
 	return (status == kStatus_I2C_Success ? kWarpStatusOK : kWarpStatusDeviceCommunicationFailed);
 }
 
@@ -4160,14 +4165,14 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	POR state seems to be powered down.
 	 */
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
+		WarpStatus status1 = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 							true				/*	sendCommandByte		*/,
 							0x20				/*	commandByte		*/,
 							true				/*	sendPayloadByte		*/,
 							0x00				/*	payloadByte		*/);
-		if ((status != kWarpStatusOK) && verbose)
+		if ((status1 != kWarpStatusOK) && verbose)
 		{
-			warpPrint("\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x%02x.\n", status, deviceL3GD20HState.i2cAddress);
+			warpPrint("\r\tPowerdown command failed, code=%d, for L3GD20H @ 0x%02x.\n", status1, deviceL3GD20HState.i2cAddress);
 		}
 	#else
 		warpPrint("\r\tPowerdown command abandoned. L3GD20H disabled\n");
