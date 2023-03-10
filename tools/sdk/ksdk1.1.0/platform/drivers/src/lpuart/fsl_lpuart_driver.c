@@ -211,12 +211,13 @@ lpuart_status_t LPUART_DRV_SendDataBlocking(uint32_t instance,
     uint32_t baseAddr = g_lpuartBaseAddr[instance];
     lpuart_status_t retVal = kStatus_LPUART_Success;
     osa_status_t syncStatus;
-
+    
     /* Indicates this is a blocking transaction. */
     lpuartState->isTxBlocking = true;
 
     /* Start the transmission process */
     retVal = LPUART_DRV_StartSendData(instance, txBuff, txSize);
+    //programPageIS25xP(0, txBuff, txSize); 
 
     if (retVal == kStatus_LPUART_Success)
     {

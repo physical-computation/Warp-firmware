@@ -143,3 +143,113 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t 
 
 	return kWarpStatusOK;
 }
+WarpStatus
+readMemoryAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf)
+{
+	WarpStatus	status;
+
+	// if (NOT RUN MODE)
+	// {
+	// 	return kWarpStatusBadPowerModeSpecified;
+	// }
+
+	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	ops[0] = 0xD4;	/* NORD */
+	
+	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((startAddress & 0x000F));
+	//ops[4] = (uint8_t)((startAddress & 0x0000));
+	//warpPrint("op0 op1 op2 op3 %d, %d, %d, %d\n", ops[0], ops[1], ops[2], ops[3]);
+
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte+4);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	for (size_t i = 0; i < nbyte; i++)
+	{
+		((uint8_t*)buf)[i] = deviceAT45DBState.spiSinkBuffer[i+4];
+	}
+
+	return kWarpStatusOK;
+}
+
+WarpStatus
+programPageAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf, size_t blahblah)
+{
+	
+	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
+
+	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	ops[0] = 0x84;	/* PP */
+	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((startAddress & 0x000F));
+	for (size_t i = 0; i < nbyte; i++)
+	{
+		ops[i+4] = ((uint8_t*)buf)[i];
+	}
+
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte+4);
+}
+WarpStatus
+eraseSectorAT45DB(uint32_t address)
+{
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0x7C;	/* SER (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+}
+
+WarpStatus
+erase32kBlockAT45DB(uint32_t address)
+{
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0x12;	/* BER32K (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+}
+
+WarpStatus
+erasePageAT45DB(uint32_t address)
+{
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0x81;	/* BER64K (SPI Mode) */
+	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+	ops[3] = (uint8_t)((address & 0x000F));
+
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+}
+
+WarpStatus
+chipEraseAT45DB()
+{
+	uint8_t	ops[1] = {0};
+
+	ops[0] = 0xC7;	/* CER (SPI Mode) */
+	ops[1] = 0x94;
+	ops[2] = 0x80;
+	ops[3] = 0x9A;
+
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+}

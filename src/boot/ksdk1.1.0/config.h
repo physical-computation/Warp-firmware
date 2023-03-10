@@ -154,7 +154,7 @@ typedef enum
 	/*
 	 *	Sizes
 	*/
-	kWarpDefaultPrintBufferSizeBytes			= 64,
+	kWarpDefaultPrintBufferSizeBytes			= 32,
 	kWarpMemoryCommonSpiBufferBytes				= 64,
 	kWarpSizesI2cBufferBytes				= 4,
 	kWarpSizesSpiBufferBytes				= 7,

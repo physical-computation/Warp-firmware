@@ -210,7 +210,9 @@ printSensorDataL3GD20H(bool hexModeFlag)
 {
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
-	int16_t		readSensorRegisterValueCombined;
+	int16_t		readSensorRegisterValueCombined1;
+	int16_t		readSensorRegisterValueCombined2;
+	int16_t		readSensorRegisterValueCombined3;
 	int8_t		readSensorRegisterSignedByte;
 	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
 
@@ -221,7 +223,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined1 = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -239,7 +241,8 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		}
 		else
 		{
-			warpPrint(" %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined1);
+			//return readSensorRegisterValueCombined1;
 		}
 	}
 
@@ -247,7 +250,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined2 = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -265,7 +268,8 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		}
 		else
 		{
-			warpPrint(" %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined2);
+			
 		}
 	}
 
@@ -273,7 +277,7 @@ printSensorDataL3GD20H(bool hexModeFlag)
 	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
 	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_H, 1 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+	readSensorRegisterValueCombined3 = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
 	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
@@ -291,7 +295,8 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		}
 		else
 		{
-			warpPrint(" %d,", readSensorRegisterValueCombined);
+			warpPrint(" %d,", readSensorRegisterValueCombined3);
+			
 		}
 	}
 
@@ -315,6 +320,12 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		else
 		{
 			warpPrint(" %d,", readSensorRegisterSignedByte);
+			
 		}
 	}
+	// if (hexModeFlag == 0)
+	// {
+	// 	return (readSensorRegisterValueCombined1 , readSensorRegisterValueCombined2 , readSensorRegisterValueCombined3 , readSensorRegisterSignedByte);
+	// }
+	
 }
