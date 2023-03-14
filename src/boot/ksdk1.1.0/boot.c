@@ -129,7 +129,7 @@
 	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 	int16_t L3g_x, L3g_y, L3g_z;
-	int16_t output_array[];
+	int16_t output_array[32];
 	WarpStatus 	status_l3g;
 #endif
 
@@ -1462,7 +1462,7 @@ main(void)
 	power_manager_user_config_t		warpPowerModeVlls1Config;
 	power_manager_user_config_t		warpPowerModeVlls3Config;
 	power_manager_user_config_t		warpPowerModeRunConfig;
-	uint8_t buf[4];
+
 	/*
 	 *	We use this as a template later below and change the .mode fields for the different other modes.
 	 */
@@ -3322,56 +3322,68 @@ main(void)
 				 */
 				case '3':
 				{
-					// for (int i=0;i<32;i++)
-					// {
-					// 	warpPrint("qw %d,", output_array[i]);
-
-					// }
-					
-					// write_to_buffer1(0x000000, output_array, strlen(output_array));
-					// OSA_TimeDelay(50);
-					uint8_t read_data[32];
-					//read_from_buffer1(0x000000, read_data, sizeof(read_data));
-					//readPageAT45DB(0x000000, 32, read_data);
-					 
-					MainMemoryPageReadAT45DB(0, 32, read_data);
-					for (uint16_t i = 0; i < 32; i++) {
-						
-    					warpPrint("%d ", read_data[i]);
-						OSA_TimeDelay(5);
+					int select_1 = 3;
+					if (select_1 == 1)
+					{
+							/* read from the buffer */
+					WarpStatus  status;
+                    uint8_t     buf_1[32];
+					status = readBufferAT45DB(0, 32, (uint8_t * ) buf_1);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
 					}
-					
-					// uint8_t buffer[sizeof(buf)];
-					// read_from_buffer1(0x000000, buffer, sizeof(buffer));
-					// for (uint16_t i = 0; i < sizeof(buffer); i++) {
-    				// 	warpPrint("%d ", buffer[i]);
-					// }
-                    // WarpStatus  status;
-                    // int16_t buf[32];
-                    // //for (int j=0; j<5; j++){
-					// 	//for (int i = 0; i < 3; i++) {
-                    //     status = readBufferAT45DB(0, 32, buf);
-					// 	for (int k = 0; k < 32; k++) {
-					// 		warpPrint("%d,", buf[k]);
-					// 		OSA_TimeDelay(5);
-					// 	}
-						//}
-						
-                        // if (status != kWarpStatusOK)
-                        // {
-                        //     warpPrint("\r\n\tCommunication failed: %d", status);
-                        // }
-                        // else
-                        // {
-                        //     warpPrint("\n");
-                        //     for (size_t i = 0; i < 64; i++)
-                        //     {
-                        //         warpPrint("%d", buf[i]);
-                        //         OSA_TimeDelay(5);
-                        //     }
-                        //         warpPrint("\n");
-                        // }
-                    //}
+					else
+					{
+						for (size_t i = 0; i < 32; i++)
+						{
+							warpPrint("%d, ", buf_1[i]);
+							OSA_TimeDelay(5);
+						}
+							warpPrint("\n");
+					}
+					}
+					if (select_1 == 2)
+					{
+							/* read from the buffer */
+					WarpStatus  status;
+                    uint8_t     buf_2[32];
+					status = readPageAT45DB(0, 32, (uint8_t * ) buf_2);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						for (size_t i = 0; i < 32; i++)
+						{
+							warpPrint("%d, ", buf_2[i]);
+							OSA_TimeDelay(5);
+						}
+							warpPrint("\n");
+					}
+					}
+					if (select_1 == 3)
+					{
+							/* read from the buffer */
+					WarpStatus  status = 0;
+                    uint8_t     buf_3[32];
+					status = MainMemoryPageReadAT45DB(0, 32, (uint8_t * ) buf_3);
+					if (status != kWarpStatusOK)
+					{
+						warpPrint("\r\n\tCommunication failed: %d", status);
+					}
+					else
+					{
+						for (size_t i = 0; i < 32; i++)
+						{
+							warpPrint("%d, ", buf_3[i]);
+							OSA_TimeDelay(5);
+						}
+							warpPrint("Okk\n");
+					}
+					}
+                    
                     break;
                 }
 
@@ -3405,57 +3417,69 @@ main(void)
 				 */
 				case '5':
 				{
-					//warpPrint("qw %d,", buf);
-					// write_to_buffer1(0x000000, buf, sizeof(buf));
-					// OSA_TimeDelay(50);
-					// uint8_t buffer[sizeof(buf)];
-					// read_from_buffer1(0x000000, buffer, sizeof(buffer));
-					// for (uint16_t i = 0; i < sizeof(buffer); i++) {
-    				// 	warpPrint("%d ", buffer[i]);
-					// 	OSA_TimeDelay(5);
-					// }
-					WarpStatus 	status;
-					uint8_t		buf[32] = {0} ;
-					// WarpStatus		dt;
-					
-					for (size_t i = 0; i < 32; i++)
-					{
-						buf[i] = 0;
-					}
-					// 	//#if (WARP_BUILD_ENABLE_DEVL3GD20H)						
-						
-					// 	//dt = printSensorDataL3GD20H(0);
-					// 	//warpPrint("%d\n", dt);
-					// 	if (i<30) 	buf[i] = 20;
-					// 	else 	buf[i] = 24;
-
-					// 	//#endif
-						
-					// // 	//warpPrint("buffer %02x\n", buf[i]);
-						
-					// }
-					//warpPrint(" %d,", bufw[i]);
-					// }
-					// for (int j =0;j<2;j++)
-					// {
-					for (int i = 0;i<32;i++)
-					{
-					//status = writeDataToBuffer(0x000000, buf[i], 1);
-					status = MainMemoryPageProgramAT45DB(i, 32, buf[i]);
-
-					}
-					
-
-					if (status != kWarpStatusOK)
-					{
-						warpPrint("\r\n\tCommunication failed: %d", status);
-					}
-					else
-					{
-						warpPrint("OK.\n");
-					}
-
-					
+	
+	int select_2 = 3;
+	if (select_2 == 1)
+	{
+			/* write to buffer*/
+		WarpStatus status;
+		uint8_t data_1[32] = {0};    
+		for (size_t i = 0; i < 32; i++)
+		{
+			data_1[i] = i * 2;  // Example data to program
+			
+		}
+		status  = writeDataToBuffer(0, 32, data_1);
+		if (status != kWarpStatusOK)
+			{
+				warpPrint("\r\n\tCommunication failed: %d", status);
+			}
+			else
+			{
+				warpPrint("OK.\n");
+			}
+	}
+	if (select_2 == 2)
+	{
+		/* write to page*/
+		WarpStatus status;
+		uint8_t data_2[32] = {0};    
+		for (size_t i = 0; i < 32; i++)
+		{
+			data_2[i] = i * 3;  // Example data to program
+			
+		}
+		status  = writeDataFromBufferToPage(0, 32, data_2);
+		if (status != kWarpStatusOK)
+			{
+				warpPrint("\r\n\tCommunication failed: %d", status);
+			}
+			else
+			{
+				warpPrint("OK.\n");
+			}
+	}
+	if (select_2 == 3)
+	{
+		/*  write to memory*/
+		WarpStatus status;
+		uint8_t data_3[32] = {0};    
+		for (size_t i = 0; i < 32; i++)
+		{
+			data_3[i] = i * 3 + 4;  // Example data to program
+			
+		}
+		status  = MainMemoryPageProgramAT45DB(0, 32, data_3);
+		if (status != kWarpStatusOK)
+			{
+				warpPrint("\r\n\tCommunication failed: %d", status);
+			}
+			else
+			{
+				warpPrint("OK.\n");
+			}
+	}
+				
 					break;
 				}
 
@@ -3467,7 +3491,7 @@ main(void)
 				{
 					WarpStatus 	status;			
 
-					status = erasePageAT45DB(0);
+					status = chipEraseAT45DB(0);
 					if (status != kWarpStatusOK)
 					{
 						warpPrint("\r\n\tCommunication failed: %d", status);
@@ -3689,8 +3713,19 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			printSensorDataL3GD20H(hexModeFlag, &L3g_x, &L3g_y, &L3g_z);
-			output_array[isd]=  L3g_x;
-			warpPrint("l3gx: %d", output_array[isd]);
+			isd++;
+			warpPrint("%d, ", isd-1);
+			output_array[isd-1]=  L3g_x;
+			
+			warpPrint("%d", output_array[isd-1]);
+			
+			// if (isd >31 && isd < 33)
+			// {
+			// 	MainMemoryPageProgramAT45DB(0, 32, output_array);
+			// 	warpPrint("isd is ok");
+			// }
+
+		
 			//write_to_buffer1(0x000000, &output_array[isd], 1);
 			
 			
