@@ -37,9 +37,17 @@
 
 void		initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
-WarpStatus readMemoryAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
-WarpStatus programPageAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf, size_t blahblah);
+WarpStatus readBufferAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus writeDataToBuffer(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus eraseSectorAT45DB(uint32_t address);
 WarpStatus erase32kBlockAT45DB(uint32_t address);
 WarpStatus erasePageAT45DB(uint32_t address);
 WarpStatus chipEraseAT45DB();
+WarpStatus writeDataFromBufferToPage(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus readPageAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus at45db_bread(uint32_t sblock, size_t nblocks, uint8_t *buf);
+WarpStatus send_command(uint8_t opcode, uint32_t address, uint8_t data) ;
+WarpStatus write_to_buffer1(uint32_t address, uint8_t* data, uint16_t length);
+void read_from_buffer1(uint32_t address, uint8_t* buffer, uint16_t length);
+WarpStatus MainMemoryPageReadAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus MainMemoryPageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);

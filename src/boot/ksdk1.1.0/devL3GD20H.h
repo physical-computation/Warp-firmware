@@ -40,4 +40,6 @@ void		initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus	readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload);
 WarpStatus	configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5);
-void		printSensorDataL3GD20H(bool hexModeFlag);
+// void printSensorDataL3GD20H(bool hexModeFlag);
+// void 		getOutputsL3G(bool hexModeFlag, int16_t *outL3GX, int16_t *outL3GY, int16_t *outL3GZ);
+void printSensorDataL3GD20H(bool hexModeFlag, int16_t *outL3GX, int16_t *outL3GY, int16_t *outL3GZ);
