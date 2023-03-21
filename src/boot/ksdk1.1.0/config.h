@@ -115,7 +115,7 @@
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
 	#define		WARP_BUILD_ENABLE_DEVBME680		0
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
+	#define		WARP_BUILD_ENABLE_DEVBMX055		1
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
@@ -175,17 +175,17 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI7021		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 2200,
-	kWarpDefaultSupplyVoltageMillivoltsBME680		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBME680		= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 2600,
 	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 3000,
 	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
 } WarpDefaults;

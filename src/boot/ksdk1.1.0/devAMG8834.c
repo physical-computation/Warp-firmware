@@ -64,6 +64,7 @@ extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
+
 /*
  *	AMG8834.
  */
@@ -72,6 +73,8 @@ initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
 	deviceAMG8834State.i2cAddress			= i2cAddress;
 	deviceAMG8834State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
+	
 
 	return;
 }
@@ -189,7 +192,7 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 }
 
 void
-printSensorDataAMG8834(bool hexModeFlag)
+printSensorDataAMG8834(bool hexModeFlag, int16_t *AMG1, int16_t *AMG2)
 {
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
@@ -229,6 +232,8 @@ printSensorDataAMG8834(bool hexModeFlag)
 			else
 			{
 				warpPrint(" %d,", readSensorRegisterValueCombined);
+				*AMG1 = readSensorRegisterValueCombined;
+
 			}
 		}
 	 }
@@ -261,6 +266,7 @@ printSensorDataAMG8834(bool hexModeFlag)
 		else
 		{
 			warpPrint(" %d,", readSensorRegisterValueCombined);
+			*AMG2 = readSensorRegisterValueCombined;
 		}
 	}
 }

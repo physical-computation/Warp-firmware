@@ -35,13 +35,13 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void		initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
+WarpStatus	initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
 WarpStatus writeDataToBuffer(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus readBufferAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus writeDataFromBufferToPage(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus readPageAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
-WarpStatus MainMemoryPageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus MainMemoryPageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf, int r);
 WarpStatus MainMemoryPageReadAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus MainMemoryPageEraseAT45DB(uint32_t startAddress);
 WarpStatus eraseSectorAT45DB(uint32_t address);
@@ -49,7 +49,21 @@ WarpStatus erase32kBlockAT45DB(uint32_t address);
 WarpStatus chipEraseAT45DB();
 WarpStatus MemoryPageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 bool AT45DB641EIsBusy();
-
+WarpStatus initializeMemoryAT45DB();
+uint8_t AT45DB_readStatusRegister();
+WarpStatus BufferWriteAT45DB(uint8_t bufferNumber, uint16_t offset, uint16_t length, uint8_t *data);
+WarpStatus BufferToMainMemoryAT45DB(uint8_t bufferNumber, uint32_t offset, uint32_t length, uint16_t pageIndex);
+WarpStatus MainMemoryPageReadAT45DB1(uint16_t pageAddress, uint16_t length, uint8_t *data);
+WarpStatus spiTransactionAT45DB1 (WarpSPIDeviceState volatile * deviceStatePointer, uint8_t * txBuffer, uint8_t * rxBuffer, size_t transactionLength);
+WarpStatus MainMemoryPageToBufferTransferAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus mainMemoryPageToBufferAT45DB(uint8_t bufferNumber, uint16_t pageAddress);
+WarpStatus bufferReadAT45DB(uint8_t bufferNumber, uint16_t bufferAddress, uint8_t* dataBuffer, uint16_t nbyte);
+WarpStatus AT45dbxx_WaitBusy(void);
+WarpStatus AT45dbxx_Resume(void);
+WarpStatus AT45dbxx_PowerDown(void);
+WarpStatus programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
+WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf);
+WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 
 
 
