@@ -1154,6 +1154,7 @@ int pageNumberPrint(const char *fmt, ...) {
   return out;
 }
 
+<<<<<<< HEAD
 void enableAT45DBWrite() {
   WarpStatus status;
   uint8_t ops[] = {
@@ -1163,6 +1164,158 @@ void enableAT45DBWrite() {
   if (status != kWarpStatusOK) {
     warpPrint("\r\n\tCommunication failed: %d", status);
   }
+=======
+void
+warpPrint(const char *fmt, ...)
+{
+	int	fmtlen;
+	va_list	arg;
+
+	/*
+	 *	We use an ifdef rather than a C if to allow us to compile-out
+	 *	all references to SEGGER_RTT_*printf if we don't want them.
+	 *
+	 *	NOTE: SEGGER_RTT_vprintf takes a va_list* rather than a va_list
+	 *	like usual vprintf. We modify the SEGGER_RTT_vprintf so that it
+	 *	also takes our print buffer which we will eventually send over
+	 *	BLE. Using SEGGER_RTT_vprintf() versus the libc vsnprintf saves
+	 *	2kB flash and removes the use of malloc so we can keep heap
+	 *	allocation to zero.
+	 */
+	#if (WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF)
+		/*
+		 *	We can't use SEGGER_RTT_vprintf to format into a buffer
+		 *	since SEGGER_RTT_vprintf formats directly into the special
+		 *	RTT memory region to be picked up by the RTT / SWD mechanism...
+		 */
+		va_start(arg, fmt);
+		fmtlen = SEGGER_RTT_vprintf(0, fmt, &arg, gWarpPrintBuffer, kWarpDefaultPrintBufferSizeBytes);
+		
+		va_end(arg);
+
+		if (fmtlen < 0)
+		{
+			SEGGER_RTT_WriteString(0, gWarpEfmt);
+
+			#if (WARP_BUILD_ENABLE_DEVBGX)
+				if (gWarpBooted)
+				{
+					WarpStatus	status;
+
+					enableLPUARTpins();
+					initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
+					status = sendBytesToUART((uint8_t *)gWarpEfmt, strlen(gWarpEfmt)+1);
+					if (status != kWarpStatusOK)
+					{
+						SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+					}
+					disableLPUARTpins();
+
+					/*
+					 *	We don't want to deInit() the BGX since that would drop
+					 *	any remote terminal connected to it.
+					 */
+					//deinitBGX();
+				}
+			#endif
+
+			return;
+		}
+
+		/*
+		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
+		 */
+		#if (WARP_BUILD_ENABLE_DEVBGX)
+			if (gWarpBooted)
+			{
+				WarpStatus	status;
+
+				enableLPUARTpins();
+				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
+
+				status = sendBytesToUART((uint8_t *)gWarpPrintBuffer, max(fmtlen, kWarpDefaultPrintBufferSizeBytes));
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				}
+				disableLPUARTpins();
+
+				/*
+				 *	We don't want to deInit() the BGX since that would drop
+				 *	any remote terminal connected to it.
+				 */
+				//deinitBGX();
+			}
+		#endif
+
+		#if (WARP_BUILD_ENABLE_DEVAT45DB)
+			if (gWarpBooted && gWarpWriteToFlash)
+			{
+					WarpStatus 	status1;
+					
+					/* Write to flash*/
+					
+					uint32_t start_address_for_page = page_number * page_size;
+ 
+					status1 = PageProgramAT45DB(start_address_for_page, page_size, gWarpPrintBuffer);
+					if (status1 != kWarpStatusOK)
+					{
+					// SEGGER_RTT_WriteString(0, gWarpEwriteFlashFailed);
+						// SEGGER_RTT_printf(0, "\r\t %s\n", gWarpEwriteFlashFailed);
+					}
+						page_number++;
+
+				// fmtlen = pageNumberPrint("page number: %d\n", page_number);
+					// page_number += strlen(gWarpPrintBuffer);
+
+						
+
+			}
+			
+		#endif
+		
+
+	#else
+		/*
+		 *	If we are not compiling in the SEGGER_RTT_printf,
+		 *	we just send the format string of warpPrint()
+		 */
+		SEGGER_RTT_WriteString(0, fmt);
+
+		/*
+		 *	If WARP_BUILD_ENABLE_DEVBGX, also send the fmt to the UART / BLE.
+		 */
+		#if (WARP_BUILD_ENABLE_DEVBGX)
+			if (gWarpBooted)
+			{
+				WarpStatus	status;
+
+				enableLPUARTpins();
+				initBGX(kWarpDefaultSupplyVoltageMillivoltsBGX);
+				status = sendBytesToUART(fmt, strlen(fmt));
+				if (status != kWarpStatusOK)
+				{
+					SEGGER_RTT_WriteString(0, gWarpEuartSendChars);
+				}
+				disableLPUARTpins();
+
+				/*
+				 *	We don't want to deInit() the BGX since that would drop
+				 *	any remote terminal connected to it.
+				 */
+				//deinitBGX();
+			}
+		#endif
+	#endif
+
+
+	/*
+	 *	Throttle to enable SEGGER to grab output, otherwise "run" mode may miss lines.
+	 */
+	OSA_TimeDelay(5);
+
+	return;
+>>>>>>> issue-118
 }
 
 WarpStatus ProgramAT45DB(size_t nbyte, uint8_t* buf) {
