@@ -1315,7 +1315,7 @@ warpPrint(const char *fmt, ...)
 					
 					uint32_t start_address_for_page = page_number * page_size;
  
-					status1 = PageProgramAT45DB(start_address_for_page, strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+					status1 = PageProgramAT45DB(start_address_for_page, page_size, gWarpPrintBuffer);
 					if (status1 != kWarpStatusOK)
 					{
 					// SEGGER_RTT_WriteString(0, gWarpEwriteFlashFailed);
