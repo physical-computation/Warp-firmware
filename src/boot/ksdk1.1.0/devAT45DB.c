@@ -309,6 +309,10 @@ WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointe
 {
 	spi_status_t	status;
 
+	if (opCount > deviceAT45DBState.spiBufferLength)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
 
 	warpScaleSupplyVoltage(deviceAT45DBState.operatingVoltageMillivolts);
 
@@ -439,8 +443,6 @@ WarpStatus spiTransactionAT45DB1 (WarpSPIDeviceState volatile * deviceStatePoint
 //################################################################################################################
 WarpStatus chipEraseAT45DB()
 {
-	AT45dbxx_Resume();
-	AT45dbxx_WaitBusy();
 	WarpStatus	status;
 	uint8_t	ops[4] = {0};
 
@@ -910,7 +912,6 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 {
 	
 	WarpStatus	status;
-	uint16_t pageIndex;
 
 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
 	{
@@ -918,13 +919,14 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 	}
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0x82;	/* PP */
-	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((startAddress & 0x000F));
+	ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint16_t)((startAddress & 0x000F));
 	
 	for (size_t i = 0; i < nbyte; i++)
 	{
 		ops[i+4] = ((uint8_t*)buf)[i];
+		//warpPrint("after write %d\n", buf[i]);
 	}
 	
     
@@ -932,6 +934,32 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 
 	
 }
+// WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, int16_t *buf)
+// {
+//     WarpStatus status;
+
+//     if (nbyte > (kWarpMemoryCommonSpiBufferBytes - 4) / 2)
+//     {
+//         return kWarpStatusBadDeviceCommand;
+//     }
+
+//     uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+//     ops[0] = 0x82; /* PP */
+//     ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
+//     ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
+//     ops[3] = (uint16_t)((startAddress & 0x000F));
+
+//     for (size_t i = 0; i < nbyte; i++)
+//     {
+        
+//         ops[i*2 + 4] = (int16_t*)( buf[i] >> 8);
+//         ops[i*2 + 5] = (uint8_t*) buf[i];
+//         warpPrint("%d",  buf[i]);
+//     }
+
+//     return spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte * 2 + 4);
+// }
+
 WarpStatus
 readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf)
 {
@@ -943,9 +971,9 @@ readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf)
 
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0xD2;	/* NORD */
-	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((startAddress & 0x000F));
+	ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
+	ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
+	ops[3] = (uint16_t)((startAddress & 0x000F));
 	ops[4] = 0x00;
 	ops[5] = 0x00;
 	ops[6] = 0x00;
@@ -959,9 +987,66 @@ readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf)
 
 	for (size_t i = 0; i < nbyte; i++)
 	{
-		((uint8_t*)buf)[i] = deviceAT45DBState.spiSinkBuffer[i+4];
+		((uint8_t*)buf)[i] = deviceAT45DBState.spiSinkBuffer[i+8];		
+
 	}
 
 	return kWarpStatusOK;
+
+}
+// WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void* buf)
+// {
+//     WarpStatus status;
+//     if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+//     {
+//         return kWarpStatusBadDeviceCommand;
+//     }
+
+//     uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+//     ops[0] = 0xD2; /* NORD */
+//     ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
+//     ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
+//     ops[3] = (uint16_t)((startAddress & 0x000F));
+//     ops[4] = 0x00;
+//     ops[5] = 0x00;
+//     ops[6] = 0x00;
+//     ops[7] = 0x00;
+
+//     status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 8);    
+//     if (status != kWarpStatusOK)
+//     {
+//         return status;
+//     }
+
+//     uint8_t* buf_uint8_t = (uint8_t*) buf;
+
+//     for (size_t i = 0; i < nbyte; i++)
+//     {
+//         buf_uint8_t[i] = deviceAT45DBState.spiSinkBuffer[i + 8];
+//     }
+
+//     int16_t* buf_int16_t = (int16_t*) buf;
+
+//     for (size_t i = 0; i < nbyte / 2; i++)
+//     {
+//         buf_int16_t[i] = (int16_t) (buf_uint8_t[2 * i] << 8) | buf_uint8_t[2 * i + 1];
+//     }
+
+//     return kWarpStatusOK;
+// }
+
+
+WarpStatus disablesectorprotection()
+{
+	WarpStatus	status;
+	uint8_t	ops[4] = {0};
+
+	ops[0] = 0x3D;	/* CER (SPI Mode) */
+	ops[1] = 0x2A;
+	ops[2] = 0x7F;
+	ops[3] = 0x9A;
+
+	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+	return status;
 
 }

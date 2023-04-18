@@ -39,3 +39,4 @@ extern const char	gWarpEfmt[];
 extern const char	gWarpEuartSendChars[];
 extern const char	gWarpEmalloc[];
 extern const char	gWarpEsensorConfig[];
+extern const char 	gWarpEwriteFlashFailed[];

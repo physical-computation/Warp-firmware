@@ -36,7 +36,7 @@
 */
 
 WarpStatus	initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
-WarpStatus	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
+WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
 WarpStatus writeDataToBuffer(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus readBufferAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus writeDataFromBufferToPage(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
@@ -62,8 +62,9 @@ WarpStatus AT45dbxx_WaitBusy(void);
 WarpStatus AT45dbxx_Resume(void);
 WarpStatus AT45dbxx_PowerDown(void);
 WarpStatus programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
-WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf);
+// WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf);
+WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void * buf);
 WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
-
+WarpStatus disablesectorprotection();
 
 

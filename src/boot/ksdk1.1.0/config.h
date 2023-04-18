@@ -122,7 +122,7 @@
 	#define		WARP_BUILD_ENABLE_DEVISL23415		1
 	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
-	#define		WARP_BUILD_ENABLE_DEVL3GD20H		1
+	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
@@ -165,7 +165,7 @@ typedef enum
 	 *	Voltages
 	 */
 	kWarpDefaultSupplyVoltageMillivolts			= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3000,
+	kWarpDefaultSupplyVoltageMillivoltsBGX			= 2000,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 2600,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 2600,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 2600,
@@ -186,6 +186,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 3000,
+	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
 } WarpDefaults;
