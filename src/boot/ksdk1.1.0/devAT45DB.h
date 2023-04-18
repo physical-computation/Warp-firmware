@@ -63,8 +63,8 @@ WarpStatus AT45dbxx_Resume(void);
 WarpStatus AT45dbxx_PowerDown(void);
 WarpStatus programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf);
 // WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf);
-WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void * buf);
-WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus readmemoryAT45DB(uint16_t startAddress, size_t nbyte, void * buf);
+WarpStatus PageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus disablesectorprotection();
 
 

@@ -159,8 +159,8 @@ uint8_t AT45DB_readStatusRegister()
     // Send Read Status Register command
     uint8_t ops[2] = {0};
 	ops[0] = 0xD7;
-	ops[1] = 0x00;	
-    
+	ops[1] = 0x00;
+
 	WarpStatus status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 2);
     return status;
 }
@@ -172,12 +172,12 @@ WarpStatus AT45dbxx_WaitBusy(void)
 	op[0] = 0xD7;
 	op[1] = 0x00;
 	//spiTransactionAT45DB(&deviceAT45DBState, op[0], 1);
-	status =  spiTransactionAT45DB(&deviceAT45DBState, op, 2);  
+	status =  spiTransactionAT45DB(&deviceAT45DBState, op, 2);
 	while((status & 0x80) == 0)
 	{
 		OSA_TimeDelay(1);
 		//spiTransactionAT45DB(&deviceAT45DBState, op, 1);
-		status =  spiTransactionAT45DB(&deviceAT45DBState, op, 2); 
+		status =  spiTransactionAT45DB(&deviceAT45DBState, op, 2);
 	}
 }
 bool AT45DB641EIsBusy()
@@ -191,14 +191,14 @@ bool AT45DB641EIsBusy()
     return (statusReg & 0x80); // return true if the device is busy, false otherwise
 }
 //################################################################################################################
-WarpStatus AT45dbxx_Resume(void) 
+WarpStatus AT45dbxx_Resume(void)
 {
-	spiTransactionAT45DB(&deviceAT45DBState, AT45DB_RESUME, 1);		
+	spiTransactionAT45DB(&deviceAT45DBState, AT45DB_RESUME, 1);
 }
 //################################################################################################################
-WarpStatus AT45dbxx_PowerDown(void) 
+WarpStatus AT45dbxx_PowerDown(void)
 {
-	spiTransactionAT45DB(&deviceAT45DBState, AT45DB_PWRDOWN, 1);	
+	spiTransactionAT45DB(&deviceAT45DBState, AT45DB_PWRDOWN, 1);
 }
 //################################################################################################################
 WarpStatus initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
@@ -209,35 +209,35 @@ WarpStatus initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts
 	deviceAT45DBState.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
 	deviceAT45DBState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
-	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);	
-	
+	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
+
 	OSA_TimeDelay(10);
 	uint8_t Temp0 = 0, Temp1 = 0,Temp2=0;
-	spiTransactionAT45DB(&deviceAT45DBState, 0x9f, 1);	
-	Temp0=spiTransactionAT45DB(&deviceAT45DBState, 0xa5, 1);	
-	Temp1=spiTransactionAT45DB(&deviceAT45DBState, 0xa5, 1);	
+	spiTransactionAT45DB(&deviceAT45DBState, 0x9f, 1);
+	Temp0=spiTransactionAT45DB(&deviceAT45DBState, 0xa5, 1);
+	Temp1=spiTransactionAT45DB(&deviceAT45DBState, 0xa5, 1);
 	Temp2=AT45DB_readStatusRegister();
 	if(Temp0==0x1f)
 	{
 		switch	(Temp1&0x1f)
 		{
-			
+
 			case 0x08:	//	AT45db641
 				 FlashSize_MBit = 64;
 				 Pages = 8192;
 				if(Temp2&0x01)
 				{
 					 Shift = 0;
-					 PageSize = 1024;				
+					 PageSize = 1024;
 				}
 				else
 				{
 					 Shift = 11;
-					 PageSize = 1056;				
+					 PageSize = 1056;
 				}
-			break;			
-		}			
-		
+			break;
+		}
+
 		return true;
 	}
 	else
@@ -258,7 +258,7 @@ WarpStatus initializeMemoryAT45DB() {
 	memoryBuffer[1] = 0x00;
 	memoryBuffer[2] = 0x00;
 	memoryBuffer[3] = 0x00;
-    
+
 
     const uint16_t numDataBytes = 32;
     const uint16_t numMemBytes = numDataBytes + 8;
@@ -267,7 +267,7 @@ WarpStatus initializeMemoryAT45DB() {
         memoryBuffer[i + 8] = (value >> 8) & 0xFF; // MSB
         memoryBuffer[i + 9] = value & 0xFF; // LSB
     }
-   
+
     WarpStatus status2 =  spiTransactionAT45DB(&deviceAT45DBState, memoryBuffer, numMemBytes + 4);
 	warpPrint("status2: %d\n", status2);
     uint8_t op2[32] = {0};
@@ -275,7 +275,7 @@ WarpStatus initializeMemoryAT45DB() {
 	op2[1] = 0x00;
 	op2[2] = 0x00;
 	op2[3] = 0x00;
-    
+
 	WarpStatus status3 =  spiTransactionAT45DB(&deviceAT45DBState, op2, numMemBytes + 4);
     warpPrint("status3: %d\n", status3);
 
@@ -288,7 +288,7 @@ WarpStatus initializeMemoryAT45DB() {
 	op3[1] = 0x00;
 	op3[2] = 0x00;
 	op3[3] = 0x00;
-    
+
 	WarpStatus status4 =  spiTransactionAT45DB(&deviceAT45DBState, op3, 4);
     warpPrint("status4: %d\n", status4);
     bool success = true;
@@ -334,8 +334,8 @@ WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointe
 	 *	(See Section 10.2.1 of manual). The 50 milliseconds we use here is conservative:
 	 *	the manual says the minimum time needed is 20ns. However, the datasheet also says:
 	 *
-	 *		"After the CS pin has been deasserted, the device will exit from the 
-	 *		Ultra-Deep Power-Down mode and return to the standby mode within a 
+	 *		"After the CS pin has been deasserted, the device will exit from the
+	 *		Ultra-Deep Power-Down mode and return to the standby mode within a
 	 *		maximum time of tXUDPD."
 	 *
 	 *	Since txudpd is 100us, we wait another millisecond before proceeding to assert /CS
@@ -375,13 +375,13 @@ WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointe
 	{
 		return kWarpStatusDeviceCommunicationFailed;
 	}
-	
+
 	return kWarpStatusOK;
 }
 WarpStatus spiTransactionAT45DB1 (WarpSPIDeviceState volatile * deviceStatePointer, uint8_t * txBuffer, uint8_t * rxBuffer, size_t transactionLength)
 {
 
-	
+
     // uint8_t bufferTx[transactionLength];
     // uint8_t bufferRx[transactionLength];
 	spi_status_t	status;
@@ -404,7 +404,7 @@ WarpStatus spiTransactionAT45DB1 (WarpSPIDeviceState volatile * deviceStatePoint
 	OSA_TimeDelay(1);
     // Assert CS
     GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
-    
+
 	warpEnableSPIpins();
     // Perform SPI transaction
     status = SPI_DRV_MasterTransferBlocking(0							/*	master instance			*/,
@@ -466,15 +466,15 @@ WarpStatus MainMemoryPageEraseAT45DB(uint32_t startAddress)
     ops[1] = (uint8_t)((startAddress >> 16) & 0xFF);
     ops[2] = (uint8_t)((startAddress >> 8) & 0xFF);
     ops[3] = (uint8_t)(startAddress & 0xFF);
-    
+
     status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-    
+
     return status;
 }
 //################################################################################################################
 WarpStatus writeDataToBuffer(uint32_t startAddress, size_t nbyte, uint8_t *  buf)
 {
-	
+
 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -504,11 +504,11 @@ WarpStatus readBufferAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  bufd
 
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0xD4;	/* NORD */
-	
+
 	ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
 	ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
 	ops[3] = (uint8_t)((startAddress & 0x000F));
-	
+
 	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 
 	if (status != kWarpStatusOK)
@@ -555,7 +555,7 @@ WarpStatus readPageAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf)
 	}
 
 	uint8_t	ops[] = {0};
-	ops[0] = 0x0B;	/* NORD */	
+	ops[0] = 0x0B;	/* NORD */
 	ops[1] = (uint8_t)((startAddress >> 16) & 0xFF);
 	ops[2] = (uint8_t)((startAddress >> 8) & 0xFF);
 	ops[3] = (uint8_t)((startAddress & 0xFF));
@@ -583,7 +583,7 @@ AT45DB641EIsBusy();
 		{
 			//warpPrint("%d,", buf[i]);
 
-			warpPrint("%d, ",  buf[i]);						
+			warpPrint("%d, ",  buf[i]);
 		}
 }
 //################################################################################################################
@@ -623,7 +623,7 @@ WarpStatus MainMemoryPageReadAT45DB(uint32_t startAddress, size_t nbyte, uint8_t
 	}
 	pageIndex = startAddress & 0x7FF;
 	uint8_t	ops[6] = {0};
-	ops[0] = 0xD2;	
+	ops[0] = 0xD2;
 	ops[1] = (uint8_t)((pageIndex >> 7) & 0xFF);
 	ops[2] = (uint8_t)((pageIndex << 1) & 0xFF);
 	ops[3] = (uint8_t)((startAddress & 0xFF));
@@ -631,8 +631,8 @@ WarpStatus MainMemoryPageReadAT45DB(uint32_t startAddress, size_t nbyte, uint8_t
 	ops[5] = 0x00;
 	ops[6] = 0x00;
 	ops[7] = 0x00;
-	
-    
+
+
 	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 8);
 
 	if (status != kWarpStatusOK)
@@ -640,24 +640,24 @@ WarpStatus MainMemoryPageReadAT45DB(uint32_t startAddress, size_t nbyte, uint8_t
         return status;
     }
 
-	
 
-	
+
+
 	// for (size_t i = 0; i < nbyte; i++)
 	// {
-	// 	buf[i] = deviceAT45DBState.spiSourceBuffer[i+7];		
-		
+	// 	buf[i] = deviceAT45DBState.spiSourceBuffer[i+7];
+
 	// 	//warpPrint(" a%d,., ", buf[i]);
-	// }	
+	// }
 	// for (size_t i = 0; i < 32; i++)
 	// {
 	// 	warpPrint("%d, ", buf[i]);
 	// 	OSA_TimeDelay(5);
 	// }
 	status = spiTransactionAT45DB(&deviceAT45DBState, buf, nbyte);
-	
-	
-	
+
+
+
 	return status;
 }
 //################################################################################################################
@@ -713,17 +713,17 @@ WarpStatus BufferWriteAT45DB(uint8_t bufferNumber, uint16_t offset, uint16_t len
     uint8_t command[] = {0};
     uint16_t pageIndex;
     WarpStatus status;
-    
+
     /* Calculate the page index and offset within the page */
     pageIndex = (offset >> 8) & 0xFF;
     offset &= 0xFF;
-    
+
     /* Send the buffer write command */
     command[0] = 0x84;
     command[1] = bufferNumber;
     command[2] = offset >> 8;
     command[3] = offset & 0xFF;
-   
+
     // for (int i = 0; i < length;i++)
     // {
     //     command[i+4] = data[i];
@@ -762,7 +762,7 @@ WarpStatus BufferToMainMemoryAT45DB(uint8_t bufferNumber, uint32_t offset, uint3
 {
     uint8_t command[4];
     WarpStatus status;
-    
+
     /* Send the buffer to main memory transfer command */
     command[0] = 0x83;
     command[1] = bufferNumber;
@@ -773,14 +773,14 @@ WarpStatus BufferToMainMemoryAT45DB(uint8_t bufferNumber, uint32_t offset, uint3
     {
         return status;
     }
-    
+
     /* Wait for the operation to complete */
     // status = AT45DB641EIsBusy();
     // if (status != kWarpStatusOK)
     // {
     //     return status;
     // }
-    
+
     return kWarpStatusOK;
 }
 //################################################################################################################
@@ -791,31 +791,31 @@ WarpStatus MainMemoryPageReadAT45DB1(uint16_t pageAddress, uint16_t length, uint
     uint32_t responseLength;
     uint16_t pageIndex;
     WarpStatus status;
-    
+
     /* Calculate the page index */
     pageIndex = pageAddress & 0x7FF;
-    
+
     /* Send the main memory page read command */
     command[0] = 0xD2;
     command[1] = (pageIndex >> 7) & 0xFF;
     command[2] = (pageIndex << 1) & 0xFF;
     command[3] = 0x00;
     command[4] = 0x00;
-	
+
 	status = spiTransactionAT45DB1 (&responseLength, &command, NULL, 5);
-	
+
     if (status != kWarpStatusOK)
     {
         return status;
     }
-    
+
     /* Read the data from main memory */
     status = spiTransactionAT45DB1(&responseLength, NULL, &data, length);
     if (status != kWarpStatusOK)
     {
         return status;
     }
-    
+
     return kWarpStatusOK;
 }
 //################################################################################################################
@@ -830,13 +830,13 @@ WarpStatus MainMemoryPageToBufferTransferAT45DB(uint32_t startAddress, size_t nb
 	}
 	pageIndex = startAddress & 0x7FF;
 	uint8_t	ops[4] = {0};
-	ops[0] = 0x53;	
+	ops[0] = 0x53;
 	ops[1] = (uint8_t)((pageIndex >> 7) & 0xFF);
 	ops[2] = (uint8_t)((pageIndex << 1) & 0xFF);
 	ops[3] = (uint8_t)((startAddress & 0xFF));
-	
-	
-    
+
+
+
 	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 
 	if (status != kWarpStatusOK)
@@ -844,9 +844,9 @@ WarpStatus MainMemoryPageToBufferTransferAT45DB(uint32_t startAddress, size_t nb
         return status;
     }
 
-	
+
 	status = spiTransactionAT45DB(&deviceAT45DBState, buf, nbyte);
-	
+
 	return status;
 }
 //################################################################################################################
@@ -899,7 +899,7 @@ WarpStatus bufferReadAT45DB(uint8_t bufferNumber, uint16_t bufferAddress, uint8_
 	commandBuffer[1] = addressBytes[0];
 	commandBuffer[2] = addressBytes[1];
 	commandBuffer[3] = addressBytes[2];
-	
+
     WarpStatus status1 = spiTransactionAT45DB(&deviceAT45DBState, commandBuffer, 4);
 
 	status = spiTransactionAT45DB(&deviceAT45DBState, dataBuffer, nbyte);
@@ -908,9 +908,9 @@ WarpStatus bufferReadAT45DB(uint8_t bufferNumber, uint16_t bufferAddress, uint8_
 }
 //################################################################################################################
 
-WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf)
+WarpStatus PageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t *  buf)
 {
-	
+
 	WarpStatus	status;
 
 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
@@ -919,20 +919,20 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 	}
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0x82;	/* PP */
-	ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
-	ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
-	ops[3] = (uint16_t)((startAddress & 0x000F));
-	
+	ops[2] = (uint8_t)(pageNumber <<= 1);
+	ops[1] = (uint8_t)(pageNumber >>= 8);
+	ops[3] = 0x00;
+
 	for (size_t i = 0; i < nbyte; i++)
 	{
-		ops[i+4] = ((uint8_t*)buf)[i];
-		//warpPrint("after write %d\n", buf[i]);
+		// warpPrint("after write %d\n", buf[i]);
+		ops[i+4] = buf[i];
 	}
-	
-    
-	return  spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);	
 
-	
+
+	return  spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
+
+
 }
 // WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, int16_t *buf)
 // {
@@ -951,7 +951,7 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 
 //     for (size_t i = 0; i < nbyte; i++)
 //     {
-        
+
 //         ops[i*2 + 4] = (int16_t*)( buf[i] >> 8);
 //         ops[i*2 + 5] = (uint8_t*) buf[i];
 //         warpPrint("%d",  buf[i]);
@@ -961,37 +961,70 @@ WarpStatus PageProgramAT45DB(uint32_t startAddress, size_t nbyte, uint8_t *  buf
 // }
 
 WarpStatus
-readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf)
+readmemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf)
 {
 	WarpStatus	status;
-	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	// if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	// {
+	// 	return kWarpStatusBadDeviceCommand;
+	// }
+
+	size_t nIterations = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
+	size_t excessBytes = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
+
+	for (size_t i = 0; i < nIterations; i++)
 	{
-		return kWarpStatusBadDeviceCommand;
+		uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+		ops[0] = 0xD2;	/* NORD */
+		ops[2] = (uint8_t)(pageNumber <<= 1);
+		ops[1] = (uint8_t)(pageNumber >>= 8);
+		ops[3] = 0x00;
+		ops[4] = 0x00;
+		ops[5] = 0x00;
+		ops[6] = 0x00;
+		ops[7] = 0x00;
+
+		status = spiTransactionAT45DB(&deviceAT45DBState, ops, kWarpMemoryCommonSpiBufferBytes);
+		if (status != kWarpStatusOK)
+		{
+			// warpPrint("here1: %d\n", status);
+			// return status;
+		}
+
+		for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
+		{
+			((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceAT45DBState.spiSinkBuffer[i+8];
+
+		}
+
 	}
 
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0xD2;	/* NORD */
-	ops[1] = (uint16_t)((startAddress & 0x0F00) >> 2);
-	ops[2] = (uint16_t)((startAddress & 0x00F0) >> 1);
-	ops[3] = (uint16_t)((startAddress & 0x000F));
+	ops[2] = (uint8_t)(pageNumber <<= 1);
+	ops[1] = (uint8_t)(pageNumber >>= 8);
+	ops[3] = 0x00;
 	ops[4] = 0x00;
 	ops[5] = 0x00;
 	ops[6] = 0x00;
 	ops[7] = 0x00;
 
-	status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 8);	
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, excessBytes + 8);
 	if (status != kWarpStatusOK)
 	{
-		return status;
+		// warpPrint("here1: %d\n", status);
+		// return status;
 	}
 
-	for (size_t i = 0; i < nbyte; i++)
+	for (size_t i = 0; i < excessBytes; i++)
 	{
-		((uint8_t*)buf)[i] = deviceAT45DBState.spiSinkBuffer[i+8];		
+		((uint8_t*)buf)[nIterations*(kWarpMemoryCommonSpiBufferBytes - 8) + i] = deviceAT45DBState.spiSinkBuffer[i+8];
 
 	}
 
 	return kWarpStatusOK;
+
+
 
 }
 // WarpStatus readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void* buf)
@@ -1012,7 +1045,7 @@ readmemoryAT45DB(uint32_t startAddress, size_t nbyte, void *  buf)
 //     ops[6] = 0x00;
 //     ops[7] = 0x00;
 
-//     status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 8);    
+//     status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 8);
 //     if (status != kWarpStatusOK)
 //     {
 //         return status;
