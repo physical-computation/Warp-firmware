@@ -3422,7 +3422,7 @@ int main(void) {
         uint8_t pageOffset = pageOffsetBuf[2];
         uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
-        for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal; pageNumber++) {
+        for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1; pageNumber++) {
           // uint32_t startAddress = pageNumber * page_size;
 
           status = readmemoryAT45DB(pageNumber, page_size, dataBuffer);
@@ -3430,14 +3430,14 @@ int main(void) {
           if (status != kWarpStatusOK) {
             warpPrint("\r\n\tCommunication failed: %d", status);
           } else {
-            warpPrint("Page [%d]\t", pageNumber);
+            // warpPrint("Page [%d]\t", pageNumber);
 
             for (size_t i = 0; i < page_size; i++) {
 
-              warpPrint("%c ", dataBuffer[i]);
+              warpPrint("%c", dataBuffer[i]);
               // OSA_TimeDelay(5);
             }
-            warpPrint("\n");
+            // warpPrint("\n");
           }
         }
         break;
