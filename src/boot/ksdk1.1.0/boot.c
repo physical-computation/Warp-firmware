@@ -237,9 +237,6 @@ static int read4digits_amg(uint8_t digit1, uint8_t digit2, uint8_t digit3,
 static void printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
                             int menuDelayBetweenEachRun, bool loopForever);
 
-static uint32_t gPageNumber = 0;
-static uint8_t gPageOffset = 0;
-
 /*
  *	TODO: change the following to take byte arrays
  */
@@ -1219,11 +1216,21 @@ void warpPrint(const char *fmt, ...) {
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
   if (gWarpBooted && gWarpWriteToFlash) {
-
     /* Write to flash*/
-    ProgramAT45DB(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+    WarpStatus status = SaveToAT45DBFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+    if (status != kWarpStatusOK) {
+      gWarpWriteToFlash = 0;
+      warpPrint("Error writing to flash: %d\n", status);
+    }
   }
 
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVIS25xP)
+  if (gWarpBooted && gWarpWriteToFlash) {
+    /* Write to flash*/
+    ProgramIS25xP(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+  }
 #endif
 
 #else
@@ -1695,6 +1702,7 @@ int main(void) {
 
 #elif (WARP_BUILD_ENABLE_DEVIS25xP)
   initIS25xP(kWarpPinIS25xP_SPI_nCS, kWarpDefaultSupplyVoltageMillivoltsIS25xP);
+  enableIs25xPWrite();
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVISL23415)
@@ -1755,7 +1763,6 @@ int main(void) {
   uint8_t ops[] = {
       0x06, /* WREN */
   };
-
   status = spiTransactionAT45DB(&deviceAT45DBState, ops, 1);
   if (status != kStatus_SPI_Success) {
     warpPrint("Write enable failed");
@@ -2005,7 +2012,9 @@ int main(void) {
     warpPrint("\r- 'F': write bytes to Flash.\n");
     warpPrint("\r- 'Z': reset Flash.\n");
 #elif (WARP_BUILD_ENABLE_DEVIS25xP)
+    warpPrint("\r\n- 'R': read bytes from Flash.\n");
     warpPrint("\r- 'F': Open Flash menu.\n");
+    warpPrint("\r- 'Z': reset Flash.\n");
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVICE40)
@@ -2645,20 +2654,6 @@ int main(void) {
       warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n",
                 menuDelayBetweenEachRun);
 
-#if (WARP_BUILD_ENABLE_DEVBGX)
-      WarpStatus status;
-      uint8_t buf_page[32];
-      status = readmemoryAT45DB(0, 32, buf_page);
-      if (status != kWarpStatusOK) {
-        warpPrint("\r\n\tCommunication failed: %d", status);
-      } else {
-        for (size_t i = 0; i < 32; i++) {
-          warpPrint("0x%08x:\t%d\n", i, buf_page[i]);
-          OSA_TimeDelay(5);
-        }
-      }
-#endif
-
       gWarpWriteToFlash = 1;
       printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag,
                       menuDelayBetweenEachRun, true /* loopForever */);
@@ -2675,6 +2670,7 @@ int main(void) {
      *	Read bytes from Flash and print as hex
      */
     case 'R': {
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
       /* read from the page */
       uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
       WarpStatus status;
@@ -2688,11 +2684,12 @@ int main(void) {
       uint8_t pageOffset = pageOffsetBuf[2];
       uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
-      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1;
+      warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+      warpPrint("\r\n\tPage offset: %d", pageOffset);
+      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal;
            pageNumber++) {
         status = readmemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
                                   dataBuffer);
-
         if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
         } else {
@@ -2702,13 +2699,99 @@ int main(void) {
         }
       }
 
+      status = readmemoryAT45DB(pageNumberTotal, pageOffset,
+                                  dataBuffer);
+
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+      } else {
+        for (size_t i = 0; i < pageOffset; i++) {
+          warpPrint("%c", dataBuffer[i]);
+        }
+      }
+
+
+#endif
+#if (WARP_BUILD_ENABLE_DEVIS25xP)
+      /* read from the page */
+      uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
+      WarpStatus status;
+
+      uint8_t pageOffsetBuf[3];
+      status = readMemoryIS25xP(0, 3, pageOffsetBuf);
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+      }
+
+      uint8_t pageOffset = pageOffsetBuf[2];
+      uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
+      warpPrint("state: %d, %d, %d", pageOffsetBuf[0], pageOffsetBuf[1],
+                pageOffsetBuf[2]);
+      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1;
+           pageNumber++) {
+        status = readMemoryIS25xP(pageNumber, kWarpSizeAT45DBPageSizeBytes,
+                                  dataBuffer);
+
+        if (status != kWarpStatusOK) {
+
+          warpPrint("\r\n\tCommunication failed: %d", status);
+        } else {
+          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) {
+
+            warpPrint("%c", dataBuffer[i]);
+          }
+        }
+      }
+      // WarpStatus 	status;
+      // 		uint8_t		buf[32] = {0};
+
+      // 		status = readMemoryIS25xP(0, 32, buf);
+      // 		if (status != kWarpStatusOK)
+      // 		{
+      // 			warpPrint("\r\n\tCommunication failed: %d",
+      // status);
+      // 		}
+      // 		else
+      // 		{
+      // 			warpPrint("\n");
+      // 			for (size_t i = 0; i < 32; i++)
+      // 			{
+      // 				warpPrint("0x%08x:\t%x\n", i, buf[i]);
+      // 				OSA_TimeDelay(5);
+
+      // 			}
+      // 		}
+#endif
+
       break;
     }
 
     case 'Z': {
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
       warpPrint("\r\n\tResetting Flash\n");
-      resetAT45DB(1, 0);
+      WarpStatus status = setAT45DBStartOffset(1, 0);
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+        break;
+      }
+
+      char data[32];
+      for (int i = 0; i < 32; i++) {
+        data[i] = "j";
+      }
+
+      // SaveToAT45DBFromEnd(32, data);
+
+      warpPrint("\r\n\tFlash reset\n");
+      break;
+#else
+      // warpPrint("\r\n\tFlash not enabled\n");
+      // break;
+#endif
+#if (WARP_BUILD_ENABLE_DEVIS25xP)
+      warpPrint("Hello");
+      warpPrint("\r\n\tResetting Flash\n");
+      resetIS25xP(1, 0);
       warpPrint("\r\n\tFlash reset\n");
       break;
 #else
@@ -2724,11 +2807,10 @@ int main(void) {
     case 'F': {
       warpPrint("\r\n\tDevice: IS25xP"
                 "\r\n\t'1' - Info and status registers"
-                "\r\n\t'2' - Dump JEDEC Table"
-                "\r\n\t'3' - Read");
-      warpPrint("\r\n\t'4' - Write Enable"
-                "\r\n\t'5' - Write"
-                "\r\n\t'6' - Chip Erase");
+                "\r\n\t'2' - Dump JEDEC Table");
+      warpPrint("\r\n\t'3' - Write Enable"
+                "\r\n\t'4' - Write"
+                "\r\n\t'5' - Chip Erase");
       warpPrint("\r\n\tEnter selection> ");
       key = warpWaitKey();
       warpPrint("\n");
@@ -2937,32 +3019,10 @@ int main(void) {
         }
         break;
       }
-
-      /*
-       *	Perform a read
-       */
-      case '3': {
-        WarpStatus status;
-        uint8_t buf[32] = {0};
-
-        status = readMemoryIS25xP(0, 32, buf);
-        if (status != kWarpStatusOK) {
-          warpPrint("\r\n\tCommunication failed: %d", status);
-        } else {
-          warpPrint("\n");
-          for (size_t i = 0; i < 32; i++) {
-            warpPrint("0x%08x:\t%x\n", i, buf[i]);
-            OSA_TimeDelay(5);
-          }
-        }
-
-        break;
-      }
-
       /*
        *	Write Enable
        */
-      case '4': {
+      case '3': {
         WarpStatus status;
         uint8_t ops[] = {
             0x06, /* WREN */
@@ -2981,15 +3041,15 @@ int main(void) {
       /*
        *	Perform a write
        */
-      case '5': {
+      case '4': {
         WarpStatus status;
         uint8_t buf[32] = {0};
 
         for (size_t i = 0; i < 32; i++) {
-          buf[i] = 1;
+          buf[i] = i;
         }
 
-        status = programPageIS25xP(0, 32, buf);
+        status = programPageIS25xP(1, 32, buf);
         if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
         } else {
@@ -3002,7 +3062,7 @@ int main(void) {
       /*
        *	Erase chip (reset to 0xFF)
        */
-      case '6': {
+      case '5': {
         WarpStatus status;
 
         status = chipEraseIS25xP();
@@ -3019,15 +3079,6 @@ int main(void) {
         break;
       }
       }
-      // warpPrint("\r\n\tStart address (e.g., '0000')> ");
-      // //xx = read4digits();
-
-      // warpPrint("\r\n\tNumber of bytes to read from console (e.g., '0000')>
-      // ");
-      // //xx = read4digits();
-
-      // warpPrint("\r\n\tEnter [%d] raw bytes > ");
-
       break;
     }
 #endif

@@ -1,38 +1,38 @@
 /*
-	Authored 2021. Phillip Stanley-Marbell.
+  Authored 2021. Phillip Stanley-Marbell.
 
-	All rights reserved.
+  All rights reserved.
 
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions
-	are met:
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
 
-	*	Redistributions of source code must retain the above
-		copyright notice, this list of conditions and the following
-		disclaimer.
+  *	Redistributions of source code must retain the above
+    copyright notice, this list of conditions and the following
+    disclaimer.
 
-	*	Redistributions in binary form must reproduce the above
-		copyright notice, this list of conditions and the following
-		disclaimer in the documentation and/or other materials
-		provided with the distribution.
+  *	Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials
+    provided with the distribution.
 
-	*	Neither the name of the author nor the names of its
-		contributors may be used to endorse or promote products
-		derived from this software without specific prior written
-		permission.
+  *	Neither the name of the author nor the names of its
+    contributors may be used to endorse or promote products
+    derived from this software without specific prior written
+    permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
 
@@ -155,88 +155,88 @@ extern uint8_t						gWarpWriteToFlash;
 WarpStatus
 initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
-	deviceAT45DBState.chipSelectIoPinID				= chipSelectIoPinID;
-	deviceAT45DBState.spiSourceBuffer				= gWarpSpiCommonSourceBuffer;
-	deviceAT45DBState.spiSinkBuffer					= gWarpSpiCommonSinkBuffer;
-	deviceAT45DBState.spiBufferLength				= kWarpMemoryCommonSpiBufferBytes;
-	deviceAT45DBState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+  deviceAT45DBState.chipSelectIoPinID				= chipSelectIoPinID;
+  deviceAT45DBState.spiSourceBuffer				= gWarpSpiCommonSourceBuffer;
+  deviceAT45DBState.spiSinkBuffer					= gWarpSpiCommonSinkBuffer;
+  deviceAT45DBState.spiBufferLength				= kWarpMemoryCommonSpiBufferBytes;
+  deviceAT45DBState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 }
 
 WarpStatus
 spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount)
 {
-	spi_status_t	status;
+  spi_status_t	status;
 
-	if (opCount > deviceAT45DBState.spiBufferLength)
-	{
-		return kWarpStatusBadDeviceCommand;
-	}
+  if (opCount > deviceAT45DBState.spiBufferLength)
+  {
+    return kWarpStatusBadDeviceCommand;
+  }
 
-	warpScaleSupplyVoltage(deviceAT45DBState.operatingVoltageMillivolts);
+  warpScaleSupplyVoltage(deviceAT45DBState.operatingVoltageMillivolts);
 
-	/*
-	 *	First, configure chip select pins of the various SPI slave devices
-	 *	as GPIO and drive all of them high.
-	 */
-	warpDeasserAllSPIchipSelects();
+  /*
+   *	First, configure chip select pins of the various SPI slave devices
+   *	as GPIO and drive all of them high.
+   */
+  warpDeasserAllSPIchipSelects();
 
-	for (int i = 0; (i < opCount) && (i < deviceAT45DBState.spiBufferLength); i++)
-	{
-		deviceAT45DBState.spiSourceBuffer[i] = ops[i];
-		deviceAT45DBState.spiSinkBuffer[i] = 0xFF;
-	}
+  for (int i = 0; (i < opCount) && (i < deviceAT45DBState.spiBufferLength); i++)
+  {
+    deviceAT45DBState.spiSourceBuffer[i] = ops[i];
+    deviceAT45DBState.spiSinkBuffer[i] = 0xFF;
+  }
 
-	/*
-	 *	First, pulse the /CS to wake up device in case it is in Ultra-Deep Power-Down mode.
-	 *	(See Section 10.2.1 of manual). The 50 milliseconds we use here is conservative:
-	 *	the manual says the minimum time needed is 20ns. However, the datasheet also says:
-	 *
-	 *		"After the CS pin has been deasserted, the device will exit from the
-	 *		Ultra-Deep Power-Down mode and return to the standby mode within a
-	 *		maximum time of tXUDPD."
-	 *
-	 *	Since txudpd is 100us, we wait another millisecond before proceeding to assert /CS
-	 *	again below.
-	 */
-	GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
-	OSA_TimeDelay(1);
-	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
-	OSA_TimeDelay(1);
+  /*
+   *	First, pulse the /CS to wake up device in case it is in Ultra-Deep Power-Down mode.
+   *	(See Section 10.2.1 of manual). The 50 milliseconds we use here is conservative:
+   *	the manual says the minimum time needed is 20ns. However, the datasheet also says:
+   *
+   *		"After the CS pin has been deasserted, the device will exit from the
+   *		Ultra-Deep Power-Down mode and return to the standby mode within a
+   *		maximum time of tXUDPD."
+   *
+   *	Since txudpd is 100us, we wait another millisecond before proceeding to assert /CS
+   *	again below.
+   */
+  GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
+  OSA_TimeDelay(1);
+  GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
+  OSA_TimeDelay(1);
 
-	/*
-	 *	Next, create a falling edge on chip-select.
-	 */
-	GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
+  /*
+   *	Next, create a falling edge on chip-select.
+   */
+  GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
 
-	/*
-	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
-	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
-	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
-	 *	the KL03 since there is only one SPI peripheral.
-	 */
-	warpEnableSPIpins();
-	status = SPI_DRV_MasterTransferBlocking(0							/*	master instance			*/,
-					NULL								/*	spi_master_user_config_t	*/,
-					(const uint8_t * restrict)deviceAT45DBState.spiSourceBuffer	/*	source buffer			*/,
-					(uint8_t * restrict)deviceAT45DBState.spiSinkBuffer		/*	receive buffer			*/,
-					opCount								/*	transfer size			*/,
-					gWarpSpiTimeoutMicroseconds);
-	warpDisableSPIpins();
+  /*
+   *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
+   *	Providing a spi_master_user_config_t is optional since it is already provided when we did
+   *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+   *	the KL03 since there is only one SPI peripheral.
+   */
+  warpEnableSPIpins();
+  status = SPI_DRV_MasterTransferBlocking(0							/*	master instance			*/,
+          NULL								/*	spi_master_user_config_t	*/,
+          (const uint8_t * restrict)deviceAT45DBState.spiSourceBuffer	/*	source buffer			*/,
+          (uint8_t * restrict)deviceAT45DBState.spiSinkBuffer		/*	receive buffer			*/,
+          opCount								/*	transfer size			*/,
+          gWarpSpiTimeoutMicroseconds);
+  warpDisableSPIpins();
 
-	/*
-	 *	Deassert the AT45DB
-	 */
-	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
+  /*
+   *	Deassert the AT45DB
+   */
+  GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
 
-	if (status != kStatus_SPI_Success)
-	{
-		return kWarpStatusDeviceCommunicationFailed;
-	}
+  if (status != kStatus_SPI_Success)
+  {
+    return kWarpStatusDeviceCommunicationFailed;
+  }
 
-	return kWarpStatusOK;
+  return kWarpStatusOK;
 }
 
-void 
+void
 enableAT45DBWrite() {
   WarpStatus status;
   uint8_t ops[] = {
@@ -247,21 +247,29 @@ enableAT45DBWrite() {
     warpPrint("\r\n\tCommunication failed: %d", status);
   }
 }
-WarpStatus 
-ProgramAT45DB(size_t nbyte, uint8_t* buf) {
-  // assume that nbyte < 60
+
+WarpStatus
+SaveToAT45DBFromEnd(size_t nbyte, uint8_t* buf) {
   int writeToFlash = gWarpWriteToFlash;
   gWarpWriteToFlash = kWarpWriteToFlash;
-
+  // assume that nbyte < 32
+  WarpStatus status;
   uint8_t pageOffsetBuf[3];
-  readmemoryAT45DB(0, 3, pageOffsetBuf);
+  status = readmemoryAT45DB(0, 3, pageOffsetBuf);
+  if (status != kWarpStatusOK) {
+  return status;
+  }
 
   uint8_t pageOffset = pageOffsetBuf[2];
   uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
+  size_t nExtraPagesRequired = (nbyte - pageOffset + (kWarpSizeAT45DBPageSizeBytes - 1)) / kWarpSizeAT45DBPageSizeBytes;
+  if (kWarpSizeAT45DBNPages - nExtraPagesRequired < pageNumber) {
+    return kWarpStatusBadDeviceCommand;
+  }
+
   bool nextPageRequired = nbyte + pageOffset > kWarpSizeAT45DBPageSizeBytes;
 
-  WarpStatus status;
   if (!nextPageRequired) {
     uint8_t fullBufSize = nbyte + pageOffset;
     uint8_t fullBuf[fullBufSize];
@@ -269,7 +277,6 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
     if (pageOffset > 0) {
       status = readmemoryAT45DB(pageNumber, pageOffset, fullBuf);
       if (status != kWarpStatusOK) {
-        warpPrint("Error: ReadAT45DB failed\n");
         return status;
       }
     }
@@ -279,17 +286,23 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
     }
 
     status = PageProgramAT45DB(pageNumber, fullBufSize, fullBuf);
+	if (status != kWarpStatusOK) {
+	  return status;
+	}
 
-    resetAT45DB(pageNumber, fullBufSize);
+    status = setAT45DBStartOffset(pageNumber, fullBufSize);
+	if (status != kWarpStatusOK) {
+	  return status;
+	}
   }
   else {
+	// Write to remaining space in current page
     uint8_t firstBufSize = kWarpSizeAT45DBPageSizeBytes - pageOffset;
     uint8_t firstBuf[kWarpSizeAT45DBPageSizeBytes];
 
     if (pageOffset > 0) {
       status = readmemoryAT45DB(pageNumber, pageOffset, firstBuf);
       if (status != kWarpStatusOK) {
-        warpPrint("Error: ReadAT45DB failed\n");
         return status;
       }
     }
@@ -300,10 +313,10 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
 
     status = PageProgramAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, firstBuf);
     if (status != kWarpStatusOK) {
-      warpPrint("Error: PageProgramAT45DB failed\n");
       return status;
     }
 
+	// Write to full pages as needed
     uint8_t middleBufSize = nbyte - firstBufSize;
     size_t nIterations = middleBufSize / kWarpSizeAT45DBPageSizeBytes;
 
@@ -313,26 +326,32 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
     for (int i = 0; i < nIterations; i++) {
       status = PageProgramAT45DB((pageNumber+=1), kWarpSizeAT45DBPageSizeBytes, middleBuf+(i*kWarpSizeAT45DBPageSizeBytes));
       if (status != kWarpStatusOK) {
-        warpPrint("Error: PageProgramAT45DB failed\n");
         return status;
       }
     }
 
+	// Write to remaining bytes
     status = PageProgramAT45DB((pageNumber+=1), excess, middleBuf+(nIterations*kWarpSizeAT45DBPageSizeBytes));
       if (status != kWarpStatusOK) {
-        warpPrint("Error: PageProgramAT45DB failed\n");
         return status;
       }
 
-    resetAT45DB(pageNumber, excess);
-  }
+    if (excess == 32) {
+      excess = 0;
+      pageNumber += 1;
+    }
 
+    status = setAT45DBStartOffset(pageNumber, excess);
+    if (status != kWarpStatusOK) {
+      return status;
+    }
+  }
   gWarpWriteToFlash = writeToFlash;
   return kWarpStatusOK;
 }
 
-void 
-resetAT45DB(uint16_t pageNumber, uint8_t pageOffset) 
+WarpStatus
+setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 {
   enableAT45DBWrite();
 
@@ -345,146 +364,118 @@ resetAT45DB(uint16_t pageNumber, uint8_t pageOffset)
 
   status = PageProgramAT45DB(0, 3, initialNANDStartPosition);
   if (status != kWarpStatusOK) {
-     warpPrint("Error: PageProgramAT45DB failed\n");
+    return status;
   }
 }
+
 WarpStatus
 PageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t *  buf)
 {
 
-	WarpStatus	status;
+  WarpStatus	status;
 
-	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
-	{
-		return kWarpStatusBadDeviceCommand;
-	}
-	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0] = 0x82;	/* PP */
-	ops[2] = (uint8_t)(pageNumber <<= 1);
-	ops[1] = (uint8_t)(pageNumber >>= 8);
-	ops[3] = 0x00;
+  if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+  {
+    return kWarpStatusBadDeviceCommand;
+  }
+  uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+  ops[0] = 0x82;	/* PP */
+  ops[2] = (uint8_t)(pageNumber <<= 1);
+  ops[1] = (uint8_t)(pageNumber >>= 8);
+  ops[3] = 0x00;
 
-	for (size_t i = 0; i < nbyte; i++)
-	{
-		ops[i+4] = buf[i];
-	}
+  for (size_t i = 0; i < nbyte; i++)
+  {
+    ops[i+4] = buf[i];
+  }
 
-	return  spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
+  return  spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
 }
 
 WarpStatus
 readmemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf)
 {
-	WarpStatus	status;
-	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
-	{
-		return kWarpStatusBadDeviceCommand;
-	}
+  WarpStatus	status;
+  if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+  {
+    return kWarpStatusBadDeviceCommand;
+  }
 
-	size_t nIterations = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
-	size_t excessBytes = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
+  uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+  ops[0] = 0xD2;	/* NORD */
+  ops[2] = (uint8_t)(pageNumber <<= 1);
+  ops[1] = (uint8_t)(pageNumber >>= 8);
+  ops[3] = 0x00;
+  ops[4] = 0x00;
+  ops[5] = 0x00;
+  ops[6] = 0x00;
+  ops[7] = 0x00;
 
-	for (size_t i = 0; i < nIterations; i++)
-	{
-		uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-		ops[0] = 0xD2;	/* NORD */
-		ops[2] = (uint8_t)(pageNumber <<= 1);
-		ops[1] = (uint8_t)(pageNumber >>= 8);
-		ops[3] = 0x00;
-		ops[4] = 0x00;
-		ops[5] = 0x00;
-		ops[6] = 0x00;
-		ops[7] = 0x00;
+  status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 8);
+  if (status != kWarpStatusOK)
+  {
+    return status;
+  }
 
-		status = spiTransactionAT45DB(&deviceAT45DBState, ops, kWarpMemoryCommonSpiBufferBytes);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("here1: %d\n", status);
-			return status;
-		}
+  for (size_t i = 0; i < nbyte; i++)
+  {
+    ((uint8_t*)buf)[i] = deviceAT45DBState.spiSinkBuffer[i+8];
 
-		for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
-		{
-			((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceAT45DBState.spiSinkBuffer[i+8];
-		}
+  }
 
-	}
-
-	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0] = 0xD2;	/* NORD */
-	ops[2] = (uint8_t)(pageNumber <<= 1);
-	ops[1] = (uint8_t)(pageNumber >>= 8);
-	ops[3] = 0x00;
-	ops[4] = 0x00;
-	ops[5] = 0x00;
-	ops[6] = 0x00;
-	ops[7] = 0x00;
-
-	status = spiTransactionAT45DB(&deviceAT45DBState, ops, excessBytes + 8);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("here1: %d\n", status);
-		return status;
-	}
-
-	for (size_t i = 0; i < excessBytes; i++)
-	{
-		((uint8_t*)buf)[nIterations*(kWarpMemoryCommonSpiBufferBytes - 8) + i] = deviceAT45DBState.spiSinkBuffer[i+8];
-	}
-
-	return kWarpStatusOK;
+  return kWarpStatusOK;
 }
 
 WarpStatus
 eraseSectorAT45DB(uint32_t address)
 {
-	uint8_t	ops[4] = {0};
+  uint8_t	ops[4] = {0};
 
-	ops[0] = 0x7C;	/* SER (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
+  ops[0] = 0x7C;	/* SER (SPI Mode) */
+  ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+  ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+  ops[3] = (uint8_t)((address & 0x000F));
 
-	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+  return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 }
 
 WarpStatus
 erase32kBlockAT45DB(uint32_t address)
 {
-	uint8_t	ops[4] = {0};
+  uint8_t	ops[4] = {0};
 
-	ops[0] = 0x12;	/* BER32K (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
+  ops[0] = 0x12;	/* BER32K (SPI Mode) */
+  ops[1] = (uint8_t)((address & 0x0F00) >> 2);
+  ops[2] = (uint8_t)((address & 0x00F0) >> 1);
+  ops[3] = (uint8_t)((address & 0x000F));
 
-	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+  return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 }
 WarpStatus
 chipEraseAT45DB()
 {
-	WarpStatus	status;
-	uint8_t	ops[4] = {0};
+  WarpStatus	status;
+  uint8_t	ops[4] = {0};
 
-	ops[0] = 0xC7;	/* CER (SPI Mode) */
-	ops[1] = 0x94;
-	ops[2] = 0x80;
-	ops[3] = 0x9A;
+  ops[0] = 0xC7;	/* CER (SPI Mode) */
+  ops[1] = 0x94;
+  ops[2] = 0x80;
+  ops[3] = 0x9A;
 
-	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-	return status;
+  status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+  return status;
 }
 WarpStatus
 disablesectorprotection()
 {
-	WarpStatus	status;
-	uint8_t	ops[4] = {0};
+  WarpStatus	status;
+  uint8_t	ops[4] = {0};
 
-	ops[0] = 0x3D;	/* CER (SPI Mode) */
-	ops[1] = 0x2A;
-	ops[2] = 0x7F;
-	ops[3] = 0x9A;
+  ops[0] = 0x3D;	/* CER (SPI Mode) */
+  ops[1] = 0x2A;
+  ops[2] = 0x7F;
+  ops[3] = 0x9A;
 
-	status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-	return status;
+  status =  spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+  return status;
 }
