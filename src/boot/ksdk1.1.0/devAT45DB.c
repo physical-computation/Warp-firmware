@@ -398,8 +398,7 @@ readmemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf)
 
 		status = spiTransactionAT45DB(&deviceAT45DBState, ops, kWarpMemoryCommonSpiBufferBytes);
 		if (status != kWarpStatusOK)
-		{
-			warpPrint("here1: %d\n", status);
+		{			
 			return status;
 		}
 
