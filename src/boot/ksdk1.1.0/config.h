@@ -122,7 +122,7 @@
 	#define		WARP_BUILD_ENABLE_DEVISL23415		1
 	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
 	#define		WARP_BUILD_ENABLE_DEVICE40		0
-	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
+	#define		WARP_BUILD_ENABLE_DEVL3GD20H		1
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
@@ -156,27 +156,29 @@ typedef enum
 	*/
 	kWarpDefaultPrintBufferSizeBytes			= 64,
 	kWarpMemoryCommonSpiBufferBytes				= 64,
-	kWarpSizesI2cBufferBytes				= 4,
-	kWarpSizesSpiBufferBytes				= 7,
-	kWarpSizesUartBufferBytes				= 8,
-	kWarpSizesBME680CalibrationValuesCount			= 41,
+	kWarpSizesI2cBufferBytes					= 4,
+	kWarpSizesSpiBufferBytes					= 7,
+	kWarpSizesUartBufferBytes					= 8,
+	kWarpSizesBME680CalibrationValuesCount		= 41,
+	kWarpSizeAT45DBPageSizeBytes				= 32,
+	kWarpWriteToFlash							= 0,
 
 	/*
 	 *	Voltages
 	 */
-	kWarpDefaultSupplyVoltageMillivolts			= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBGX			= 2000,
+	kWarpDefaultSupplyVoltageMillivolts					= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBGX				= 2000,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 2600,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 2600,
 	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 2600,
-	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsHDC1000		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsSI7021		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 2200,
-	kWarpDefaultSupplyVoltageMillivoltsBME680		= 2400,
-	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsLPS25H			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsHDC1000			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsMAG3110			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI7021			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsL3GD20H			= 2200,
+	kWarpDefaultSupplyVoltageMillivoltsBME680			= 2400,
+	kWarpDefaultSupplyVoltageMillivoltsTCS34725			= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 2600,
