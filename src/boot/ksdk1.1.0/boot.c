@@ -2651,8 +2651,6 @@ int main(void) {
       uint16_t menuDelayBetweenEachRun = read4digits();
       warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n",
                 menuDelayBetweenEachRun);
-      warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n",
-                menuDelayBetweenEachRun);
 
       gWarpWriteToFlash = 1;
       printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag,
@@ -2768,7 +2766,6 @@ int main(void) {
       //break;
 #endif
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
-      warpPrint("Hello");
       warpPrint("\r\n\tResetting Flash\n");
       resetIS25xP(1, 0);
       warpPrint("\r\n\tFlash reset\n");      
