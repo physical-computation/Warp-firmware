@@ -138,7 +138,7 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 
 	return kWarpStatusOK;
 }
-void 
+void
 enableIs25xPWrite() {
   WarpStatus status;
   uint8_t ops[] = {
@@ -149,7 +149,7 @@ enableIs25xPWrite() {
     warpPrint("\r\n\tCommunication failed: %d", status);
   }
 }
-WarpStatus 
+WarpStatus
 ProgramIS25xP(size_t nbyte, uint8_t* buf) {
   // assume that nbyte < 60
   int writeToFlash = gWarpWriteToFlash;
@@ -233,19 +233,20 @@ ProgramIS25xP(size_t nbyte, uint8_t* buf) {
   return kWarpStatusOK;
 }
 
-void 
-resetIS25xP(uint16_t pageNumber, uint8_t pageOffset) 
+void
+resetIS25xP(uint32_t pageNumber, uint8_t pageOffset)
 {
   enableIs25xPWrite();
 
   WarpStatus status;
 
-  uint8_t initialNANDStartPosition[3];
-  initialNANDStartPosition[1] = (uint8_t)pageNumber;
+  uint8_t initialNANDStartPosition[4];
+  initialNANDStartPosition[2] = (uint8_t)(pageNumber);
+  initialNANDStartPosition[1] = (uint8_t)(pageNumber>>=8);
   initialNANDStartPosition[0] = (uint8_t)(pageNumber>>=8);
-  initialNANDStartPosition[2] = pageOffset;
+  initialNANDStartPosition[3] = pageOffset;
 
-  status = programPageIS25xP(0, 3, initialNANDStartPosition);
+  status = programPageIS25xP(0, 4, initialNANDStartPosition);
   if (status != kWarpStatusOK) {
      warpPrint("Error: PageProgramIS25xP failed\n");
   }
@@ -254,125 +255,167 @@ resetIS25xP(uint16_t pageNumber, uint8_t pageOffset)
 WarpStatus
 readMemoryIS25xP(uint32_t pageNumber, size_t nbyte, void *  buf)
 {
+
 	WarpStatus	status;
+  if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+  {
+    return kWarpStatusBadDeviceCommand;
+  }
 
-
-	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
-	{
-		return kWarpStatusBadDeviceCommand;
-	}
-
-	size_t nIterations = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
-	size_t excessBytes = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
-
-	for (size_t i = 0; i < nIterations; i++)
-	{
-		uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-		ops[0] = 0x03;	/* NORD */
-		ops[2] = (uint8_t)(pageNumber <<= 1);
-		ops[1] = (uint8_t)(pageNumber >>= 8);
-		ops[3] = 0x00;
-		// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-		// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-		// ops[3] = (uint8_t)((startAddress & 0x000F));
-		// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-		// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-		// ops[3] = (uint8_t)((startAddress & 0x000F));
-
-		status = spiTransactionIS25xP(ops, nbyte+4);
-		if (status != kWarpStatusOK)
-		{
-			return status;
-		}
-
-		// for (size_t i = 0; i < nbyte; i++)
-		// {
-		// 	((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+4];
-		// }
-		for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
-			{
-				((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceIS25xPState.spiSinkBuffer[i+8];
-			}
-	}
-	for (size_t i = 0; i < nIterations; i++)
-	{
-		uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-		ops[0] = 0x03;	/* NORD */
-		ops[2] = (uint8_t)(pageNumber <<= 1);
-		ops[1] = (uint8_t)(pageNumber >>= 8);
-		ops[3] = 0x00;
-		// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-		// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-		// ops[3] = (uint8_t)((startAddress & 0x000F));
-		
-
-		status = spiTransactionIS25xP(ops, kWarpMemoryCommonSpiBufferBytes);
-		if (status != kWarpStatusOK)
-		{			
-			return status;
-		}
-
-		for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
-		{
-			((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceIS25xPState.spiSinkBuffer[i+8];
-		}
-
-	}
-
-	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0] = 0x03;	/* NORD */
-	ops[2] = (uint8_t)(pageNumber <<= 1);
+  uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+  ops[0] = 0x03;	/* NORD */
+  ops[3] = (uint8_t)(pageNumber);
+	ops[2] = (uint8_t)(pageNumber >>= 8);
 	ops[1] = (uint8_t)(pageNumber >>= 8);
-	ops[3] = 0x00;
-	// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
-	// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
-	// ops[3] = (uint8_t)((startAddress & 0x000F));
-	
+	// ops[4] = 0x00;
+	// ops[5] = 0x00;
+	// ops[6] = 0x00;
+	// ops[7] = 0x00;
 
-	status = spiTransactionIS25xP(ops, excessBytes + 8);
-	if (status != kWarpStatusOK)
-	{
+  status = spiTransactionIS25xP(ops, nbyte+4);
+	if (status != kWarpStatusOK) {
 		return status;
 	}
-	
-	for (size_t i = 0; i < excessBytes; i++)
-	{
-		((uint8_t*)buf)[nIterations*(kWarpMemoryCommonSpiBufferBytes - 8) + i] = deviceIS25xPState.spiSinkBuffer[i+8];
-	}
 
-	return kWarpStatusOK;
+  for (size_t i = 0; i < nbyte; i++)
+  {
+    ((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+8];
+
+  }
+
+  return kWarpStatusOK;
+
+
+
 
 	// WarpStatus	status;
+
+
 	// if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
 	// {
 	// 	return kWarpStatusBadDeviceCommand;
 	// }
 
+	// size_t nIterations = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
+	// size_t excessBytes = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
+
+	// for (size_t i = 0; i < nIterations; i++)
+	// {
+	// 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	// 	ops[0] = 0x03;	/* NORD */
+	// 	ops[3] = (uint8_t)(pageNumber);
+	// 	ops[2] = (uint8_t)(pageNumber >>= 8);
+	// 	ops[1] = (uint8_t)(pageNumber >>= 8);
+	// 	ops[4] = 0x00;
+	// 	ops[5] = 0x00;
+	// 	ops[6] = 0x00;
+	// 	ops[7] = 0x00;
+
+
+	// 	// ops[2] = (uint8_t)(pageNumber <<= 1);
+	// 	// ops[1] = (uint8_t)(pageNumber >>= 8);
+	// 	// ops[3] = 0x00;
+	// 	// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	// 	// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	// 	// ops[3] = (uint8_t)((startAddress & 0x000F));
+	// 	// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	// 	// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	// 	// ops[3] = (uint8_t)((startAddress & 0x000F));
+
+	// 	status = spiTransactionIS25xP(ops, nbyte+4);
+	// 	if (status != kWarpStatusOK)
+	// 	{
+	// 		return status;
+	// 	}
+
+	// 	// for (size_t i = 0; i < nbyte; i++)
+	// 	// {
+	// 	// 	((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+4];
+	// 	// }
+	// 	for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
+	// 		{
+	// 			((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceIS25xPState.spiSinkBuffer[i+8];
+	// 		}
+	// }
+	// for (size_t i = 0; i < nIterations; i++)
+	// {
+	// 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	// 	ops[0] = 0x03;	/* NORD */
+	// 	ops[3] = (uint8_t)(pageNumber);
+	// 	ops[2] = (uint8_t)(pageNumber >>= 8);
+	// 	ops[1] = (uint8_t)(pageNumber >>= 8);
+	// 	// ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	// 	// ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	// 	// ops[3] = (uint8_t)((startAddress & 0x000F));
+
+
+	// 	status = spiTransactionIS25xP(ops, kWarpMemoryCommonSpiBufferBytes);
+	// 	if (status != kWarpStatusOK)
+	// 	{
+	// 		return status;
+	// 	}
+
+	// 	for (size_t j = 0; j < kWarpMemoryCommonSpiBufferBytes - 8; j++)
+	// 	{
+	// 		((uint8_t*)buf)[i*(kWarpMemoryCommonSpiBufferBytes - 8) + j] = deviceIS25xPState.spiSinkBuffer[i+8];
+	// 	}
+
+	// }
+
 	// uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	// ops[0] = 0x03;	/* NORD */
-	// ops[2] = (uint8_t)(pageNumber <<= 1);
-	// ops[1] = (uint8_t)(pageNumber >>= 8);
-	// ops[3] = 0x00;
+	// ops[3] = (uint8_t)(pageNumber);
+	// 	ops[2] = (uint8_t)(pageNumber >>= 8);
+	// 	ops[1] = (uint8_t)(pageNumber >>= 8);
+	// // ops[1] = (uint8_t)((startAddress & 0x0F00) >> 2);
+	// // ops[2] = (uint8_t)((startAddress & 0x00F0) >> 1);
+	// // ops[3] = (uint8_t)((startAddress & 0x000F));
 
-	// status = spiTransactionIS25xP(ops, nbyte+4);
+
+	// status = spiTransactionIS25xP(ops, excessBytes + 8);
 	// if (status != kWarpStatusOK)
 	// {
 	// 	return status;
 	// }
 
-	// for (size_t i = 0; i < nbyte; i++)
+	// for (size_t i = 0; i < excessBytes; i++)
 	// {
-	// 	((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+4];
+	// 	((uint8_t*)buf)[nIterations*(kWarpMemoryCommonSpiBufferBytes - 8) + i] = deviceIS25xPState.spiSinkBuffer[i+8];
 	// }
 
 	// return kWarpStatusOK;
+
+	// // WarpStatus	status;
+	// // if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+	// // {
+	// // 	return kWarpStatusBadDeviceCommand;
+	// // }
+
+	// // uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	// // ops[0] = 0x03;	/* NORD */
+	// // ops[2] = (uint8_t)(pageNumber <<= 1);
+	// // ops[1] = (uint8_t)(pageNumber >>= 8);
+	// // ops[3] = 0x00;
+
+	// // status = spiTransactionIS25xP(ops, nbyte+4);
+	// // if (status != kWarpStatusOK)
+	// // {
+	// // 	return status;
+	// // }
+
+	// // for (size_t i = 0; i < nbyte; i++)
+	// // {
+	// // 	((uint8_t*)buf)[i] = deviceIS25xPState.spiSinkBuffer[i+4];
+	// // }
+
+	// // return kWarpStatusOK;
 }
 
 WarpStatus
 programPageIS25xP(uint32_t pageNumber, size_t nbyte, uint8_t *  buf)
 {
 
-	
+
 	WarpStatus	status;
 
 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
@@ -381,10 +424,10 @@ programPageIS25xP(uint32_t pageNumber, size_t nbyte, uint8_t *  buf)
 	}
 
 	uint8_t	ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0] = 0x02;	/* NORD */	
-	ops[2] = (uint8_t)(pageNumber <<= 1);
+	ops[0] = 0x02;	/* NORD */
+	ops[3] = (uint8_t)(pageNumber);
+	ops[2] = (uint8_t)(pageNumber >>= 8);
 	ops[1] = (uint8_t)(pageNumber >>= 8);
-	ops[3] = 0x00;
 
 	if (status != kWarpStatusOK)
 	{

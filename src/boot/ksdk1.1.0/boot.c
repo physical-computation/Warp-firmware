@@ -2676,7 +2676,7 @@ int main(void) {
       WarpStatus status;
 
       uint8_t pageOffsetBuf[3];
-      status = readmemoryAT45DB(0, 3, pageOffsetBuf);
+      status = readMemoryAT45DB(0, 3, pageOffsetBuf);
       if (status != kWarpStatusOK) {
         warpPrint("\r\n\tCommunication failed: %d", status);
       }
@@ -2688,7 +2688,7 @@ int main(void) {
       warpPrint("\r\n\tPage offset: %d", pageOffset);
       for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal;
            pageNumber++) {
-        status = readmemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
+        status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
                                   dataBuffer);
         if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
@@ -2699,7 +2699,7 @@ int main(void) {
         }
       }
 
-      status = readmemoryAT45DB(pageNumberTotal, pageOffset,
+      status = readMemoryAT45DB(pageNumberTotal, pageOffset,
                                   dataBuffer);
 
       if (status != kWarpStatusOK) {
@@ -2717,16 +2717,17 @@ int main(void) {
       uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
       WarpStatus status;
 
-      uint8_t pageOffsetBuf[3];
-      status = readMemoryIS25xP(0, 3, pageOffsetBuf);
+      uint8_t pageOffsetBuf[4];
+      status = readMemoryIS25xP(0, 4, pageOffsetBuf);
       if (status != kWarpStatusOK) {
         warpPrint("\r\n\tCommunication failed: %d", status);
       }
 
-      uint8_t pageOffset = pageOffsetBuf[2];
-      uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-      warpPrint("state: %d, %d, %d", pageOffsetBuf[0], pageOffsetBuf[1],
-                pageOffsetBuf[2]);
+      uint8_t pageOffset = pageOffsetBuf[3];
+      uint32_t pageNumberTotal = pageOffsetBuf[2] | pageOffsetBuf[1] << 8 | pageOffsetBuf[0] << 16;
+      warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+      warpPrint("\r\n\tPage offset: %d", pageOffset);
+
       for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1;
            pageNumber++) {
         status = readMemoryIS25xP(pageNumber, kWarpSizeAT45DBPageSizeBytes,
@@ -2775,13 +2776,6 @@ int main(void) {
         break;
       }
 
-      char data[32];
-      for (int i = 0; i < 32; i++) {
-        data[i] = "j";
-      }
-
-      // SaveToAT45DBFromEnd(32, data);
-
       warpPrint("\r\n\tFlash reset\n");
       break;
 #else
@@ -2792,6 +2786,7 @@ int main(void) {
       warpPrint("Hello");
       warpPrint("\r\n\tResetting Flash\n");
       resetIS25xP(1, 0);
+
       warpPrint("\r\n\tFlash reset\n");
       break;
 #else
