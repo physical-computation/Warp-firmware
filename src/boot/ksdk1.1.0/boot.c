@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 /*
  *	config.h needs to come first
  */
@@ -1216,22 +1215,23 @@ void warpPrint(const char *fmt, ...) {
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
-  if (gWarpBooted && gWarpWriteToFlash)
-  {
+  if (gWarpBooted && gWarpWriteToFlash) {
     /* Write to flash*/
-    ProgramAT45DB(strlen(gWarpPrintBuffer), gWarpPrintBuffer);    
+    WarpStatus status = SaveToAT45DBFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+    if (status != kWarpStatusOK) {
+      gWarpWriteToFlash = 0;
+      warpPrint("Error writing to flash: %d\n", status);
+    }
   }
 
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
-if (gWarpBooted && gWarpWriteToFlash) 
-{
+  if (gWarpBooted && gWarpWriteToFlash) {
     /* Write to flash*/
-    ProgramIS25xP(strlen(gWarpPrintBuffer), gWarpPrintBuffer);    
-}
+    ProgramIS25xP(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+  }
 #endif
-
 
 #else
   /*
@@ -2667,108 +2667,124 @@ int main(void) {
     /*
      *	Read bytes from Flash and print as hex
      */
-    case 'R': 
-    {
-      #if (WARP_BUILD_ENABLE_DEVAT45DB)
+    case 'R': {
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
       /* read from the page */
       uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
       WarpStatus status;
 
       uint8_t pageOffsetBuf[3];
-      status = readmemoryAT45DB(0, 3, pageOffsetBuf);
-      if (status != kWarpStatusOK) 
-        {
-          warpPrint("\r\n\tCommunication failed: %d", status);
-        } 
+      status = readMemoryAT45DB(0, 3, pageOffsetBuf);
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+      }
 
       uint8_t pageOffset = pageOffsetBuf[2];
       uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
-      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1; pageNumber++) 
-      {
-        status = readmemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, dataBuffer);
-
-        if (status != kWarpStatusOK) 
-        {
+      warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+      warpPrint("\r\n\tPage offset: %d", pageOffset);
+      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal;
+           pageNumber++) {
+        status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
+                                  dataBuffer);
+        if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
-        } else 
-        {
-          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) 
-          {
+        } else {
+          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) {
             warpPrint("%c", dataBuffer[i]);
           }
         }
       }
-      #endif
-    #if (WARP_BUILD_ENABLE_DEVIS25xP)
-    /* read from the page */
+
+      status = readMemoryAT45DB(pageNumberTotal, pageOffset,
+                                  dataBuffer);
+
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+      } else {
+        for (size_t i = 0; i < pageOffset; i++) {
+          warpPrint("%c", dataBuffer[i]);
+        }
+      }
+
+
+#endif
+#if (WARP_BUILD_ENABLE_DEVIS25xP)
+      /* read from the page */
       uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
       WarpStatus status;
 
-      uint8_t pageOffsetBuf[3];
-      status = readMemoryIS25xP(0, 3, pageOffsetBuf);      
-      if (status != kWarpStatusOK) 
-        {
-          warpPrint("\r\n\tCommunication failed: %d", status);
-        } 
+      uint8_t pageOffsetBuf[4];
+      status = readMemoryIS25xP(0, 4, pageOffsetBuf);
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+      }
 
-      uint8_t pageOffset = pageOffsetBuf[2];
-      uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-      warpPrint("state: %d, %d, %d", pageOffsetBuf[0],pageOffsetBuf[1],pageOffsetBuf[2]);
-      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1; pageNumber++) 
-      {
-        status = readMemoryIS25xP(pageNumber, kWarpSizeAT45DBPageSizeBytes, dataBuffer);
+      uint8_t pageOffset = pageOffsetBuf[3];
+      uint32_t pageNumberTotal = pageOffsetBuf[2] | pageOffsetBuf[1] << 8 | pageOffsetBuf[0] << 16;
+      warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+      warpPrint("\r\n\tPage offset: %d", pageOffset);
 
-        if (status != kWarpStatusOK) 
-        {
-          
+      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal + 1;
+           pageNumber++) {
+        status = readMemoryIS25xP(pageNumber, kWarpSizeAT45DBPageSizeBytes,
+                                  dataBuffer);
+
+        if (status != kWarpStatusOK) {
+
           warpPrint("\r\n\tCommunication failed: %d", status);
-        } else 
-        {
-          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) 
-          {
-            
+        } else {
+          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) {
+
             warpPrint("%c", dataBuffer[i]);
           }
         }
       }
       // WarpStatus 	status;
-			// 		uint8_t		buf[32] = {0};
+      // 		uint8_t		buf[32] = {0};
 
-			// 		status = readMemoryIS25xP(0, 32, buf);
-			// 		if (status != kWarpStatusOK)
-			// 		{
-			// 			warpPrint("\r\n\tCommunication failed: %d", status);
-			// 		}
-			// 		else
-			// 		{
-			// 			warpPrint("\n");
-			// 			for (size_t i = 0; i < 32; i++)
-			// 			{
-			// 				warpPrint("0x%08x:\t%x\n", i, buf[i]);
-			// 				OSA_TimeDelay(5);
-							
-			// 			}
-			// 		}
-    #endif
-         
+      // 		status = readMemoryIS25xP(0, 32, buf);
+      // 		if (status != kWarpStatusOK)
+      // 		{
+      // 			warpPrint("\r\n\tCommunication failed: %d",
+      // status);
+      // 		}
+      // 		else
+      // 		{
+      // 			warpPrint("\n");
+      // 			for (size_t i = 0; i < 32; i++)
+      // 			{
+      // 				warpPrint("0x%08x:\t%x\n", i, buf[i]);
+      // 				OSA_TimeDelay(5);
+
+      // 			}
+      // 		}
+#endif
+
       break;
     }
 
     case 'Z': {
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
       warpPrint("\r\n\tResetting Flash\n");
-      resetAT45DB(1, 0);
-      warpPrint("\r\n\tFlash reset\n");      
+      WarpStatus status = setAT45DBStartOffset(1, 0);
+      if (status != kWarpStatusOK) {
+        warpPrint("\r\n\tCommunication failed: %d", status);
+        break;
+      }
+
+      warpPrint("\r\n\tFlash reset\n");
       break;
 #else
-      //warpPrint("\r\n\tFlash not enabled\n");
-      //break;
+      // warpPrint("\r\n\tFlash not enabled\n");
+      // break;
 #endif
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
       warpPrint("\r\n\tResetting Flash\n");
       resetIS25xP(1, 0);
-      warpPrint("\r\n\tFlash reset\n");      
+
+      warpPrint("\r\n\tFlash reset\n");
       break;
 #else
       warpPrint("\r\n\tFlash not enabled\n");
@@ -2780,8 +2796,7 @@ int main(void) {
  *	Write raw bytes read from console to Flash
  */
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
-    case 'F': 
-    {
+    case 'F': {
       warpPrint("\r\n\tDevice: IS25xP"
                 "\r\n\t'1' - Info and status registers"
                 "\r\n\t'2' - Dump JEDEC Table");
@@ -2797,10 +2812,8 @@ int main(void) {
       /*
        *	Read informational and status registers
        */
-      case '1': 
-      {
-        uint8_t ops1[] = 
-        {
+      case '1': {
+        uint8_t ops1[] = {
             /* Read JEDEC ID Command */
             0x9F, /* Instruction Code */
             0x00, /* Dummy Receive Byte */
@@ -2809,19 +2822,16 @@ int main(void) {
         };
         status = spiTransactionIS25xP(ops1, sizeof(ops1) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read JEDEC ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("JEDEC ID = [0x%X] [0x%X] [0x%X]\n",
                     deviceIS25xPState.spiSinkBuffer[1],
                     deviceIS25xPState.spiSinkBuffer[2],
                     deviceIS25xPState.spiSinkBuffer[3]);
         }
 
-        uint8_t ops2[] = 
-        {
+        uint8_t ops2[] = {
             /* Read Manufacturer & Device ID */
             0x90, /* Instruction Code */
             0x00, /* Dummy Byte 1	    */
@@ -2833,18 +2843,15 @@ int main(void) {
         };
         status = spiTransactionIS25xP(ops2, sizeof(ops2) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Manufacturer ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("Manufacturer & Device ID = [0x%X] [0x%X]\n",
                     deviceIS25xPState.spiSinkBuffer[4],
                     deviceIS25xPState.spiSinkBuffer[5]);
         }
 
-        uint8_t ops3[] = 
-        {
+        uint8_t ops3[] = {
             /* Read ID / Release Power Down */
             0xAB, /* Instruction Code */
             0x00, /* Dummy Byte */
@@ -2854,84 +2861,69 @@ int main(void) {
         };
         status = spiTransactionIS25xP(ops3, sizeof(ops3) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("Flash ID = [0x%x]\n", deviceIS25xPState.spiSinkBuffer[4]);
         }
 
-        uint8_t ops4[] = 
-        {
+        uint8_t ops4[] = {
             /* Read Status Register */
             0x05, /* Byte0 */
             0x00, /* Dummy Byte1 */
         };
         status = spiTransactionIS25xP(ops4, sizeof(ops4) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("Status = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
         }
 
-        uint8_t ops5[] = 
-        {
+        uint8_t ops5[] = {
             /* Read Function Register */
             0x48, /* RDFR */
             0x00, /* Dummy Byte1 */
         };
         status = spiTransactionIS25xP(ops5, sizeof(ops5) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("RDFR = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
         }
 
-        uint8_t ops6[] = 
-        {
+        uint8_t ops6[] = {
             /* Read Read Parameters */
             0x61, /* RDRP */
             0x00, /* Dummy Byte1 */
         };
         status = spiTransactionIS25xP(ops6, sizeof(ops6) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("ReadParam = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
         }
 
-        uint8_t ops7[] = 
-        {
+        uint8_t ops7[] = {
             /* Read Extended Read Parameters */
             0x81, /* RDERP */
             0x00, /* Dummy Byte1 */
         };
         status = spiTransactionIS25xP(ops7, sizeof(ops7) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("ExtReadParam = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
         }
 
-        uint8_t ops8[] = 
-        {
+        uint8_t ops8[] = {
             /* Read Unique ID */
             0x4B, /* RDUID */
             0x00, /* Dummy Byte */
@@ -2942,11 +2934,9 @@ int main(void) {
         };
         status = spiTransactionIS25xP(ops8, sizeof(ops8) /
                                                 sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("UID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[5]);
         }
 
@@ -2956,10 +2946,8 @@ int main(void) {
       /*
        *	Dump first 0xF addresses from JEDEC table
        */
-      case '2': 
-      {
-        uint8_t ops[] = 
-        {
+      case '2': {
+        uint8_t ops[] = {
             /* Read JEDEC Discoverable Params */
             0x5A, /* RDSFDP */
             0x00, /* Address Byte */
@@ -2985,11 +2973,9 @@ int main(void) {
         };
         status = spiTransactionIS25xP(ops, sizeof(ops) /
                                                sizeof(uint8_t) /* opCount */);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("SPI transaction to read Flash ID failed...\n");
-        } else 
-        {
+        } else {
           warpPrint("SFDP[0x00] = [0x%X]\n",
                     deviceIS25xPState.spiSinkBuffer[5 + 0x00]);
           warpPrint("SFDP[0x01] = [0x%X]\n",
@@ -3024,21 +3010,18 @@ int main(void) {
                     deviceIS25xPState.spiSinkBuffer[5 + 0x0F]);
         }
         break;
-      }   
+      }
       /*
        *	Write Enable
        */
-      case '3': 
-      {
+      case '3': {
         WarpStatus status;
-        uint8_t ops[] = 
-        {
+        uint8_t ops[] = {
             0x06, /* WREN */
         };
 
         status = spiTransactionIS25xP(ops, 1);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
         } else {
           warpPrint("OK.\n");
@@ -3050,22 +3033,18 @@ int main(void) {
       /*
        *	Perform a write
        */
-      case '4': 
-      {
+      case '4': {
         WarpStatus status;
         uint8_t buf[32] = {0};
 
-        for (size_t i = 0; i < 32; i++) 
-        {
+        for (size_t i = 0; i < 32; i++) {
           buf[i] = i;
         }
 
         status = programPageIS25xP(1, 32, buf);
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
-        } else 
-        {
+        } else {
           warpPrint("OK.\n");
         }
 
@@ -3075,23 +3054,19 @@ int main(void) {
       /*
        *	Erase chip (reset to 0xFF)
        */
-      case '5': 
-      {
+      case '5': {
         WarpStatus status;
 
         status = chipEraseIS25xP();
-        if (status != kWarpStatusOK) 
-        {
+        if (status != kWarpStatusOK) {
           warpPrint("\r\n\tCommunication failed: %d", status);
-        } else 
-        {
+        } else {
           warpPrint("OK.\n");
         }
 
         break;
       }
-      default: 
-      {
+      default: {
         warpPrint("\r\n\tInvalid selection.");
         break;
       }
@@ -3101,12 +3076,10 @@ int main(void) {
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
-    case 'F': 
-    {
+    case 'F': {
       warpPrint("\r\n\tDevice: AT45DB"
                 "\r\n\t'1' - Info and status registers"
-                "\r\n\t'2' - Dump JEDEC Table"
-                );
+                "\r\n\t'2' - Dump JEDEC Table");
       warpPrint("\r\n\t'3' - Write Enable"
                 "\r\n\t'4' - Write to Flash"
                 "\r\n\t'5' - Chip Erase");
@@ -3114,43 +3087,36 @@ int main(void) {
       key = warpWaitKey();
       warpPrint("\n");
 
-      switch (key) 
-      {
+      switch (key) {
 
-       /*
-       *	Read informational and status registers
-       */
-        case '1': 
-        {
-            uint8_t ops4[2] = 
-            {
-              /* Read Status Register */
-              0xD7, /* Byte0 */
-              0x00, /* Dummy Byte1 */
-            };
-            status =
+        /*
+         *	Read informational and status registers
+         */
+      case '1': {
+        uint8_t ops4[2] = {
+            /* Read Status Register */
+            0xD7, /* Byte0 */
+            0x00, /* Dummy Byte1 */
+        };
+        status =
             spiTransactionAT45DB(&deviceAT45DBState, ops4,
                                  sizeof(ops4) / sizeof(uint8_t) /* opCount */);
-            if (status != kWarpStatusOK) 
-            {
-              warpPrint("SPI transaction to read Flash ID failed...\n");
-            } else 
-            {
-              warpPrint("Status = [" BYTE_TO_BINARY_PATTERN "]\n",
+        if (status != kWarpStatusOK) {
+          warpPrint("SPI transaction to read Flash ID failed...\n");
+        } else {
+          warpPrint("Status = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceAT45DBState.spiSinkBuffer[1]));
-              warpPrint("Status2 = [" BYTE_TO_BINARY_PATTERN "]\n",
+          warpPrint("Status2 = [" BYTE_TO_BINARY_PATTERN "]\n",
                     BYTE_TO_BINARY(deviceAT45DBState.spiSinkBuffer[2]));
-            }       
-
-            break;
         }
-        /*
-        *	Dump first 0xF addresses from JEDEC table
-        */
-        case '2': 
-        {
-          uint8_t ops[] = 
-          {
+
+        break;
+      }
+      /*
+       *	Dump first 0xF addresses from JEDEC table
+       */
+      case '2': {
+        uint8_t ops[] = {
             /* Read JEDEC Discoverable Params */
             0x5A, /* RDSFDP */
             0x00, /* Address Byte */
@@ -3173,120 +3139,106 @@ int main(void) {
             0x00, /* Receive 0x0D */
             0x00, /* Receive 0x0E */
             0x00, /* Receive 0x0F */
-          };
-          status =
+        };
+        status =
             spiTransactionAT45DB(&deviceAT45DBState, ops,
                                  sizeof(ops) / sizeof(uint8_t) /* opCount */);
-          if (status != kWarpStatusOK) 
-          {
-            warpPrint("SPI transaction to read Flash ID failed...\n");
-          } else 
-          {
-            warpPrint("SFDP[0x00] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x00]);
-            warpPrint("SFDP[0x01] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x01]);
-            warpPrint("SFDP[0x02] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x02]);
-            warpPrint("SFDP[0x03] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x03]);
-            warpPrint("SFDP[0x04] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x04]);
-            warpPrint("SFDP[0x05] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x05]);
-            warpPrint("SFDP[0x06] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x06]);
-            warpPrint("SFDP[0x07] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x07]);
-            warpPrint("SFDP[0x08] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x08]);
-            warpPrint("SFDP[0x09] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x09]);
-            warpPrint("SFDP[0x0A] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0A]);
-            warpPrint("SFDP[0x0B] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0B]);
-            warpPrint("SFDP[0x0C] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0C]);
-            warpPrint("SFDP[0x0D] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0D]);
-            warpPrint("SFDP[0x0E] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0E]);
-            warpPrint("SFDP[0x0F] = [0x%X]\n",
-                      deviceAT45DBState.spiSinkBuffer[5 + 0x0F]);
-          }
-          break;
-        }        
-        
-        /*
-        *	Write Enable
-        */
-        case '3': 
-        {
-          WarpStatus status;
-          uint8_t ops[] = 
-          {
-              0x06, /* WREN */
-          };
-          status = spiTransactionAT45DB(&deviceAT45DBState, ops, 1);
-          if (status != kWarpStatusOK) 
-          {
-            warpPrint("\r\n\tCommunication failed: %d", status);
-          } else 
-          {
-            warpPrint("OK.\n");
-          }
-          break;
+        if (status != kWarpStatusOK) {
+          warpPrint("SPI transaction to read Flash ID failed...\n");
+        } else {
+          warpPrint("SFDP[0x00] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x00]);
+          warpPrint("SFDP[0x01] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x01]);
+          warpPrint("SFDP[0x02] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x02]);
+          warpPrint("SFDP[0x03] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x03]);
+          warpPrint("SFDP[0x04] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x04]);
+          warpPrint("SFDP[0x05] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x05]);
+          warpPrint("SFDP[0x06] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x06]);
+          warpPrint("SFDP[0x07] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x07]);
+          warpPrint("SFDP[0x08] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x08]);
+          warpPrint("SFDP[0x09] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x09]);
+          warpPrint("SFDP[0x0A] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0A]);
+          warpPrint("SFDP[0x0B] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0B]);
+          warpPrint("SFDP[0x0C] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0C]);
+          warpPrint("SFDP[0x0D] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0D]);
+          warpPrint("SFDP[0x0E] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0E]);
+          warpPrint("SFDP[0x0F] = [0x%X]\n",
+                    deviceAT45DBState.spiSinkBuffer[5 + 0x0F]);
+        }
+        break;
+      }
+
+      /*
+       *	Write Enable
+       */
+      case '3': {
+        WarpStatus status;
+        uint8_t ops[] = {
+            0x06, /* WREN */
+        };
+        status = spiTransactionAT45DB(&deviceAT45DBState, ops, 1);
+        if (status != kWarpStatusOK) {
+          warpPrint("\r\n\tCommunication failed: %d", status);
+        } else {
+          warpPrint("OK.\n");
+        }
+        break;
+      }
+
+      /*
+       *	Perform a write
+       */
+      case '4': {
+        /* write to page*/
+        WarpStatus status;
+        uint8_t databuf[32] = {0};
+        for (size_t i = 0; i < 32; i++) {
+          databuf[i] = i * 2 + 5; // Example data to program
+        }
+        status = PageProgramAT45DB(0, 32, databuf);
+        if (status != kWarpStatusOK) {
+          warpPrint("\r\n\tCommunication failed: %d", status);
+        } else {
+          warpPrint("OK.\n");
+        }
+        break;
+      }
+
+      /*
+       *	Erase chip (reset to 0xFF)
+       */
+      case '5': {
+        WarpStatus status;
+        status = chipEraseAT45DB();
+        if (status != kWarpStatusOK) {
+          warpPrint("\r\n\tCommunication failed: %d", status);
+        } else {
+          warpPrint("OK.\n");
         }
 
-        /*
-        *	Perform a write
-        */
-        case '4': 
-        {
-          /* write to page*/
-          WarpStatus status;
-          uint8_t databuf[32] = {0};
-          for (size_t i = 0; i < 32; i++) 
-          {
-            databuf[i] = i * 2 + 5; // Example data to program          
-          }
-          status = PageProgramAT45DB(0, 32, databuf);
-          if (status != kWarpStatusOK) 
-          {
-            warpPrint("\r\n\tCommunication failed: %d", status);
-          } else 
-          {
-            warpPrint("OK.\n");
-          }
-          break;
-        }
-
-        /*
-        *	Erase chip (reset to 0xFF)
-        */
-        case '5': 
-        {
-          WarpStatus status;
-          status = chipEraseAT45DB();
-          if (status != kWarpStatusOK) 
-          {
-            warpPrint("\r\n\tCommunication failed: %d", status);
-          } else 
-          {
-            warpPrint("OK.\n");
-          }
-
-          break;
-        }
-        default: 
-        {
-          warpPrint("\r\n\tInvalid selection.");
-          break;
-        }
-     }
+        break;
+      }
+      default: {
+        warpPrint("\r\n\tInvalid selection.");
+        break;
+      }
+      }
       break;
-   }
+    }
 #endif
     /*
      *	Use data from Flash to program FPGA
@@ -3324,7 +3276,7 @@ void printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
    *at 60fps
    */
   uint32_t readingCount = 0;
-  uint32_t numberOfConfigErrors = 0; 
+  uint32_t numberOfConfigErrors = 0;
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
   numberOfConfigErrors += configureSensorAMG8834(0x3F, /* Initial reset */

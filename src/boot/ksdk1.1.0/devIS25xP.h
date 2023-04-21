@@ -42,7 +42,7 @@ void		initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
  *
  * This function performs a blocking transaction with the Flash device using the
  * provided operation command bytes.
- * 
+ *
  * @param ops Array pointing to bytes making up the command.
  * @param opCount The number of bytes making up the command (including dummies for receive).
  */
@@ -64,6 +64,6 @@ WarpStatus	eraseSectorIS25xP(uint32_t address);
 WarpStatus	erase32kBlockIS25xP(uint32_t address);
 WarpStatus	erase64kBlockIS25xP(uint32_t address);
 WarpStatus	chipEraseIS25xP();
-void resetIS25xP(uint16_t pageNumber, uint8_t pageOffset);
+void resetIS25xP(uint32_t pageNumber, uint8_t pageOffset);
 WarpStatus ProgramIS25xP(size_t nbyte, uint8_t* buf);
 void enableAIS25xPWrite();

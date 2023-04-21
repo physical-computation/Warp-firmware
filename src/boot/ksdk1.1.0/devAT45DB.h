@@ -38,9 +38,9 @@
 WarpStatus	initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
 void enableAT45DBWrite();
-WarpStatus ProgramAT45DB(size_t nbyte, uint8_t* buf);
-void resetAT45DB(uint16_t pageNumber, uint8_t pageOffset);
-WarpStatus readmemoryAT45DB(uint16_t startAddress, size_t nbyte, void * buf);
+WarpStatus SaveToAT45DBFromEnd(size_t nbyte, uint8_t* buf);
+WarpStatus setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset);
+WarpStatus readMemoryAT45DB(uint16_t startAddress, size_t nbyte, void * buf);
 WarpStatus PageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t *  buf);
 WarpStatus eraseSectorAT45DB(uint32_t address);
 WarpStatus erase32kBlockAT45DB(uint32_t address);
