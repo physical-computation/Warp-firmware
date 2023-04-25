@@ -1,6 +1,6 @@
 power on perm
 exec EnableRemarks
 unlock kinetis
-loadfile /Users/hamid/Warp-firmware/build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.srec
+loadfile /Users/janithpet/work/cambridge/Warp-firmware/build/ksdk1.1/work/demos/Warp/armgcc/Warp/release/Warp.srec
 r
 go
