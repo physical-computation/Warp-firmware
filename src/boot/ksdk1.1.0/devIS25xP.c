@@ -79,66 +79,66 @@ initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	return;
 }
 
-// WarpStatus
-// spiTransactionIS25xP(uint8_t ops[], size_t opCount)
-// {
-// 	spi_status_t	status;
+WarpStatus
+spiTransactionIS25xP(uint8_t ops[], size_t opCount)
+{
+	spi_status_t	status;
 
-// 	if (opCount > deviceIS25xPState.spiBufferLength)
-// 	{
-// 		return kWarpStatusBadDeviceCommand;
-// 	}
+	if (opCount > deviceIS25xPState.spiBufferLength)
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
 
-// 	warpScaleSupplyVoltage(deviceIS25xPState.operatingVoltageMillivolts);
+	warpScaleSupplyVoltage(deviceIS25xPState.operatingVoltageMillivolts);
 
-// 	/*
-// 	 *	First, configure chip select pins of the various SPI slave devices
-// 	 *	as GPIO and drive all of them high.
-// 	 */
-// 	warpDeasserAllSPIchipSelects();
+	/*
+	 *	First, configure chip select pins of the various SPI slave devices
+	 *	as GPIO and drive all of them high.
+	 */
+	warpDeasserAllSPIchipSelects();
 
-// 	for (int i = 0; (i < opCount) && (i < deviceIS25xPState.spiBufferLength); i++)
-// 	{
-// 		deviceIS25xPState.spiSourceBuffer[i] = ops[i];
-// 		deviceIS25xPState.spiSinkBuffer[i] = 0xFF;
-// 	}
+	for (int i = 0; (i < opCount) && (i < deviceIS25xPState.spiBufferLength); i++)
+	{
+		deviceIS25xPState.spiSourceBuffer[i] = ops[i];
+		deviceIS25xPState.spiSinkBuffer[i] = 0xFF;
+	}
 
-// 	/*
-// 	 *	Create a falling edge on chip-select.
-// 	 */
-// 	// PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
-// 	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
-// 	OSA_TimeDelay(50);
-// 	GPIO_DRV_ClearPinOutput(deviceIS25xPState.chipSelectIoPinID);
+	/*
+	 *	Create a falling edge on chip-select.
+	 */
+	// PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
+	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
+	OSA_TimeDelay(50);
+	GPIO_DRV_ClearPinOutput(deviceIS25xPState.chipSelectIoPinID);
 
-// 	/*
-// 	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
-// 	 *
-// 	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
-// 	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
-// 	 *	the KL03 since there is only one SPI peripheral.
-// 	 */
-// 	warpEnableSPIpins();
-// 	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
-// 					NULL /* spi_master_user_config_t */,
-// 					(const uint8_t * restrict)deviceIS25xPState.spiSourceBuffer,
-// 					(uint8_t * restrict)deviceIS25xPState.spiSinkBuffer,
-// 					opCount /* transfer size */,
-// 					gWarpSpiTimeoutMicroseconds);
-// 	warpDisableSPIpins();
+	/*
+	 *	The result of the SPI transaction will be stored in deviceADXL362State.spiSinkBuffer.
+	 *
+	 *	Providing a spi_master_user_config_t is optional since it is already provided when we did
+	 *	SPI_DRV_MasterConfigureBus(), so we pass in NULL. The "master instance" is always 0 for
+	 *	the KL03 since there is only one SPI peripheral.
+	 */
+	warpEnableSPIpins();
+	status = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
+					NULL /* spi_master_user_config_t */,
+					(const uint8_t * restrict)deviceIS25xPState.spiSourceBuffer,
+					(uint8_t * restrict)deviceIS25xPState.spiSinkBuffer,
+					opCount /* transfer size */,
+					gWarpSpiTimeoutMicroseconds);
+	warpDisableSPIpins();
 
-// 	/*
-// 	 *	Deassert the IS25xP
-// 	 */
-// 	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
+	/*
+	 *	Deassert the IS25xP
+	 */
+	GPIO_DRV_SetPinOutput(deviceIS25xPState.chipSelectIoPinID);
 
-// 	if (status != kStatus_SPI_Success)
-// 	{
-// 		return kWarpStatusDeviceCommunicationFailed;
-// 	}
+	if (status != kStatus_SPI_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
 
-// 	return kWarpStatusOK;
-// }
+	return kWarpStatusOK;
+}
 WarpStatus
 spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 {
