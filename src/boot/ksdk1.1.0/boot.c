@@ -1218,11 +1218,11 @@ void warpPrint(const char *fmt, ...) {
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
   if (gWarpBooted && gWarpWriteToFlash) {
     /* Write to flash*/
-    //WarpStatus status = SaveToAT45DBFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
-    // if (status != kWarpStatusOK) {
-    //   gWarpWriteToFlash = 0;
-    //   warpPrint("Error writing to flash: %d\n", status);
-    // }
+    WarpStatus status = SaveToAT45DBFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+    if (status != kWarpStatusOK) {
+      gWarpWriteToFlash = 0;
+      warpPrint("Error writing to flash: %d\n", status);
+    }
   }
 
 #endif
@@ -1770,13 +1770,7 @@ int main(void) {
   }
   /* Enable Write*/
 
-  uint8_t ops[] = {
-      0x06, /* WREN */
-  };
-  status = spiTransactionAT45DB(&deviceAT45DBState, ops, 1);
-  if (status != kStatus_SPI_Success) {
-    warpPrint("Write enable failed");
-  }
+  enableAT45DBWrite();
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVICE40)
@@ -2698,7 +2692,6 @@ int main(void) {
       warpPrint("\n");
       for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal;
            pageNumber++) {
-            warpPrint("\n");
         status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
                                   dataBuffer);
         if (status != kWarpStatusOK) {
@@ -2716,7 +2709,6 @@ int main(void) {
       if (status != kWarpStatusOK) {
         warpPrint("\r\n\tCommunication failed: %d", status);
       } else {
-        warpPrint("\n");
         for (size_t i = 0; i < pageOffset; i++) {
           warpPrint("%c", dataBuffer[i]);
         }
