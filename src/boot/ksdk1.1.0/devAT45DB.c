@@ -248,13 +248,13 @@ enableAT45DBWrite() {
   }
 }
 WarpStatus 
-ProgramAT45DB(size_t nbyte, uint8_t* buf) {
+SaveToAT45DBFromEnd(size_t nbyte, uint8_t* buf) {
   // assume that nbyte < 60
   int writeToFlash = gWarpWriteToFlash;
   gWarpWriteToFlash = kWarpWriteToFlash;
 
   uint8_t pageOffsetBuf[3];
-  readmemoryAT45DB(0, 3, pageOffsetBuf);
+  readMemoryAT45DB(0, 3, pageOffsetBuf);
 
   uint8_t pageOffset = pageOffsetBuf[2];
   uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
@@ -267,7 +267,7 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
     uint8_t fullBuf[fullBufSize];
 
     if (pageOffset > 0) {
-      status = readmemoryAT45DB(pageNumber, pageOffset, fullBuf);
+      status = readMemoryAT45DB(pageNumber, pageOffset, fullBuf);
       if (status != kWarpStatusOK) {
         warpPrint("Error: ReadAT45DB failed\n");
         return status;
@@ -280,14 +280,14 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
 
     status = PageProgramAT45DB(pageNumber, fullBufSize, fullBuf);
 
-    resetAT45DB(pageNumber, fullBufSize);
+    setAT45DBStartOffset(pageNumber, fullBufSize);
   }
   else {
     uint8_t firstBufSize = kWarpSizeAT45DBPageSizeBytes - pageOffset;
     uint8_t firstBuf[kWarpSizeAT45DBPageSizeBytes];
 
     if (pageOffset > 0) {
-      status = readmemoryAT45DB(pageNumber, pageOffset, firstBuf);
+      status = readMemoryAT45DB(pageNumber, pageOffset, firstBuf);
       if (status != kWarpStatusOK) {
         warpPrint("Error: ReadAT45DB failed\n");
         return status;
@@ -324,15 +324,15 @@ ProgramAT45DB(size_t nbyte, uint8_t* buf) {
         return status;
       }
 
-    resetAT45DB(pageNumber, excess);
+    setAT45DBStartOffset(pageNumber, excess);
   }
 
   gWarpWriteToFlash = writeToFlash;
   return kWarpStatusOK;
 }
 
-void 
-resetAT45DB(uint16_t pageNumber, uint8_t pageOffset) 
+WarpStatus 
+setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset) 
 {
   enableAT45DBWrite();
 
@@ -373,7 +373,7 @@ PageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t *  buf)
 }
 
 WarpStatus
-readmemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf)
+readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf)
 {
 	WarpStatus	status;
 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
