@@ -39,4 +39,4 @@ void		initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus	readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload);
 WarpStatus	configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg);
-void printSensorDataAMG8834(bool hexModeFlag, int16_t *AMG1, int16_t *AMG2);
+void 		printSensorDataAMG8834(bool hexModeFlag);

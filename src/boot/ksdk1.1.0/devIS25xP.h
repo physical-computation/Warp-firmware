@@ -58,18 +58,17 @@ WarpStatus	spiTransactionIS25xP(uint8_t ops[], size_t opCount);
  * @param nbyte Number of bytes to read from the flash memory.
  * @param buf Buffer to place the read values in. Must fit `nbyte` bytes.
  */
-// WarpStatus	readMemoryIS25xP(uint32_t pageNumber, size_t nbyte, void *  buf);
-WarpStatus readAllMemoryIS25xP();
-WarpStatus readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void* buf);
-// WarpStatus	programPageIS25xP(uint32_t pageNumber, size_t nbyte, uint8_t *  buf);
-WarpStatus programPageIS25xP(uint16_t startPageAddress, uint8_t startPageOffset,  size_t nbyte, uint8_t* buf);
-WarpStatus eraseSectorIS25xP(uint32_t address);
-WarpStatus erase32kBlockIS25xP(uint32_t address);
-WarpStatus erase64kBlockIS25xP(uint32_t address);
-WarpStatus chipEraseIS25xP();
-WarpStatus programPageNumberAndOffset(uint16_t pageNumber, uint8_t pageOffset);
-WarpStatus resetIS25xP();
-WarpStatus ProgramIS25xP(size_t nbyte, uint8_t* buf);
-void enableIS25xPWrite();
-WarpStatus flashStatusIS25xP();
-WarpStatus waitForWriteCompletion();
+WarpStatus 	readAllMemoryIS25xP();
+WarpStatus 	readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void* buf);
+WarpStatus 	programPageIS25xP(uint16_t startPageAddress, uint8_t startPageOffset,  size_t nbyte, uint8_t* buf);
+WarpStatus 	eraseSectorIS25xP(uint32_t address);
+WarpStatus 	erase32kBlockIS25xP(uint32_t address);
+WarpStatus 	erase64kBlockIS25xP(uint32_t address);
+WarpStatus 	chipEraseIS25xP();
+WarpStatus 	programPageNumberAndOffset(uint16_t pageNumber, uint8_t pageOffset);
+WarpStatus 	resetIS25xP();
+WarpStatus 	saveToIS25xPFromEnd(size_t nbyte, uint8_t* buf);
+void 		enableIS25xPWrite();
+void 		disableIS25xPWrite();
+WarpStatus 	flashStatusIS25xP();
+WarpStatus 	waitForWriteCompletion();

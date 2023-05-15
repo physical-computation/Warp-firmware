@@ -78,7 +78,7 @@ initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	switch (deviceRegister)
@@ -151,7 +151,7 @@ configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1)
 WarpStatus
 readSensorRegisterMMA8451Q(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 

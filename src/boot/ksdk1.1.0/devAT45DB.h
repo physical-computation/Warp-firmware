@@ -36,15 +36,14 @@
 */
 
 WarpStatus	initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
-WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
-void enableAT45DBWrite();
-WarpStatus SaveToAT45DBFromEnd(size_t nbyte, uint8_t* buf);
-WarpStatus setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset);
-WarpStatus readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf);
-WarpStatus PageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t *  buf);
-WarpStatus eraseSectorAT45DB(uint32_t address);
-WarpStatus erase32kBlockAT45DB(uint32_t address);
-WarpStatus chipEraseAT45DB();
-WarpStatus disablesectorprotection();
+WarpStatus 	spiTransactionAT45DB(WarpSPIDeviceState volatile *  deviceStatePointer, uint8_t ops[], size_t opCount);
+void 		enableAT45DBWrite();
+WarpStatus 	saveToAT45DBFromEnd(size_t nbyte, uint8_t* buf);
+void 	setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset);
+WarpStatus 	readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void *  buf);
+WarpStatus 	pageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t *  buf);
+WarpStatus 	eraseSectorAT45DB(uint32_t address);
+WarpStatus 	erase32kBlockAT45DB(uint32_t address);
+WarpStatus 	chipEraseAT45DB();
 
 

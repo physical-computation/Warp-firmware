@@ -58,16 +58,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceL3GD20HState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
 void
 initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceL3GD20HState.i2cAddress			= i2cAddress;
+	deviceL3GD20HState.i2cAddress					= i2cAddress;
 	deviceL3GD20HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -76,7 +76,7 @@ initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	switch (deviceRegister)
@@ -150,7 +150,7 @@ configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t paylo
 WarpStatus
 readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status1, status2;
 
 

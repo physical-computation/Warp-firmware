@@ -35,10 +35,12 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
-#define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
-#define		WARP_BUILD_BOOT_TO_VLPR				1
+#define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF			1
+#define		WARP_BUILD_BOOT_TO_CSVSTREAM				0
+#define		WARP_BUILD_BOOT_TO_VLPR						1
 #define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
+#define		WARP_BUILD_DUMP_FLASH						0
+
 
 /*
  *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
@@ -64,46 +66,46 @@
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 	#define		WARP_BUILD_ENABLE_DEVADXL362		0
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
-	#define		WARP_BUILD_ENABLE_DEVAS7262		0
-	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVBME680		1
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
-	#define		WARP_BUILD_ENABLE_DEVCCS811		0
+	#define		WARP_BUILD_ENABLE_DEVAS7262			0
+	#define		WARP_BUILD_ENABLE_DEVAS7263			0
+	#define		WARP_BUILD_ENABLE_DEVBGX			0
+	#define		WARP_BUILD_ENABLE_DEVBME680			1
+	#define		WARP_BUILD_ENABLE_DEVBMX055			0
+	#define		WARP_BUILD_ENABLE_DEVCCS811			0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
-	#define		WARP_BUILD_ENABLE_DEVIS25xP		1
+	#define		WARP_BUILD_ENABLE_DEVIS25xP			1
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
-	#define		WARP_BUILD_ENABLE_DEVICE40		0
+	#define		WARP_BUILD_ENABLE_DEVAT45DB			0
+	#define		WARP_BUILD_ENABLE_DEVICE40			0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
-	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
+	#define		WARP_BUILD_ENABLE_DEVLPS25H			0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
-	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVSI4705		0
-	#define		WARP_BUILD_ENABLE_DEVSI7021		0
+	#define		WARP_BUILD_ENABLE_DEVRV8803C7		1
+	#define		WARP_BUILD_ENABLE_DEVSI4705			0
+	#define		WARP_BUILD_ENABLE_DEVSI7021			0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #elif (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVADXL362		0
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
-	#define		WARP_BUILD_ENABLE_DEVAS7262		0
-	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVBME680		0
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
-	#define		WARP_BUILD_ENABLE_DEVCCS811		0
+	#define		WARP_BUILD_ENABLE_DEVAS7262			0
+	#define		WARP_BUILD_ENABLE_DEVAS7263			0
+	#define		WARP_BUILD_ENABLE_DEVBGX			0
+	#define		WARP_BUILD_ENABLE_DEVBME680			0
+	#define		WARP_BUILD_ENABLE_DEVBMX055			0
+	#define		WARP_BUILD_ENABLE_DEVCCS811			0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
-	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
+	#define		WARP_BUILD_ENABLE_DEVIS25xP			0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
-	#define		WARP_BUILD_ENABLE_DEVICE40		0
+	#define		WARP_BUILD_ENABLE_DEVAT45DB			0
+	#define		WARP_BUILD_ENABLE_DEVICE40			0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		0
-	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
+	#define		WARP_BUILD_ENABLE_DEVLPS25H			0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		1
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVSI4705		0
-	#define		WARP_BUILD_ENABLE_DEVSI7021		0
+	#define		WARP_BUILD_ENABLE_DEVSI4705			0
+	#define		WARP_BUILD_ENABLE_DEVSI7021			0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #else
 	/*
@@ -111,24 +113,24 @@
 	 */
 	#define		WARP_BUILD_ENABLE_DEVADXL362		0
 	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
-	#define		WARP_BUILD_ENABLE_DEVAS7262		0
-	#define		WARP_BUILD_ENABLE_DEVAS7263		0
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVBME680		0
-	#define		WARP_BUILD_ENABLE_DEVBMX055		1
-	#define		WARP_BUILD_ENABLE_DEVCCS811		0
+	#define		WARP_BUILD_ENABLE_DEVAS7262			0
+	#define		WARP_BUILD_ENABLE_DEVAS7263			0
+	#define		WARP_BUILD_ENABLE_DEVBGX			0
+	#define		WARP_BUILD_ENABLE_DEVBME680			0
+	#define		WARP_BUILD_ENABLE_DEVBMX055			1
+	#define		WARP_BUILD_ENABLE_DEVCCS811			0
 	#define		WARP_BUILD_ENABLE_DEVHDC1000		0
-	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
+	#define		WARP_BUILD_ENABLE_DEVIS25xP			0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		1
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
-	#define		WARP_BUILD_ENABLE_DEVICE40		0
+	#define		WARP_BUILD_ENABLE_DEVAT45DB			1
+	#define		WARP_BUILD_ENABLE_DEVICE40			0
 	#define		WARP_BUILD_ENABLE_DEVL3GD20H		1
-	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
+	#define		WARP_BUILD_ENABLE_DEVLPS25H			0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVSI4705		0
-	#define		WARP_BUILD_ENABLE_DEVSI7021		0
+	#define		WARP_BUILD_ENABLE_DEVSI4705			0
+	#define		WARP_BUILD_ENABLE_DEVSI7021			0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #endif
 
@@ -144,10 +146,10 @@ typedef enum
 	/*
 	 *	Times
 	 */
-	kWarpDefaultSleeptimeSeconds				= 60,
-	kWarpDefaultI2cTimeoutMilliseconds			= 5,
-	kWarpDefaultUartTimeoutMilliseconds			= 1000,
-	kWarpDefaultSpiTimeoutMicroseconds			= 5,
+	kWarpDefaultSleeptimeSeconds					= 60,
+	kWarpDefaultI2cTimeoutMilliseconds				= 5,
+	kWarpDefaultUartTimeoutMilliseconds				= 1000,
+	kWarpDefaultSpiTimeoutMicroseconds				= 5,
 	kWarpDefaultMenuPrintDelayMilliseconds			= 10,
 	kWarpDefaultSupplySettlingDelayMilliseconds		= 1,
 
@@ -161,7 +163,7 @@ typedef enum
 	kWarpSizesUartBufferBytes					= 8,
 	kWarpSizesBME680CalibrationValuesCount		= 41,
 	kWarpSizeAT45DBPageSizeBytes				= 32,
-	kWarpSizeAT45DBNPages =  32768,
+	kWarpSizeAT45DBNPages 						= 32768,
 	kWarpWriteToFlash							= 0,
 
 	/*
@@ -180,15 +182,15 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H			= 2200,
 	kWarpDefaultSupplyVoltageMillivoltsBME680			= 2400,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725			= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 2600,
-	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsADXL362		= 2400,
-	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI4705			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsCCS811			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAMG8834			= 2600,
+	kWarpDefaultSupplyVoltageMillivoltsAS7262			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAS7263			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsRV8803C7			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362			= 2400,
+	kWarpDefaultSupplyVoltageMillivoltsIS25xP			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsISL23415			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAT45DB			= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsICE40			= 1800,
 } WarpDefaults;

@@ -71,9 +71,8 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
  */
 void
 initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
-{
-	
-	deviceBMX055accelState.i2cAddress			= i2cAddress;
+{	
+	deviceBMX055accelState.i2cAddress					= i2cAddress;
 	deviceBMX055accelState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 	
 	return;
@@ -82,7 +81,7 @@ initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	if (deviceRegister > 0x3F)
@@ -138,7 +137,7 @@ configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW)
 WarpStatus
 readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 	if (deviceRegister > 0x3F)
@@ -177,7 +176,7 @@ readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 void
 initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceBMX055magState.i2cAddress				= i2cAddress;
+	deviceBMX055magState.i2cAddress						= i2cAddress;
 	deviceBMX055magState.operatingVoltageMillivolts		= operatingVoltageMillivolts;
 
 	return;
@@ -186,7 +185,7 @@ initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	if (deviceRegister > 0x52 || deviceRegister < 0x40)
@@ -200,7 +199,6 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload)
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
 	
-	// warpPrint("mag slave: %d\n", slave);
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
 	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
@@ -243,9 +241,8 @@ configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode)
 WarpStatus
 readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
-
 
 	if (deviceRegister > 0x52 || deviceRegister < 0x40)
 	{
@@ -283,7 +280,7 @@ void
 initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
 	
-	deviceBMX055gyroState.i2cAddress			= i2cAddress;
+	deviceBMX055gyroState.i2cAddress					= i2cAddress;
 	deviceBMX055gyroState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -292,7 +289,7 @@ initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	if (deviceRegister > 0x3F)
@@ -352,7 +349,7 @@ configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t paylo
 							);
 
 	status4 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRATE_HBW/* register address RATE_HBW */,
-							payloadRATE_HBW /* payload */
+							payloadLPM1 /* payload */
 							);
 	return (status1 | status2 | status3 | status4);
 }
@@ -360,7 +357,7 @@ configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t paylo
 WarpStatus
 readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 

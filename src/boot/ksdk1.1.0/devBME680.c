@@ -58,16 +58,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceBME680State;
-extern volatile uint8_t			deviceBME680CalibrationValues[];
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint8_t				deviceBME680CalibrationValues[];
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initBME680(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceBME680State.i2cAddress			= i2cAddress;
+	deviceBME680State.i2cAddress					= i2cAddress;
 	deviceBME680State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -76,7 +76,7 @@ initBME680(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	if (deviceRegister > 0xFF)
@@ -115,7 +115,7 @@ writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload)
 WarpStatus
 readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 
@@ -158,7 +158,6 @@ readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 
 	return kWarpStatusOK;
 }
-
 
 WarpStatus
 configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t payloadGas_0)

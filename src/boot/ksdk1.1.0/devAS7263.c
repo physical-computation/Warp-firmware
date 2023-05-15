@@ -58,8 +58,8 @@
 #include "devAS726x.h"
 
 extern volatile WarpI2CDeviceState	deviceAS7263State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
 
 
 void

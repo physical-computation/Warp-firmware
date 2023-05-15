@@ -58,18 +58,18 @@
 #include "devISL23415.h"
 
 extern volatile WarpSPIDeviceState	deviceISL23415State;
-extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
-extern uint8_t				gWarpSpiCommonSourceBuffer[];
-extern uint8_t				gWarpSpiCommonSinkBuffer[];
+extern volatile uint32_t			gWarpSpiTimeoutMicroseconds;
+extern uint8_t						gWarpSpiCommonSourceBuffer[];
+extern uint8_t						gWarpSpiCommonSinkBuffer[];
 
 
 void		
 initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts) 
 {
-	deviceISL23415State.chipSelectIoPinID		= chipSelectIoPinID;
-	deviceISL23415State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
-	deviceISL23415State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
-	deviceISL23415State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceISL23415State.chipSelectIoPinID			= chipSelectIoPinID;
+	deviceISL23415State.spiSourceBuffer				= gWarpSpiCommonSourceBuffer;
+	deviceISL23415State.spiSinkBuffer				= gWarpSpiCommonSinkBuffer;
+	deviceISL23415State.spiBufferLength				= kWarpMemoryCommonSpiBufferBytes;
 	deviceISL23415State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;

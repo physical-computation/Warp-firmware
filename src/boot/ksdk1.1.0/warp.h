@@ -24,7 +24,7 @@
  */
 #define BOARD_SW_HAS_LLWU_PIN		1
 #define BOARD_SW_LLWU_EXT_PIN		7
-#define BOARD_SW_LLWU_PIN		0
+#define BOARD_SW_LLWU_PIN			0
 #define BOARD_SW_LLWU_BASE		PORTA_BASE
 #define BOARD_SW_LLWU_IRQ_HANDLER	PORTA_IRQHandler
 #define BOARD_SW_LLWU_IRQ_NUM		PORTA_IRQn
@@ -113,7 +113,7 @@ typedef enum
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
 
-	kWarpSensorConfigurationRegisterHDC1000Configuration		= 0x02,
+	kWarpSensorConfigurationRegisterHDC1000Configuration	= 0x02,
 
 	kWarpSensorConfigurationRegisterAMG8834PCTL			= 0x00,
 	kWarpSensorConfigurationRegisterAMG8834RST			= 0x01,
@@ -123,8 +123,8 @@ typedef enum
 	kWarpSensorConfigurationRegisterCCS811APP_START			= 0xF4,
 
 	kWarpSensorConfigurationRegisterBMX055accelPMU_RANGE		= 0x0F,
-	kWarpSensorConfigurationRegisterBMX055accelPMU_BW		= 0x10,
-	kWarpSensorConfigurationRegisterBMX055accelPMU_LPW		= 0x11,
+	kWarpSensorConfigurationRegisterBMX055accelPMU_BW			= 0x10,
+	kWarpSensorConfigurationRegisterBMX055accelPMU_LPW			= 0x11,
 	kWarpSensorConfigurationRegisterBMX055accelPMU_LOW_POWER	= 0x12,
 	kWarpSensorConfigurationRegisterBMX055accelACCD_HBW		= 0x13,
 	kWarpSensorConfigurationRegisterBMX055magPowerCtrl		= 0x4B,
@@ -138,7 +138,7 @@ typedef enum
 	kWarpSensorConfigurationRegisterL3GD20HCTRL2			= 0x21,
 	kWarpSensorConfigurationRegisterL3GD20HCTRL5			= 0x24,
 
-	kWarpSensorConfigurationRegisterBME680Reset			= 0xE0,
+	kWarpSensorConfigurationRegisterBME680Reset				= 0xE0,
 	kWarpSensorConfigurationRegisterBME680Config			= 0x75,
 	kWarpSensorConfigurationRegisterBME680Ctrl_Meas			= 0x74,
 	kWarpSensorConfigurationRegisterBME680Ctrl_Hum			= 0x72,
@@ -146,9 +146,9 @@ typedef enum
 	kWarpSensorConfigurationRegisterBME680Ctrl_Gas_0		= 0x70,
 
 	kWarpSensorConfigurationRegisterBME680CalibrationRegion1Start	= 0x89,
-	kWarpSensorConfigurationRegisterBME680CalibrationRegion1End	= 0xA2,
+	kWarpSensorConfigurationRegisterBME680CalibrationRegion1End		= 0xA2,
 	kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start	= 0xE1,
-	kWarpSensorConfigurationRegisterBME680CalibrationRegion2End	= 0xF2,
+	kWarpSensorConfigurationRegisterBME680CalibrationRegion2End		= 0xF2,
 
 	/*
 	 *	See Table 4 of the ISL23415 manual. We choose to use the encoding
@@ -188,7 +188,7 @@ typedef enum
 	kWarpSensorOutputRegisterAMG8834TTHL				= 0x0E,
 	kWarpSensorOutputRegisterAMG8834TTHH				= 0x0F,
 	kWarpSensorOutputRegisterAMG8834T01L				= 0x80,
-	kWarpSensorOutputRegisterAMG8834T64H				= 0xFF,
+	kWarpSensorOutputRegisterAMG8834T64H				= 0xFF,	
 
 	kWarpSensorOutputRegisterCCS811ALG_DATA				= 0x02,
 	kWarpSensorOutputRegisterCCS811RAW_DATA				= 0x03,
@@ -258,7 +258,7 @@ typedef enum
 	kWarpSensorConfigConstADXL362registerWriteCommand		= 0x0A,
 	kWarpSensorConfigConstADXL362registerReadRegister		= 0x0B,
 	kWarpSensorConfigConstADXL362registerFIFORead			= 0x0D,
-	kWarpSensorConfigConstADXL362resetCode				= 0x52,
+	kWarpSensorConfigConstADXL362resetCode					= 0x52,
 } WarpSensorConfigConst;
 
 typedef enum

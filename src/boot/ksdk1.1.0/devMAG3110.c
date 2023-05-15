@@ -58,15 +58,15 @@
 #include "warp.h"
 
 extern volatile WarpI2CDeviceState	deviceMAG3110State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initMAG3110(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceMAG3110State.i2cAddress			= i2cAddress;
+	deviceMAG3110State.i2cAddress					= i2cAddress;
 	deviceMAG3110State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -75,7 +75,7 @@ initMAG3110(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterMAG3110(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	returnValue;
 
 	switch (deviceRegister)
@@ -146,7 +146,7 @@ configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_REG2, uint1
 WarpStatus
 readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1]	= {0xFF};
+	uint8_t			cmdBuf[1]	= {0xFF};
 	i2c_status_t	status1, status2;
 
 
