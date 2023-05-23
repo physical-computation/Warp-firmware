@@ -1776,9 +1776,21 @@ int main(void) {
   warpPrint("Boot done.\n");
 
 #if (WARP_BUILD_BOOT_TO_CSVSTREAM)
-  printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
-                  &powerManagerCallbackStructure);
+  // printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
+  //                 &powerManagerCallbackStructure);
+  int timer = 0;
+  int rttKey = -1;
 
+  warpPrint("Press any key to show menu...\n");
+  while (rttKey < 0 && timer < 3000) {
+      rttKey = SEGGER_RTT_GetKey();
+      OSA_TimeDelay(1);
+      timer++;
+  }
+
+  if (rttKey < 0) {
+      printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
+                  &powerManagerCallbackStructure);
   /*
    *	Force to printAllSensors
    */
@@ -1800,6 +1812,7 @@ int main(void) {
   /*
    *	Notreached
    */
+  }
 #endif
 
 #if (WARP_BUILD_DUMP_FLASH)
