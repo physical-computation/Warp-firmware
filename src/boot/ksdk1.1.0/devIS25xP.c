@@ -177,8 +177,6 @@ readMemoryIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
 WarpStatus
 programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
 {
-	WarpStatus	status;
-
 	// if (NOT RUN MODE)
 	// {
 	// 	return kWarpStatusBadPowerModeSpecified;
@@ -205,8 +203,6 @@ programPageIS25xP(uint32_t startAddress, size_t nbyte, void *  buf)
 WarpStatus
 eraseSectorIS25xP(uint32_t address)
 {
-	WarpStatus	status;
-
 	uint8_t	ops[4] = {0};
 
 	ops[0] = 0xD7;	/* SER (SPI Mode) */
@@ -220,8 +216,6 @@ eraseSectorIS25xP(uint32_t address)
 WarpStatus
 erase32kBlockIS25xP(uint32_t address)
 {
-	WarpStatus	status;
-
 	uint8_t	ops[4] = {0};
 
 	ops[0] = 0x52;	/* BER32K (SPI Mode) */
@@ -235,8 +229,6 @@ erase32kBlockIS25xP(uint32_t address)
 WarpStatus
 erase64kBlockIS25xP(uint32_t address)
 {
-	WarpStatus	status;
-
 	uint8_t	ops[4] = {0};
 
 	ops[0] = 0xD8;	/* BER64K (SPI Mode) */
@@ -250,8 +242,6 @@ erase64kBlockIS25xP(uint32_t address)
 WarpStatus
 chipEraseIS25xP()
 {
-	WarpStatus	status;
-
 	uint8_t	ops[1] = {0};
 
 	ops[0] = 0xC7;	/* CER (SPI Mode) */

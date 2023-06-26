@@ -31,7 +31,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 	/*
 	 *	Set unused pins as outputs
 	 */
-	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT)
+	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT && !WARP_BUILD_ENABLE_FRDMKL03)
 		{
 			.pinName = kWarpPinBGX_nRST,
 			.config.outputLogic = 1,
@@ -152,7 +152,7 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.driveStrength = kPortLowDriveStrength,
 		},
 		*/
-	#else
+	#elif (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		{
 			.pinName = kGlauxPinLED,
 			.config.outputLogic = 1,
@@ -165,6 +165,8 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+	#elif (WARP_BUILD_ENABLE_FRDMKL03)
+
 	#endif
 
 	{
