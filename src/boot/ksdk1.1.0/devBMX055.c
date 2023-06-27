@@ -349,7 +349,7 @@ configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t paylo
 							);
 
 	status4 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRATE_HBW/* register address RATE_HBW */,
-							payloadLPM1 /* payload */
+							payloadRATE_HBW /* payload */
 							);
 	return (status1 | status2 | status3 | status4);
 }

@@ -350,6 +350,7 @@ readAllMemoryIS25xP()
 
 	uint8_t pageOffsetBuf[3];
 	status = readMemoryIS25xP(0, 0, 3, pageOffsetBuf);
+	
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("\r\n\tError: readMemoryIS25xP failed");
@@ -360,10 +361,10 @@ readAllMemoryIS25xP()
 	uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 	uint32_t startAddress = gFlashStartPageOffset | gFlashStartPageNumber << 8;
 	uint32_t endAddress = pageOffset | pageNumber << 8;
-
+	// warpPrint("pageOffset , pageNumber, %d, %d", pageOffset, pageNumber);
 	size_t n_iterations = (endAddress - startAddress) / gFlashWriteLimit;
 	size_t excess = (endAddress - startAddress) % gFlashWriteLimit;
-
+	// warpPrint("n_iterations , pageNumber, %d, %d", n_iterations, pageNumber);
 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0] = 0x03; /* NORD */
 

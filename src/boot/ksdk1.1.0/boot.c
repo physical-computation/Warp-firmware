@@ -1815,61 +1815,7 @@ int main(void) {
   }
 #endif
 
-#if (WARP_BUILD_DUMP_FLASH)
-  #if (WARP_BUILD_ENABLE_DEVAT45DB)
-      /* read from the page */
-      gWarpWriteToFlash = false;
-      uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
-      // WarpStatus status;
-
-      uint8_t pageOffsetBuf[3];
-      status = readMemoryAT45DB(0, 3, pageOffsetBuf);
-      if (status != kWarpStatusOK) {
-        warpPrint("\r\n\treadMemoryAT45DB failed: %d", status);
-      }
-
-      uint8_t pageOffset = pageOffsetBuf[2];
-      uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-
-      warpPrint("\r\n\tPage number: %d", pageNumberTotal);
-      warpPrint("\r\n\tPage offset: %d", pageOffset);
-      for (uint32_t pageNumber = 1; pageNumber < pageNumberTotal;
-           pageNumber++) {
-        status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
-                                  dataBuffer);
-        if (status != kWarpStatusOK) {
-          warpPrint("\r\n\treadMemoryAT45DB failed: %d", status);
-        } else {
-          for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++) {
-            warpPrint("%c", dataBuffer[i]);
-          }
-        }
-      }
-
-      status = readMemoryAT45DB(pageNumberTotal, pageOffset,
-                                  dataBuffer);
-
-      if (status != kWarpStatusOK) {
-        warpPrint("\r\n\treadMemoryAT45DB failed: %d", status);
-      } else {
-        for (size_t i = 0; i < pageOffset; i++) {
-          warpPrint("%c", dataBuffer[i]);
-        }
-      }
-
-#endif
-#if (WARP_BUILD_ENABLE_DEVIS25xP)
-    /* read from the page */
-    gWarpWriteToFlash = false;
-    status = readAllMemoryIS25xP(); 
-    if (status != kWarpStatusOK) {
-        warpPrint("\r\n\treadAllMemoryIS25xP failed: %d", status);
-    }
-#endif
-#endif
-
-
-#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+#if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
   printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
                   &powerManagerCallbackStructure);
 
@@ -1973,7 +1919,7 @@ int main(void) {
     for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++) {
       printAllSensors(true /* printHeadersAndCalibration */,
                       true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */,
-                      false /* loopForever */);
+                      true /* loopForever */);
     }
 
     warpPrint("About to configureSensorBME680() for sleep...\n");
@@ -2770,8 +2716,8 @@ int main(void) {
       warpPrint("\r\n\tFlash reset\n");
       break;
 #else
-      warpPrint("\r\n\tFlash not enabled\n");
-      break;
+      // warpPrint("\r\n\tFlash not enabled\n");
+      // break;
 #endif
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
       gWarpWriteToFlash = false;
@@ -3052,7 +2998,7 @@ int main(void) {
             {
               buf[i] = i*j;
             }
-          status =ProgramIS25xP(32, buf);
+          status =saveToIS25xPFromEnd(32, buf);
           if (status != kWarpStatusOK) {
             warpPrint("\r\n\tProgramIS25xP failed: %d", status);
           } else {
