@@ -228,9 +228,9 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile* deviceStatePointer, uint8_t op
 	 *	again below.
 	 */
 	GPIO_DRV_ClearPinOutput(deviceAT45DBState.chipSelectIoPinID);
-	OSA_TimeDelay(1);
+	// OSA_TimeDelay(1);
 	GPIO_DRV_SetPinOutput(deviceAT45DBState.chipSelectIoPinID);
-	OSA_TimeDelay(1);
+	// OSA_TimeDelay(1);
 
 	/*
 	 *	Next, create a falling edge on chip-select.
@@ -281,16 +281,6 @@ enableAT45DBWrite()
 	{
 		warpPrint("\r\n\tCommunication failed: %d", status);
 	}
-
-	// uint8_t ops2[] =
-	// 	{
-	// 		0x06, /* WREN */
-	// 	};
-	// status = spiTransactionAT45DB(&deviceAT45DBState, ops2, 1);
-	// if (status != kWarpStatusOK)
-	// {
-	// 	warpPrint("\r\n\tCommunication failed: %d", status);
-	// }
 }
 
 WarpStatus
@@ -393,8 +383,6 @@ saveToAT45DBFromEnd(size_t nbyte, uint8_t* buf)
 WarpStatus
 setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 {
-	enableAT45DBWrite();
-
 	WarpStatus status;
 
 	uint8_t initialNANDStartPosition[3];
@@ -414,7 +402,16 @@ setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 }
 
 WarpStatus
-saveToAT45DBFromEndFast(size_t nbyte, uint8_t* buf)
+savePageOffsetAT45DB()
+{
+	WarpStatus status;
+
+	status = setAT45DBStartOffset(currentPageNumber, 0);
+
+	return status;
+}
+WarpStatus
+saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 {
 	WarpStatus status;
 
@@ -439,7 +436,8 @@ saveToAT45DBFromEndFast(size_t nbyte, uint8_t* buf)
 		currentBuffer       = currentBuffer == bufferNumber1 ? bufferNumber2 : bufferNumber1;
 		currentBufferOffset = 0;
 
-		status              = saveToAT45DBFromEndFast(nbyte, buf);
+		// savePageOffsetAT45DB();
+		status              = saveToAT45DBFromEndBuffered(nbyte, buf);
 
 		return status;
 	}
@@ -460,7 +458,7 @@ saveToAT45DBFromEndFast(size_t nbyte, uint8_t* buf)
 		nbyte -= nBytesToWrite;
 		buf += nBytesToWrite;
 
-		status = saveToAT45DBFromEndFast(nbyte, buf);
+		status = saveToAT45DBFromEndBuffered(nbyte, buf);
 	}
 	else
 	{
@@ -591,12 +589,12 @@ resetAT45DB()
 		return status;
 	}
 
-	warpPrint("Erasing Chip (takes about 1min)...\n");
-	status = initiateChipEraseAndWaitAT45DB();
-	if (status != kWarpStatusOK)
-	{
-		return status;
-	}
+	// warpPrint("Erasing Chip (takes about 1min)...\n");
+	// status = initiateChipEraseAndWaitAT45DB();
+	// if (status != kWarpStatusOK)
+	// {
+	// 	return status;
+	// }
 
 	warpPrint("Setting start offset...\n");
 	status = setAT45DBStartOffset(firstPageNumberAT45DB, initialPageOffset);
@@ -654,11 +652,11 @@ bufferToMainMemoryWriteAT45DB(BufferNumber buffer, uint16_t pageNumber)
 	uint8_t writeOpcode;
 	if (buffer == bufferNumber1)
 	{
-		writeOpcode = 0x88;
+		writeOpcode = 0x83;
 	}
 	else if (buffer == bufferNumber2)
 	{
-		writeOpcode = 0x89;
+		writeOpcode = 0x86;
 	}
 
 	uint8_t ops[4] = {0};
@@ -685,8 +683,8 @@ bufferToMainMemoryWritePageAT45DB(BufferNumber buffer)
 	}
 
 	currentPageNumber += 1;
-	setAT45DBStartOffset(currentPageNumber, 0);
 
+	savePageOffsetAT45DB();
 	return status;
 }
 
@@ -700,8 +698,18 @@ pageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t* buf)
 		return kWarpStatusBadDeviceCommand;
 	}
 
+	uint8_t opCode;
+	if (currentBuffer == bufferNumber1)
+	{
+		opCode = 0x82;
+	}
+	else if (currentBuffer == bufferNumber2)
+	{
+		opCode = 0x85;
+	}
+
 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0]                                       = 0x82; /* PP */
+	ops[0]                                       = opCode; /* PP */
 	ops[2]                                       = (uint8_t)(pageNumber <<= 1);
 	ops[1]                                       = (uint8_t)(pageNumber >>= 8);
 	ops[3]                                       = 0x00;

@@ -1285,7 +1285,7 @@ warpPrint(const char* fmt, ...)
 	if (gWarpBooted && gWarpWriteToFlash)
 	{
 		/* Write to flash*/
-		WarpStatus status = saveToAT45DBFromEndFast(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
+		WarpStatus status = saveToAT45DBFromEndBuffered(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
 		if (status != kWarpStatusOK)
 		{
 			warpPrint("Error writing to flash: %d\n", status);
@@ -1563,17 +1563,17 @@ main(void)
 	memset(&powerManagerCallbackStructure, 0,
 	       sizeof(WarpPowerManagerCallbackStructure));
 
-	warpPowerModeVlpwConfig       = warpPowerModeVlprConfig;
-	warpPowerModeVlpwConfig.mode  = kPowerManagerVlpw;
+	warpPowerModeVlpwConfig      = warpPowerModeVlprConfig;
+	warpPowerModeVlpwConfig.mode = kPowerManagerVlpw;
 
-	warpPowerModeVlpsConfig       = warpPowerModeVlprConfig;
-	warpPowerModeVlpsConfig.mode  = kPowerManagerVlps;
+	warpPowerModeVlpsConfig      = warpPowerModeVlprConfig;
+	warpPowerModeVlpsConfig.mode = kPowerManagerVlps;
 
-	warpPowerModeWaitConfig       = warpPowerModeVlprConfig;
-	warpPowerModeWaitConfig.mode  = kPowerManagerWait;
+	warpPowerModeWaitConfig      = warpPowerModeVlprConfig;
+	warpPowerModeWaitConfig.mode = kPowerManagerWait;
 
-	warpPowerModeStopConfig       = warpPowerModeVlprConfig;
-	warpPowerModeStopConfig.mode  = kPowerManagerStop;
+	warpPowerModeStopConfig      = warpPowerModeVlprConfig;
+	warpPowerModeStopConfig.mode = kPowerManagerStop;
 
 	warpPowerModeVlls0Config      = warpPowerModeVlprConfig;
 	warpPowerModeVlls0Config.mode = kPowerManagerVlls0;
@@ -1584,7 +1584,7 @@ main(void)
 	warpPowerModeVlls3Config      = warpPowerModeVlprConfig;
 	warpPowerModeVlls3Config.mode = kPowerManagerVlls3;
 
-	warpPowerModeRunConfig.mode   = kPowerManagerRun;
+	warpPowerModeRunConfig.mode = kPowerManagerRun;
 
 	POWER_SYS_Init(
 		&powerConfigs,
@@ -2860,7 +2860,7 @@ main(void)
 				warpPrint("\n");
 				gWarpWriteToFlash = (key == '1' ? 1 : 0);
 
-				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag,
+				printAllSensors(false /* printHeadersAndCalibration */, hexModeFlag,
 				                menuDelayBetweenEachRun, true /* loopForever */);
 
 				gWarpWriteToFlash = 0;
@@ -2941,7 +2941,7 @@ main(void)
 
 				for (int i = 0; i < 100; i++)
 				{
-					// status = saveToAT45DBFromEndFast(19, a);
+					// status = saveToAT45DBFromEndBuffered(19, a);
 				}
 
 				break;
@@ -3544,7 +3544,10 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 	uint32_t readingCount         = 0;
 	uint32_t numberOfConfigErrors = 0;
 
-	int rttKey                    = -1;
+	uint8_t numberOfDataPerMeasurement = 0;
+
+	int rttKey = -1;
+
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
 	numberOfConfigErrors += configureSensorAMG8834(0x3F, /* Initial reset */
 	                                               0x01  /* Frame rate 1 FPS */
@@ -4486,13 +4489,13 @@ writeByteToI2cDeviceRegister(uint8_t i2cAddress,
 	i2c_device_t i2cSlaveConfig = {.address       = i2cAddress,
 	                               .baudRate_kbps = gWarpI2cBaudRateKbps};
 
-	commandBuffer[0]            = commandByte;
-	payloadBuffer[0]            = payloadByte;
+	commandBuffer[0] = commandByte;
+	payloadBuffer[0] = payloadByte;
 
-	status                      = I2C_DRV_MasterSendDataBlocking(
-        0 /* instance */, &i2cSlaveConfig, commandBuffer,
-        (sendCommandByte ? 1 : 0), payloadBuffer, (sendPayloadByte ? 1 : 0),
-        gWarpI2cTimeoutMilliseconds);
+	status = I2C_DRV_MasterSendDataBlocking(
+		0 /* instance */, &i2cSlaveConfig, commandBuffer,
+		(sendCommandByte ? 1 : 0), payloadBuffer, (sendPayloadByte ? 1 : 0),
+		gWarpI2cTimeoutMilliseconds);
 	return (status == kStatus_I2C_Success ? kWarpStatusOK
 	                                      : kWarpStatusDeviceCommunicationFailed);
 }

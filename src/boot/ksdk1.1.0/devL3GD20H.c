@@ -1,39 +1,39 @@
 /*
-	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
-	2018-onwards, see git log.
+    Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+    2018-onwards, see git log.
 
-	All rights reserved.
+    All rights reserved.
 
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions
-	are met:
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
 
-	*	Redistributions of source code must retain the above
-		copyright notice, this list of conditions and the following
-		disclaimer.
+    *	Redistributions of source code must retain the above
+        copyright notice, this list of conditions and the following
+        disclaimer.
 
-	*	Redistributions in binary form must reproduce the above
-		copyright notice, this list of conditions and the following
-		disclaimer in the documentation and/or other materials
-		provided with the distribution.
+    *	Redistributions in binary form must reproduce the above
+        copyright notice, this list of conditions and the following
+        disclaimer in the documentation and/or other materials
+        provided with the distribution.
 
-	*	Neither the name of the author nor the names of its
-		contributors may be used to endorse or promote products
-		derived from this software without specific prior written
-		permission.
+    *	Neither the name of the author nor the names of its
+        contributors may be used to endorse or promote products
+        derived from this software without specific prior written
+        permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
 
@@ -56,19 +56,16 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-
-extern volatile WarpI2CDeviceState	deviceL3GD20HState;
-extern volatile uint32_t			gWarpI2cBaudRateKbps;
-extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
-
-
+extern volatile WarpI2CDeviceState deviceL3GD20HState;
+extern volatile uint32_t gWarpI2cBaudRateKbps;
+extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
 
 void
 initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceL3GD20HState.i2cAddress					= i2cAddress;
-	deviceL3GD20HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+	deviceL3GD20HState.i2cAddress                 = i2cAddress;
+	deviceL3GD20HState.operatingVoltageMillivolts = operatingVoltageMillivolts;
 
 	return;
 }
@@ -76,20 +73,32 @@ initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t			payloadByte[1], commandByte[1];
-	i2c_status_t	status;
+	uint8_t payloadByte[1], commandByte[1];
+	i2c_status_t status;
 
 	switch (deviceRegister)
 	{
-		case 0x20: case 0x21: case 0x22: case 0x23:
-		case 0x24: case 0x25: case 0x2E: case 0x30:
-		case 0x32: case 0x33: case 0x34: case 0x35:
-		case 0x36: case 0x37: case 0x38: case 0x39:
+		case 0x20:
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x2E:
+		case 0x30:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+		case 0x38:
+		case 0x39:
 		{
 			/* OK */
 			break;
 		}
-		
+
 		default:
 		{
 			return kWarpStatusBadDeviceCommand;
@@ -97,10 +106,9 @@ writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceL3GD20HState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceL3GD20HState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 
@@ -109,13 +117,13 @@ writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 	warpEnableI2Cpins();
 
 	status = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		1,
+		gWarpI2cTimeoutMilliseconds);
 	if (status != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -127,22 +135,21 @@ writeSensorRegisterL3GD20H(uint8_t deviceRegister, uint8_t payload)
 WarpStatus
 configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t payloadCTRL5)
 {
-	WarpStatus	status1, status2, status3;
-
+	WarpStatus status1, status2, status3;
 
 	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 
 	status1 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL1 /* register address CTRL1 */,
-							payloadCTRL1 /* payload */
-							);
+	                                     payloadCTRL1 /* payload */
+	);
 
 	status2 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL2 /* register address CTRL2 */,
-							payloadCTRL2 /* payload */
-							);
+	                                     payloadCTRL2 /* payload */
+	);
 
 	status3 = writeSensorRegisterL3GD20H(kWarpSensorConfigurationRegisterL3GD20HCTRL5 /* register address CTRL5 */,
-							payloadCTRL5 /* payload */
-							);
+	                                     payloadCTRL5 /* payload */
+	);
 
 	return (status1 | status2 | status3);
 }
@@ -150,9 +157,8 @@ configureSensorL3GD20H(uint8_t payloadCTRL1, uint8_t payloadCTRL2, uint8_t paylo
 WarpStatus
 readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t			cmdBuf[1] = {0xFF};
-	i2c_status_t	status1, status2;
-
+	uint8_t cmdBuf[1] = {0xFF};
+	i2c_status_t status1, status2;
 
 	USED(numberOfBytes);
 	if ((deviceRegister < 0x0F) || (deviceRegister > 0x39))
@@ -161,10 +167,9 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceL3GD20HState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceL3GD20HState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 	cmdBuf[0] = deviceRegister;
@@ -179,22 +184,22 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 	 */
 
 	status1 = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							NULL,
-							0,
-							gWarpI2cTimeoutMilliseconds);
-		
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		NULL,
+		0,
+		gWarpI2cTimeoutMilliseconds);
+
 	status2 = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceL3GD20HState.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t*)deviceL3GD20HState.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if ((status1 != kStatus_I2C_Success) || (status2 != kStatus_I2C_Success))
 	{
@@ -204,23 +209,21 @@ readSensorRegisterL3GD20H(uint8_t deviceRegister, int numberOfBytes)
 	return kWarpStatusOK;
 }
 
-
 void
 printSensorDataL3GD20H(bool hexModeFlag)
 {
-	uint16_t	readSensorRegisterValueLSB;
-	uint16_t	readSensorRegisterValueMSB;
-	int16_t		readSensorRegisterValueCombined;	
-	int8_t		readSensorRegisterSignedByte;
-	WarpStatus	i2cReadStatusLow, i2cReadStatusHigh;
-
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	int8_t readSensorRegisterSignedByte;
+	WarpStatus i2cReadStatusLow, i2cReadStatusHigh;
 
 	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
 
-	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_L, 1 /* numberOfBytes */);
-	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
-	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
-	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
@@ -243,10 +246,10 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_L, 1 /* numberOfBytes */);
-	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
-	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_H, 1 /* numberOfBytes */);
-	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
@@ -266,14 +269,13 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		else
 		{
 			warpPrint(" %d,", readSensorRegisterValueCombined);
-			
 		}
 	}
 
-	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_L, 1 /* numberOfBytes */);
-	readSensorRegisterValueLSB = deviceL3GD20HState.i2cBuffer[0];
-	i2cReadStatusHigh = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_H, 1 /* numberOfBytes */);
-	readSensorRegisterValueMSB = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
@@ -293,11 +295,10 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		else
 		{
 			warpPrint(" %d,", readSensorRegisterValueCombined);
-			
 		}
 	}
 
-	i2cReadStatusLow = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_TEMP, 1 /* numberOfBytes */);
+	i2cReadStatusLow             = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_TEMP, 1 /* numberOfBytes */);
 	readSensorRegisterSignedByte = deviceL3GD20HState.i2cBuffer[0];
 
 	/*
@@ -317,8 +318,139 @@ printSensorDataL3GD20H(bool hexModeFlag)
 		else
 		{
 			warpPrint(" %d,", readSensorRegisterSignedByte);
-			
 		}
-	}	
-	
+	}
+}
+
+uint8_t
+appendSensorDataL3GD20H(uint8_t* buf)
+{
+	uint8_t index = 0;
+
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	int16_t readSensorRegisterSignedByte;
+	WarpStatus i2cReadStatusLow, i2cReadStatusHigh;
+
+	warpScaleSupplyVoltage(deviceL3GD20HState.operatingVoltageMillivolts);
+
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_X_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Y_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatusLow                = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_L, 1 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceL3GD20HState.i2cBuffer[0];
+	i2cReadStatusHigh               = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_Z_H, 1 /* numberOfBytes */);
+	readSensorRegisterValueMSB      = deviceL3GD20HState.i2cBuffer[0];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if ((i2cReadStatusLow != kWarpStatusOK) || (i2cReadStatusHigh != kWarpStatusOK))
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatusLow             = readSensorRegisterL3GD20H(kWarpSensorOutputRegisterL3GD20HOUT_TEMP, 1 /* numberOfBytes */);
+	readSensorRegisterSignedByte = (int16_t)(deviceL3GD20HState.i2cBuffer[0]);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int8_t
+	 */
+
+	if (i2cReadStatusLow != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterSignedByte >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterSignedByte);
+		index += 1;
+	}
+
+	return index;
 }

@@ -51,7 +51,7 @@ WarpStatus eraseSectorAT45DB(uint32_t address);
 WarpStatus erase32kBlockAT45DB(uint32_t address);
 WarpStatus chipEraseAT45DB();
 
-WarpStatus saveToAT45DBFromEndFast(size_t nbyte, uint8_t* buf);
+WarpStatus saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf);
 WarpStatus resetAT45DB();
 WarpStatus waitForDeviceReady();
 WarpStatus initiateChipEraseAndWaitAT45DB();
@@ -62,3 +62,4 @@ WarpStatus bufferToMainMemoryWritePageAT45DB(BufferNumber buffer);
 WarpStatus configurePageSize();
 WarpStatus readAllAT45DB();
 WarpStatus readFromBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf);
+WarpStatus savePageOffsetAT45DB();
