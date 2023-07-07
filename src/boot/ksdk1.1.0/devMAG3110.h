@@ -42,3 +42,5 @@ WarpStatus configureSensorMAG3110(uint8_t payloadCTRL_REG1, uint8_t payloadCTRL_
 WarpStatus readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes);
 void printSensorDataMAG3110(bool hexModeFlag);
 uint8_t appendSensorDataMAG3110(uint8_t* buf);
+
+const uint8_t bytesOfDataPerMeasurementMAG3110 = 8;

@@ -320,6 +320,12 @@ appendSensorDataBME680(uint8_t* buf)
 
 		buf[index] = 0;
 		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
 	}
 	else
 	{
@@ -356,6 +362,12 @@ appendSensorDataBME680(uint8_t* buf)
 
 		buf[index] = 0;
 		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
 	}
 	else
 	{
@@ -382,6 +394,12 @@ appendSensorDataBME680(uint8_t* buf)
 	unsignedRawAdcValue        = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 	if ((triggerStatus != kWarpStatusOK) || (i2cReadStatusMSB != kWarpStatusOK) || (i2cReadStatusLSB != kWarpStatusOK))
 	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+
 		buf[index] = 0;
 		index += 1;
 

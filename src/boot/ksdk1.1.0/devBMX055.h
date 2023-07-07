@@ -63,3 +63,6 @@ void printSensorDataBMX055mag(bool hexModeFlag);
 uint8_t appendSensorDataBMX055accel(uint8_t* buf);
 uint8_t appendSensorDataBMX055gyro(uint8_t* buf);
 uint8_t appendSensorDataBMX055mag(uint8_t* buf);
+
+const uint8_t bytesOfDataPerMeasurementBMX055 = 22;
+const uint8_t bytesPerReadingBMX055           = 2;
