@@ -1,39 +1,39 @@
 /*
-    Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
-    2018-onwards, see git log.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
-    All rights reserved.
+	All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
 
-    *	Redistributions of source code must retain the above
-        copyright notice, this list of conditions and the following
-        disclaimer.
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
 
-    *	Redistributions in binary form must reproduce the above
-        copyright notice, this list of conditions and the following
-        disclaimer in the documentation and/or other materials
-        provided with the distribution.
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
 
-    *	Neither the name of the author nor the names of its
-        contributors may be used to endorse or promote products
-        derived from this software without specific prior written
-        permission.
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
 
@@ -56,16 +56,17 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-extern volatile WarpI2CDeviceState deviceHDC1000State;
-extern volatile uint32_t gWarpI2cBaudRateKbps;
-extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
+extern volatile WarpI2CDeviceState	deviceHDC1000State;
+extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+
 
 void
 initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceHDC1000State.i2cAddress                 = i2cAddress;
-	deviceHDC1000State.operatingVoltageMillivolts = operatingVoltageMillivolts;
+	deviceHDC1000State.i2cAddress			= i2cAddress;
+	deviceHDC1000State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -73,8 +74,8 @@ initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload)
 {
-	uint8_t payloadByte[2], commandByte[1];
-	i2c_status_t returnValue;
+	uint8_t		payloadByte[2], commandByte[1];
+	i2c_status_t	returnValue;
 
 	switch (deviceRegister)
 	{
@@ -101,13 +102,13 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload)
 	payloadByte[0] = (payload >> 8) & 0xFF; /* MSB first */
 	payloadByte[1] = payload & 0xFF;        /* LSB */
 	returnValue    = I2C_DRV_MasterSendDataBlocking(
-        0 /* I2C instance */,
-        &slave,
-        commandByte,
-        1,
-        payloadByte,
-        2,
-        1000);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		2,
+		1000);
 	if (returnValue != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -134,40 +135,40 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 	if (deviceRegister == 0 || deviceRegister == 1)
 	{
 		/*
-		    Steps:
-		    (1)	Write transaction beginning with start condition, slave address,
-		        and pointer address (0x02 == configuration register) and 2
-		        bytes of config values to be written  (total payload of 3 bytes).
+			Steps:
+			(1)	Write transaction beginning with start condition, slave address,
+				and pointer address (0x02 == configuration register) and 2
+				bytes of config values to be written  (total payload of 3 bytes).
 
-		    (2)	Write transaction beginning with start condition, slave address,
-		        and pointer address (0x00/0x01 == humidity/temperature). Total
-		        payload is just 1 byte. (Trigger measurement)
+			(2)	Write transaction beginning with start condition, slave address,
+				and pointer address (0x00/0x01 == humidity/temperature). Total
+				payload is just 1 byte. (Trigger measurement)
 
-		    (3)	Wait 10ms for conversion to complete.
+			(3)	Wait 10ms for conversion to complete.
 
-		    (4)	Read transaction beginning with start condition, followed by
-		        slave address, and read 2 byte payload
+			(4)	Read transaction beginning with start condition, followed by
+				slave address, and read 2 byte payload
 
-		    Note: to get this to work, had to make the following changes to the default KSDK I2C driver:
+			Note: to get this to work, had to make the following changes to the default KSDK I2C driver:
 
-		    diff KSDK_1.1.0/platform/drivers/src/i2c/fsl_i2c_master_driver.c KSDK_1.1.0/platform/drivers/src/i2c/fsl_i2c_master_driver.c.orig.pip
-		    617c617
-		    < //    assert(txBuff);
-		    ---
-		    >     assert(txBuff);
-		    657,664d656
-		    <     //
-		    <     //  If txSize is zero, don't try to send anything
-		    <     //
-		    <     if (txSize == 0)
-		    <     {
-		    <             goto skip;
-		    <     }
-		    <
-		    683d674
-		    < skip:
+			diff KSDK_1.1.0/platform/drivers/src/i2c/fsl_i2c_master_driver.c KSDK_1.1.0/platform/drivers/src/i2c/fsl_i2c_master_driver.c.orig.pip
+			617c617
+			< //    assert(txBuff);
+			---
+			>     assert(txBuff);
+			657,664d656
+			<     //
+			<     //  If txSize is zero, don't try to send anything
+			<     //
+			<     if (txSize == 0)
+			<     {
+			<             goto skip;
+			<     }
+			<
+			683d674
+			< skip:
 
-		    Also added a check to KSDK_1.1.0/platform/hal/src/i2c/fsl_i2c_hal.c so we don't assert whern can't find the device on I2C
+			Also added a check to KSDK_1.1.0/platform/hal/src/i2c/fsl_i2c_hal.c so we don't assert whern can't find the device on I2C
 		*/
 
 		/*
@@ -231,15 +232,16 @@ readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataHDC1000(bool hexModeFlag)
 {
-	uint16_t readSensorRegisterValueLSB;
-	uint16_t readSensorRegisterValueMSB;
-	int16_t readSensorRegisterValueCombined;
-	WarpStatus i2cReadStatus;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
+	int16_t		readSensorRegisterValueCombined;
+	WarpStatus	i2cReadStatus;
+
 
 	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
-	i2cReadStatus                   = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
-	readSensorRegisterValueMSB      = deviceHDC1000State.i2cBuffer[0];
-	readSensorRegisterValueLSB      = deviceHDC1000State.i2cBuffer[1];
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Temperature, 2 /* numberOfBytes */);
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*
@@ -265,9 +267,9 @@ printSensorDataHDC1000(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatus                   = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Humidity, 2 /* numberOfBytes */);
-	readSensorRegisterValueMSB      = deviceHDC1000State.i2cBuffer[0];
-	readSensorRegisterValueLSB      = deviceHDC1000State.i2cBuffer[1];
+	i2cReadStatus = readSensorRegisterHDC1000(kWarpSensorOutputRegisterHDC1000Humidity, 2 /* numberOfBytes */);
+	readSensorRegisterValueMSB = deviceHDC1000State.i2cBuffer[0];
+	readSensorRegisterValueLSB = deviceHDC1000State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
 
 	/*

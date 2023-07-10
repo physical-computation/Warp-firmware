@@ -1,39 +1,39 @@
 /*
-    Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
-    2018-onwards, see git log.
+	Authored 2016-2018. Phillip Stanley-Marbell. Additional contributors,
+	2018-onwards, see git log.
 
-    All rights reserved.
+	All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
 
-    *	Redistributions of source code must retain the above
-        copyright notice, this list of conditions and the following
-        disclaimer.
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
 
-    *	Redistributions in binary form must reproduce the above
-        copyright notice, this list of conditions and the following
-        disclaimer in the documentation and/or other materials
-        provided with the distribution.
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
 
-    *	Neither the name of the author nor the names of its
-        contributors may be used to endorse or promote products
-        derived from this software without specific prior written
-        permission.
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
 
@@ -56,10 +56,12 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-extern volatile WarpI2CDeviceState deviceCCS811State;
-extern volatile uint32_t gWarpI2cBaudRateKbps;
-extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
+extern volatile WarpI2CDeviceState	deviceCCS811State;
+extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+
+
 
 /*
  *	CCS811.
@@ -67,8 +69,8 @@ extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
 void
 initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceCCS811State.i2cAddress                 = i2cAddress;
-	deviceCCS811State.operatingVoltageMillivolts = operatingVoltageMillivolts;
+	deviceCCS811State.i2cAddress			= i2cAddress;
+	deviceCCS811State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
@@ -76,9 +78,9 @@ initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t* payload)
 {
-	uint8_t commandByte[1];
-	uint8_t payloadSize;
-	i2c_status_t status;
+	uint8_t		commandByte[1];
+	uint8_t		payloadSize;
+	i2c_status_t	status;
 
 	switch (deviceRegister)
 	{
@@ -129,14 +131,15 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t* payload)
 
 	i2c_device_t slave =
 		{
-			.address       = deviceCCS811State.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps};
+		.address = deviceCCS811State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
 
 	commandByte[0] = deviceRegister;
 
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
-	if (payloadSize)
+	if(payloadSize)
 	{
 		status = I2C_DRV_MasterSendDataBlocking(
 			0 /* I2C instance */,
@@ -170,7 +173,7 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t* payload)
 WarpStatus
 configureSensorCCS811(uint8_t* payloadMEAS_MODE)
 {
-	WarpStatus status1, status2;
+	WarpStatus	status1, status2;
 
 	/*
 	 *	See https://narcisaam.github.io/Init_Device/ for more information
@@ -184,7 +187,7 @@ configureSensorCCS811(uint8_t* payloadMEAS_MODE)
 
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
-	                                    payloadMEAS_MODE /* Dummy value */
+										payloadMEAS_MODE /* Dummy value */
 	);
 
 	/*
@@ -193,7 +196,7 @@ configureSensorCCS811(uint8_t* payloadMEAS_MODE)
 	OSA_TimeDelay(500);
 
 	status2 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811MEAS_MODE /* register address MEAS_MODE */,
-	                                    payloadMEAS_MODE /* payload: 3F initial reset */
+										payloadMEAS_MODE /* payload: 3F initial reset */
 	);
 
 	/*
@@ -207,8 +210,9 @@ configureSensorCCS811(uint8_t* payloadMEAS_MODE)
 WarpStatus
 readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t cmdBuf[1] = {0xFF};
-	i2c_status_t returnValue;
+	uint8_t		cmdBuf[1] = {0xFF};
+	i2c_status_t	returnValue;
+
 
 	if ((deviceRegister > 0xFF) || (numberOfBytes > kWarpSizesI2cBufferBytes))
 	{
@@ -217,8 +221,9 @@ readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 
 	i2c_device_t slave =
 		{
-			.address       = deviceCCS811State.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps};
+		.address = deviceCCS811State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
 
 	cmdBuf[0] = deviceRegister;
 
@@ -244,16 +249,17 @@ readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 void
 printSensorDataCCS811(bool hexModeFlag)
 {
-	uint16_t readSensorRegisterValueLSB;
-	uint16_t readSensorRegisterValueMSB;
-	int16_t readSensorRegisterValueCombined;
-	int16_t equivalentCO2, TVOC;
-	WarpStatus i2cReadStatus;
+	uint16_t	readSensorRegisterValueLSB;
+	uint16_t	readSensorRegisterValueMSB;
+	int16_t		readSensorRegisterValueCombined;
+	int16_t		equivalentCO2, TVOC;
+	WarpStatus	i2cReadStatus;
+
 
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
-	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811ALG_DATA, 4 /* numberOfBytes */);
-	equivalentCO2 = (deviceCCS811State.i2cBuffer[0] << 8) | deviceCCS811State.i2cBuffer[1];
-	TVOC          = (deviceCCS811State.i2cBuffer[2] << 8) | deviceCCS811State.i2cBuffer[3];
+	i2cReadStatus	= readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811ALG_DATA, 4 /* numberOfBytes */);
+	equivalentCO2	= (deviceCCS811State.i2cBuffer[0] << 8) | deviceCCS811State.i2cBuffer[1];
+	TVOC		= (deviceCCS811State.i2cBuffer[2] << 8) | deviceCCS811State.i2cBuffer[3];
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		warpPrint(" ----, ----,");
@@ -263,10 +269,10 @@ printSensorDataCCS811(bool hexModeFlag)
 		if (hexModeFlag)
 		{
 			warpPrint(" 0x%02x 0x%02x, 0x%02x 0x%02x,",
-			          deviceCCS811State.i2cBuffer[3],
-			          deviceCCS811State.i2cBuffer[2],
-			          deviceCCS811State.i2cBuffer[1],
-			          deviceCCS811State.i2cBuffer[0]);
+					  deviceCCS811State.i2cBuffer[3],
+					  deviceCCS811State.i2cBuffer[2],
+					  deviceCCS811State.i2cBuffer[1],
+					  deviceCCS811State.i2cBuffer[0]);
 		}
 		else
 		{
@@ -274,7 +280,7 @@ printSensorDataCCS811(bool hexModeFlag)
 		}
 	}
 
-	i2cReadStatus              = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_DATA, 2 /* numberOfBytes */);
+	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_DATA, 2 /* numberOfBytes */);
 	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
 	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
 
@@ -302,9 +308,9 @@ printSensorDataCCS811(bool hexModeFlag)
 	/*
 	 *	Get Voltage across V_REF
 	 */
-	i2cReadStatus                   = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
-	readSensorRegisterValueLSB      = deviceCCS811State.i2cBuffer[0];
-	readSensorRegisterValueMSB      = deviceCCS811State.i2cBuffer[1];
+	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)
@@ -325,8 +331,8 @@ printSensorDataCCS811(bool hexModeFlag)
 	/*
 	 *	Get Voltage across R_NTC
 	 */
-	readSensorRegisterValueLSB      = deviceCCS811State.i2cBuffer[2];
-	readSensorRegisterValueMSB      = deviceCCS811State.i2cBuffer[3];
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[2];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[3];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
 
 	if (i2cReadStatus != kWarpStatusOK)

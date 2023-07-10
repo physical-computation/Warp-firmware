@@ -56,10 +56,13 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-extern volatile WarpI2CDeviceState deviceAMG8834State;
-extern volatile uint32_t gWarpI2cBaudRateKbps;
-extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
+
+
+extern volatile WarpI2CDeviceState	deviceAMG8834State;
+extern volatile uint32_t		gWarpI2cBaudRateKbps;
+extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+
 
 /*
  *	AMG8834.
@@ -67,34 +70,26 @@ extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
 void
 initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceAMG8834State.i2cAddress                 = i2cAddress;
-	deviceAMG8834State.operatingVoltageMillivolts = operatingVoltageMillivolts;
+	deviceAMG8834State.i2cAddress			= i2cAddress;
+	deviceAMG8834State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
 
 WarpStatus
-writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload)
+writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
 {
-	uint8_t payloadByte[1], commandByte[1];
-	i2c_status_t returnValue;
+	uint8_t		payloadByte[1], commandByte[1];
+	i2c_status_t	returnValue;
+
 
 	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 
 	switch (deviceRegister)
 	{
-		case 0x00:
-		case 0x01:
-		case 0x02:
-		case 0x03:
-		case 0x05:
-		case 0x07:
-		case 0x08:
-		case 0x09:
-		case 0x0A:
-		case 0x0B:
-		case 0x0C:
-		case 0x0D:
+		case 0x00: case 0x01: case 0x02: case 0x03:
+		case 0x05: case 0x07: case 0x08: case 0x09:
+		case 0x0A: case 0x0B: case 0x0C: case 0x0D:
 		{
 			/* OK */
 			break;
@@ -108,8 +103,9 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload)
 
 	i2c_device_t slave =
 		{
-			.address       = deviceAMG8834State.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps};
+		.address = deviceAMG8834State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
@@ -133,7 +129,8 @@ writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload)
 WarpStatus
 configureSensorAMG8834(uint8_t payloadConfigReg, uint8_t payloadFrameRateReg)
 {
-	WarpStatus i2cWriteStatus1, i2cWriteStatus2;
+	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
+
 
 	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 
