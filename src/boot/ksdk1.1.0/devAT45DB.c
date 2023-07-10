@@ -210,7 +210,7 @@ initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	 * Load the current page from main memory into the current buffer. This is done so that if the previous session ended with a partial write to a page, we need to load that page again into the buffer, and continue writing from there, since we can only do page writes from the start of a page.
 	 */
 	status = loadMainMemoryPageToBuffer(currentPageNumberAT45DB, currentBufferAT45DB);
-
+	warpPrint("\nAT45DB global variables set to page %d, offset %d, buffer offset %d\n", currentPageNumberAT45DB, currentPageOffsetAT45DB, currentBufferOffsetAT45DB);
 	return status;
 }
 
@@ -542,6 +542,7 @@ resetAT45DB()
 		return status;
 	}
 
+	warpPrint("Reinitializing global variables...\n");
 	currentPageNumberAT45DB = initialPageNumberAT45DB;
 	currentPageOffsetAT45DB = initialPageOffsetAT45DB;
 
@@ -746,13 +747,14 @@ readAllMemoryAT45DB()
 
 	warpPrint("\r\n\tPage number: %d", pageNumberTotal);
 	warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+	warpPrint("\r\n\tReading memory. Press 'q' to stop.\n\n");
 
-	uint8_t bytesIndex			 = 0;
-	uint8_t readingIndex		 = 0;
-	uint8_t sensorIndex			 = 0;
-	uint8_t measurementIndex = 0;
+	uint8_t bytesIndex			= 0;
+	uint8_t readingIndex		= 0;
+	uint8_t sensorIndex			= 0;
+	uint8_t measurementIndex	= 0;
 
-	uint8_t currentSensorNumberOfReadings = 0;
+	uint8_t currentSensorNumberOfReadings	= 0;
 	uint8_t currentSensorSizePerReading		= 0;
 
 	uint16_t sensorBitField				 = 0;
@@ -760,9 +762,17 @@ readAllMemoryAT45DB()
 
 	int32_t currentReading = 0;
 
+	int rttKey = -1;
+
 	for (uint32_t pageNumber = initialPageNumberAT45DB; pageNumber < pageNumberTotal;
 			 pageNumber++)
 	{
+		rttKey = SEGGER_RTT_GetKey();
+		if (rttKey == 'q')
+		{
+			return kWarpStatusOK;
+		}
+
 		status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, dataBuffer);
 		if (status != kWarpStatusOK)
 		{

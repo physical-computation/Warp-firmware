@@ -196,7 +196,7 @@ volatile uint32_t	  gWarpSupplySettlingDelayMilliseconds = kWarpDefaultSupplySet
 volatile uint16_t	  gWarpCurrentSupplyVoltage			   = kWarpDefaultSupplyVoltageMillivolts;
 
 char		  gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
-volatile bool gWarpWriteToFlash = kWarpWriteToFlash;
+volatile bool gWarpWriteToFlash = false;
 
 /*
  *	Since only one SPI transaction is ongoing at a time in our implementaion
@@ -1491,7 +1491,7 @@ main(void)
 	 *	When booting to CSV stream, we wait to be up and running as soon as possible after
 	 *	a reset (e.g., a reset due to waking from VLLS0)
 	 */
-	if (!WARP_BUILD_BOOT_TO_CSVSTREAM && !WARP_BUILD_DUMP_FLASH)
+	if (!WARP_BUILD_BOOT_TO_CSVSTREAM)
 	{
 		warpPrint("\n\n\n\rBooting Warp, in 3... ");
 		OSA_TimeDelay(1000);
@@ -1800,19 +1800,23 @@ main(void)
 	/*
 	 *	Only supported in main Warp variant.
 	 */
-		initAT45DB(kWarpPinAT45DB_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsAT45DB	);
+	status =  initAT45DB(kWarpPinAT45DB_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsAT45DB	);
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("AT45DB: initAT45DB() failed...\n");
+	}
 
-		status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
+	status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("AT45DB: SPI transaction to read Manufacturer ID failed...\n");
 	}
 	else
 	{
-			warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
-						deviceAT45DBState.spiSinkBuffer[1],
-						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
-						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
+		warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
+			deviceAT45DBState.spiSinkBuffer[1],
+			deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
+			deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
 	}
 #endif
 
@@ -1858,8 +1862,6 @@ main(void)
 	warpPrint("Boot done.\n");
 
 #if (WARP_BUILD_BOOT_TO_CSVSTREAM)
-	// printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
-	//                 &powerManagerCallbackStructure);
 	int timer  = 0;
 	int rttKey = -1;
 
@@ -1875,6 +1877,7 @@ main(void)
 	{
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress,
 						&powerManagerCallbackStructure);
+
 		/*
 		 *	Force to printAllSensors
 		 */
@@ -1891,16 +1894,15 @@ main(void)
 
 		warpScaleSupplyVoltage(3300);
 
-		if (gWarpWriteToFlash)
-		{
-			printAllSensors(false /* printHeadersAndCalibration */, false /* hexModeFlag */,
-						0 /* menuDelayBetweenEachRun */, true /* loopForever */);
-		} else {
+#if (WARP_CSVSTREAM_TO_FLASH)
+			gWarpWriteToFlash = true;
+			printAllSensors(false, false, 1, true);
+			gWarpWriteToFlash = false;
+
+#else
 			printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
 						0 /* menuDelayBetweenEachRun */, true /* loopForever */);
-		}
-
-
+#endif
 
 		/*
 		 *	Notreached
@@ -2729,6 +2731,7 @@ main(void)
 
 				if (gWarpWriteToFlash)
 				{
+					warpPrint("\r\n\tWriting to flash. Press 'q' to exit back to menu\n");
 					printAllSensors(false /* printHeadersAndCalibration */, false,
 								menuDelayBetweenEachRun, true /* loopForever */);
 					gWarpWriteToFlash = false;
@@ -2739,10 +2742,10 @@ main(void)
 					warpPrint("\r\n\tHex or converted mode? ('h' or 'c')> ");
 					key = warpWaitKey();
 					hexModeFlag = (key == 'h' ? true : false);
+					warpPrint("\n");
 					printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag,
 								menuDelayBetweenEachRun, true /* loopForever */);
 				}
-
 
 				warpDisableI2Cpins();
 

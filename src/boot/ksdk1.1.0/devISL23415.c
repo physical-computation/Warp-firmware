@@ -63,8 +63,8 @@ extern uint8_t						gWarpSpiCommonSourceBuffer[];
 extern uint8_t						gWarpSpiCommonSinkBuffer[];
 
 
-void		
-initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts) 
+void
+initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
 	deviceISL23415State.chipSelectIoPinID			= chipSelectIoPinID;
 	deviceISL23415State.spiSourceBuffer				= gWarpSpiCommonSourceBuffer;
@@ -75,8 +75,8 @@ initISL23415(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	return;
 }
 
-WarpStatus	
-readDeviceRegisterISL23415(uint8_t deviceRegister) 
+WarpStatus
+readDeviceRegisterISL23415(uint8_t deviceRegister)
 {
 	spi_status_t	status;
 
@@ -115,7 +115,7 @@ readDeviceRegisterISL23415(uint8_t deviceRegister)
 	GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
 	OSA_TimeDelay(50);
 	GPIO_DRV_ClearPinOutput(kWarpPinISL23415_SPI_nCS);
-	
+
 	/*
 	 *	The result of the SPI transaction will be stored in deviceISL23415State.spiSinkBuffer.
 	 *
@@ -127,7 +127,7 @@ readDeviceRegisterISL23415(uint8_t deviceRegister)
 	status = SPI_DRV_MasterTransferBlocking(
 					0								/*	master instance			*/,
 					NULL								/*	spi_master_user_config_t	*/,
-					(const uint8_t * restrict)deviceISL23415State.spiSourceBuffer,
+					(const uint8_t *  restrict)deviceISL23415State.spiSourceBuffer,
 					(uint8_t * restrict)deviceISL23415State.spiSinkBuffer,
 					4								/*	reg ID + dummy + NOP + dummy	*/,
 					gWarpSpiTimeoutMicroseconds);
@@ -147,7 +147,7 @@ readDeviceRegisterISL23415(uint8_t deviceRegister)
 	return kWarpStatusOK;
 }
 
-WarpStatus	
+WarpStatus
 writeDeviceRegisterISL23415(uint8_t deviceRegister, uint8_t writeValue)
 {
 	spi_status_t	status;

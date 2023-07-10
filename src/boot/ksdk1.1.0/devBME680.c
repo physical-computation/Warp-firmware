@@ -205,8 +205,8 @@ printSensorDataBME680(bool hexModeFlag)
 	/*
 	 *	First, trigger a measurement
 	 */
-	triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
-	                                          0b00100101);
+	triggerStatus               = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
+	                                                        0b00100101);
 
 	i2cReadStatusMSB            = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 1);
 	readSensorRegisterValueMSB  = deviceBME680State.i2cBuffer[0];
@@ -299,8 +299,8 @@ appendSensorDataBME680(uint8_t* buf)
 	/*
 	 *	First, trigger a measurement
 	 */
-	triggerStatus = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
-	                                          0b00100101);
+	triggerStatus               = writeSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas,
+	                                                        0b00100101);
 
 	i2cReadStatusMSB            = readSensorRegisterBME680(kWarpSensorOutputRegisterBME680press_msb, 1);
 	readSensorRegisterValueMSB  = deviceBME680State.i2cBuffer[0];
