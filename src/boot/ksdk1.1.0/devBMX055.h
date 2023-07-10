@@ -39,13 +39,12 @@ void		initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivo
 void		initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 void		initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
 
-WarpStatus	writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
-WarpStatus	writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
-WarpStatus	writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue);
+WarpStatus	writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload);
+WarpStatus	writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload);
+WarpStatus	writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload);
 
 WarpStatus	configureSensorBMX055accel(uint8_t payloadPMU_RANGE,
-					uint8_t payloadACCD_HBW,
-					uint16_t menuI2cPullupValue);
+					uint8_t payloadACCD_HBW);
 WarpStatus	configureSensorBMX055gyro(uint8_t payloadRANGE,
 					uint8_t payloadBW,
 					uint8_t payloadLPM1,
