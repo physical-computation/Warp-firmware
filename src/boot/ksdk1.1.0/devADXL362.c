@@ -1,38 +1,38 @@
 /*
-    Authored 2016-2018. Phillip Stanley-Marbell.
+	Authored 2016-2018. Phillip Stanley-Marbell.
 
-    All rights reserved.
+	All rights reserved.
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
 
-    *	Redistributions of source code must retain the above
-        copyright notice, this list of conditions and the following
-        disclaimer.
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
 
-    *	Redistributions in binary form must reproduce the above
-        copyright notice, this list of conditions and the following
-        disclaimer in the documentation and/or other materials
-        provided with the distribution.
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
 
-    *	Neither the name of the author nor the names of its
-        contributors may be used to endorse or promote products
-        derived from this software without specific prior written
-        permission.
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
 
@@ -57,10 +57,11 @@
 #include "warp.h"
 #include "devADXL362.h"
 
-extern volatile WarpSPIDeviceState deviceADXL362State;
-extern volatile uint32_t gWarpSpiTimeoutMicroseconds;
-extern uint8_t gWarpSpiCommonSourceBuffer[];
-extern uint8_t gWarpSpiCommonSinkBuffer[];
+extern volatile WarpSPIDeviceState	deviceADXL362State;
+extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
+extern uint8_t				gWarpSpiCommonSourceBuffer[];
+extern uint8_t				gWarpSpiCommonSinkBuffer[];
+
 
 /*
  *	Analog Devices ADXL362.
@@ -77,27 +78,27 @@ extern uint8_t gWarpSpiCommonSinkBuffer[];
  *		-	0x0D: read FIFO
  *		"
  */
-#define ADXL362_FIFO_ENTRIES (min(kWarpMemoryCommonSpiBufferBytes - 1, 0xFF) & 0xFE)
+#define	ADXL362_FIFO_ENTRIES	(min(kWarpMemoryCommonSpiBufferBytes - 1, 0xFF) & 0xFE)
 
 void
 initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
-	WarpStatus status;
+	WarpStatus	status;
 
-	deviceADXL362State.chipSelectIoPinID          = chipSelectIoPinID;
-	deviceADXL362State.spiSourceBuffer            = gWarpSpiCommonSourceBuffer;
-	deviceADXL362State.spiSinkBuffer              = gWarpSpiCommonSinkBuffer;
-	deviceADXL362State.spiBufferLength            = kWarpMemoryCommonSpiBufferBytes;
-	deviceADXL362State.operatingVoltageMillivolts = operatingVoltageMillivolts;
+	deviceADXL362State.chipSelectIoPinID		= chipSelectIoPinID;
+	deviceADXL362State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
+	deviceADXL362State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
+	deviceADXL362State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceADXL362State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	/*
 	 *	Soft reset
 	 */
 
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorConfigurationRegisterADXL362RESET /*	The register to write			*/,
-	                                    kWarpSensorConfigConstADXL362resetCode /*	writeValue				*/,
-	                                    0 /*	number of additional dummy bytes	*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorConfigurationRegisterADXL362RESET		/*	The register to write			*/,
+						kWarpSensorConfigConstADXL362resetCode			/*	writeValue				*/,
+						0							/*	number of additional dummy bytes	*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -108,10 +109,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	/*
 	 *	Set MEASURE mode with AUTOSLEEP
 	 */
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorOutputRegisterADXL362POWER_CTL /*	The register to write			*/,
-	                                    0x06 /*	writeValue				*/,
-	                                    0 /*	number of additional dummy bytes	*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorOutputRegisterADXL362POWER_CTL		/*	The register to write			*/,
+						0x06							/*	writeValue				*/,
+						0							/*	number of additional dummy bytes	*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -121,10 +122,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	/*
 	 *	Set ODR mode to 400Hz
 	 */
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorOutputRegisterADXL362FILTER_CTL /*	The register to write			*/,
-	                                    0x07 /*	writeValue				*/,
-	                                    0 /*	number of additional dummy bytes	*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorOutputRegisterADXL362FILTER_CTL		/*	The register to write			*/,
+						0x07							/*	writeValue				*/,
+						0							/*	number of additional dummy bytes	*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -134,10 +135,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	/*
 	 *	Set FIFO mode to STREAM and AH bit to 0, also read temperature to FIFO
 	 */
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorOutputRegisterADXL362FIFO_CONTROL /*	The register to write			*/,
-	                                    0x06 /*	writeValue				*/,
-	                                    0 /*	number of additional dummy bytes	*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorOutputRegisterADXL362FIFO_CONTROL		/*	The register to write			*/,
+						0x06							/*	writeValue				*/,
+						0							/*	number of additional dummy bytes	*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -151,10 +152,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	 *	by default). Since the entries put into the FIFO by the sensor are 2-byte records
 	 *	we  will Therefore, the maximum FIFO entries is min(kWarpMemoryCommonSpiBufferBytes - 1, 0xFF)
 	 */
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorOutputRegisterADXL362FIFO_SAMPLES /*	The register to write			*/,
-	                                    ADXL362_FIFO_ENTRIES /*	writeValue				*/,
-	                                    0 /*	number of additional dummy bytes	*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorOutputRegisterADXL362FIFO_SAMPLES		/*	The register to write			*/,
+						ADXL362_FIFO_ENTRIES					/*	writeValue				*/,
+						0							/*	number of additional dummy bytes	*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -164,10 +165,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	/*
 	 *	Put the sensor in LOOP mode with ACT_EN and INACT_EN enabled
 	 */
-	status = writeSensorRegisterADXL362(kWarpSensorConfigConstADXL362registerWriteCommand /*	command == write register		*/,
-	                                    kWarpSensorOutputRegisterADXL362ACT_INACT_CTL /*	ACT_INACT_CTL register			*/,
-	                                    0x35 /*	writeValue				*/,
-	                                    0 /*	numberOfAdditionalDummyBytes		*/
+	status = writeSensorRegisterADXL362(	kWarpSensorConfigConstADXL362registerWriteCommand	/*	command == write register		*/,
+						kWarpSensorOutputRegisterADXL362ACT_INACT_CTL		/*	ACT_INACT_CTL register			*/,
+						0x35							/*	writeValue				*/,
+						0							/*	numberOfAdditionalDummyBytes		*/
 	);
 	if (status != kWarpStatusOK)
 	{
@@ -180,7 +181,8 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfAdditionalDummyBytes)
 {
-	spi_status_t status;
+	spi_status_t	status;
+
 
 	warpScaleSupplyVoltage(deviceADXL362State.operatingVoltageMillivolts);
 
@@ -188,7 +190,7 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 	 *	Appropriately restrict the total number of bytes shifted out
 	 *	(and hence shifted in) to the size of the sink buffer.
 	 */
-	int totalTransactionBytes = min(numberOfAdditionalDummyBytes + 3, kWarpMemoryCommonSpiBufferBytes);
+	int	totalTransactionBytes = min(numberOfAdditionalDummyBytes + 3, kWarpMemoryCommonSpiBufferBytes);
 
 	/*
 	 *	First, configure chip select pins of the various SPI slave devices
@@ -218,12 +220,12 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 	 *	the KL03 since there is only one SPI peripheral.
 	 */
 	warpEnableSPIpins();
-	status = SPI_DRV_MasterTransferBlocking(0 /*	master instance */,
-	                                        NULL /* spi_master_user_config_t */,
-	                                        (const uint8_t* restrict)deviceADXL362State.spiSourceBuffer,
-	                                        (uint8_t* restrict)deviceADXL362State.spiSinkBuffer,
-	                                        totalTransactionBytes /* transfer size */,
-	                                        gWarpSpiTimeoutMicroseconds);
+	status = SPI_DRV_MasterTransferBlocking(0							/*	master instance */,
+					NULL								/* spi_master_user_config_t */,
+					(const uint8_t * restrict)deviceADXL362State.spiSourceBuffer,
+					(uint8_t * restrict)deviceADXL362State.spiSinkBuffer,
+					totalTransactionBytes						/* transfer size */,
+											gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
 
 	/*
@@ -257,8 +259,9 @@ readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes)
 WarpStatus
 readFIFObytesADXL362(void)
 {
-	WarpStatus status;
-	int transferSize;
+	WarpStatus	status;
+	int		transferSize;
+
 
 	warpPrint("\n\n");
 
@@ -273,7 +276,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_CONTROL	--> [0x%02x]\n",
-		          deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -287,7 +290,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("Status		--> [0x%02x]\n",
-		          deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -301,7 +304,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_SAMPLES	--> [0x%02x]\n",
-		          deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -315,7 +318,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_L	--> [0x%02x]\n",
-		          deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -329,14 +332,16 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_H	--> [0x%02x]\n",
-		          deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
+
 
 	/*
 	 *	For the FIFO read operation, we can't easil;y repurpose the register
 	 *	read operation as it currently is, so we do the whole SPI process
 	 *	in a self-contained way here.
 	 */
+
 
 	warpScaleSupplyVoltage(deviceADXL362State.operatingVoltageMillivolts);
 
@@ -366,11 +371,11 @@ readFIFObytesADXL362(void)
 	GPIO_DRV_ClearPinOutput(deviceADXL362State.chipSelectIoPinID);
 	warpEnableSPIpins();
 	spi_status_t ksdkStatus = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
-	                                                         NULL /* spi_master_user_config_t */,
-	                                                         (const uint8_t* restrict)deviceADXL362State.spiSourceBuffer,
-	                                                         (uint8_t* restrict)deviceADXL362State.spiSinkBuffer,
-	                                                         transferSize /* transfer size */,
-	                                                         gWarpSpiTimeoutMicroseconds /* timeout in microseconds (unlike I2C which is ms) */);
+															 NULL /* spi_master_user_config_t */,
+						(const uint8_t *restrict)deviceADXL362State.spiSourceBuffer,
+						(uint8_t * restrict) deviceADXL362State.spiSinkBuffer,
+															 transferSize /* transfer size */,
+															 gWarpSpiTimeoutMicroseconds /* timeout in microseconds (unlike I2C which is ms) */);
 	warpDisableSPIpins();
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
 
@@ -383,14 +388,15 @@ readFIFObytesADXL362(void)
 	for (int i = 1; i < kWarpMemoryCommonSpiBufferBytes - 8; i += 8)
 	{
 		warpPrint("0x%02x 0x%02x\t0x%02x 0x%02x\t0x%02x 0x%02x\t0x%02x 0x%02x\n",
-		          deviceADXL362State.spiSinkBuffer[i + 0],
-		          deviceADXL362State.spiSinkBuffer[i + 1],
-		          deviceADXL362State.spiSinkBuffer[i + 2],
-		          deviceADXL362State.spiSinkBuffer[i + 3],
-		          deviceADXL362State.spiSinkBuffer[i + 4],
-		          deviceADXL362State.spiSinkBuffer[i + 5],
-		          deviceADXL362State.spiSinkBuffer[i + 6],
-		          deviceADXL362State.spiSinkBuffer[i + 7]);
+				  deviceADXL362State.spiSinkBuffer[i + 0],
+				  deviceADXL362State.spiSinkBuffer[i + 1],
+				  deviceADXL362State.spiSinkBuffer[i + 2],
+				  deviceADXL362State.spiSinkBuffer[i + 3],
+				  deviceADXL362State.spiSinkBuffer[i + 4],
+				  deviceADXL362State.spiSinkBuffer[i + 5],
+				  deviceADXL362State.spiSinkBuffer[i + 6],
+				deviceADXL362State.spiSinkBuffer[i + 7]
+			);
 	}
 	warpPrint("\n");
 
@@ -400,17 +406,18 @@ readFIFObytesADXL362(void)
 void
 printSensorDataADXL362(bool hexModeFlag)
 {
-	uint8_t readSensorRegisterValueLSB;
-	uint8_t readSensorRegisterValueMSB;
-	int16_t readSensorRegisterValueCombined;
-	WarpStatus status;
+	uint8_t		readSensorRegisterValueLSB;
+	uint8_t		readSensorRegisterValueMSB;
+	int16_t		readSensorRegisterValueCombined;
+	WarpStatus	status;
 
-	// readFIFObytesADXL362();
+//readFIFObytesADXL362();
 
 	/*
 	 *			Read X, Y, Z, TEMP
 	 */
 	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362XDATA_L, 8 /* numberOfBytes */);
+
 
 	/*
 	 *			Print X
@@ -426,8 +433,8 @@ printSensorDataADXL362(bool hexModeFlag)
 		 *	bytes that were shifted in when sending out the instruction
 		 *	and address bytes. We therefore look in indices [2] and [3].
 		 */
-		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[2];
-		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[3];
+		readSensorRegisterValueLSB = deviceADXL362State.spiSinkBuffer[2];
+		readSensorRegisterValueMSB = deviceADXL362State.spiSinkBuffer[3];
 		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
 		if (hexModeFlag)
@@ -439,6 +446,7 @@ printSensorDataADXL362(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+
 
 	/*
 	 *			Print Y
@@ -454,8 +462,8 @@ printSensorDataADXL362(bool hexModeFlag)
 		 *	bytes that were shifted in when sending out the instruction
 		 *	and address bytes. We therefore look in indices [2] and [3].
 		 */
-		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[4];
-		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[5];
+		readSensorRegisterValueLSB = deviceADXL362State.spiSinkBuffer[4];
+		readSensorRegisterValueMSB = deviceADXL362State.spiSinkBuffer[5];
 		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
 		if (hexModeFlag)
@@ -467,6 +475,7 @@ printSensorDataADXL362(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+
 
 	/*
 	 *			Print Z
@@ -482,8 +491,8 @@ printSensorDataADXL362(bool hexModeFlag)
 		 *	bytes that were shifted in when sending out the instruction
 		 *	and address bytes. We therefore look in indices [2] and [3].
 		 */
-		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[6];
-		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[7];
+		readSensorRegisterValueLSB = deviceADXL362State.spiSinkBuffer[6];
+		readSensorRegisterValueMSB = deviceADXL362State.spiSinkBuffer[7];
 		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
 		if (hexModeFlag)
@@ -495,6 +504,7 @@ printSensorDataADXL362(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+
 
 	/*
 	 *			Print TEMP
@@ -510,8 +520,8 @@ printSensorDataADXL362(bool hexModeFlag)
 		 *	bytes that were shifted in when sending out the instruction
 		 *	and address bytes. We therefore look in indices [2] and [3].
 		 */
-		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[8];
-		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[9];
+		readSensorRegisterValueLSB = deviceADXL362State.spiSinkBuffer[8];
+		readSensorRegisterValueMSB = deviceADXL362State.spiSinkBuffer[9];
 		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
 		if (hexModeFlag)
