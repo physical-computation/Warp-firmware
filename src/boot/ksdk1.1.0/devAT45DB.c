@@ -163,24 +163,21 @@ extern uint8_t gWarpWriteToFlash;
 #define AT45DB_SR_PGSIZE          (1 << 0) /* Bit 0: PAGE_SIZE */
 
 #define kWarpSizeAT45DBBufferSize 256
-// #define kWarpSizeAT45DBPageSizeBytes 256
+#define initialPageNumberAT45DB   1
+#define initialPageOffsetAT45DB   0
+#define initialBufferOffsetAT45DB 0
 
 uint16_t kWarpAT45DBPageOffsetStoragePage = 0;
 size_t kWarpAT45DBPageOffsetStorageSize   = 3;
 
-BufferNumber currentBuffer   = bufferNumber1;
-uint16_t currentBufferOffset = 0;
+BufferNumberAT45DB currentBufferAT45DB = bufferNumber1AT45DB;
+uint16_t currentBufferOffsetAT45DB     = 0;
 
-// uint8_t bufferAT45DB[kWarpSizeAT45DBBufferSize] = {0};
+const uint16_t pageOffsetStorePageNumberAT45D = 0;
+const uint8_t pageOffsetStoreNBytesAT45DB     = 3;
 
-const uint16_t firstPageNumberAT45DB = 1;
-const uint8_t initialPageOffset      = 0;
-
-const uint16_t pageOffsetStorePageNumber = 0;
-const uint8_t pageOffsetStoreNBytes      = 3;
-
-volatile uint16_t currentPageNumber;
-volatile uint8_t currentPageOffset;
+volatile uint16_t currentPageNumberAT45DB;
+volatile uint8_t currentPageOffsetAT45DB;
 
 WarpStatus
 initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
@@ -193,16 +190,23 @@ initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	deviceAT45DBState.spiBufferLength            = kWarpMemoryCommonSpiBufferBytes;
 	deviceAT45DBState.operatingVoltageMillivolts = operatingVoltageMillivolts;
 
-	uint8_t pageOffsetBuf[3];
-	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pageOffsetBuf);
+	enableAT45DBWrite();
+
+	uint8_t pagePositionBuf[3];
+	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pagePositionBuf);
 	if (status != kWarpStatusOK)
 	{
 		return status;
 	}
 
-	currentBufferOffset = 0;
-	currentBuffer       = bufferNumber1;
-	currentPageNumber   = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
+	currentBufferAT45DB = bufferNumber1AT45DB;
+
+	currentPageOffsetAT45DB = pagePositionBuf[2];
+	currentPageNumberAT45DB = pagePositionBuf[1] | pagePositionBuf[0] << 8;
+
+	currentBufferOffsetAT45DB = currentPageOffsetAT45DB;
+
+	status = loadMainMemoryPageToBuffer(currentPageNumberAT45DB, currentBufferAT45DB);
 
 	return status;
 }
@@ -284,7 +288,6 @@ spiTransactionAT45DB(WarpSPIDeviceState volatile* deviceStatePointer, uint8_t op
 void
 enableAT45DBWrite()
 {
-	WarpStatus status;
 	uint8_t ops[4] =
 		{
 			0x3D,
@@ -292,15 +295,11 @@ enableAT45DBWrite()
 			0x7F,
 			0x9A,
 		};
-	status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tCommunication failed: %d", status);
-	}
+	return spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 }
 
 WarpStatus
-setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
+setAT45DBStartPosition(uint16_t pageNumber, uint8_t pageOffset)
 {
 	WarpStatus status;
 
@@ -313,7 +312,6 @@ setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 
 	if (status != kWarpStatusOK)
 	{
-		warpPrint("Error: PageProgramAT45DB failed\n");
 		return status;
 	}
 
@@ -321,12 +319,11 @@ setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 }
 
 WarpStatus
-savePageOffsetAT45DB()
+savePagePositionAT45DB()
 {
 	WarpStatus status;
 
-	// warpPrint("Saving page: %d\n", currentPageNumber);
-	status = setAT45DBStartOffset(currentPageNumber, 0);
+	status = setAT45DBStartPosition(currentPageNumberAT45DB, currentPageOffsetAT45DB);
 
 	return status;
 }
@@ -337,7 +334,7 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 	WarpStatus status;
 
 	// write to buffer
-	uint16_t spaceAvailable = kWarpSizeAT45DBBufferSize - currentBufferOffset;
+	uint16_t spaceAvailable = kWarpSizeAT45DBBufferSize - currentBufferOffsetAT45DB;
 
 	bool currentBufferIsFull = spaceAvailable == 0;
 	if (currentBufferIsFull)
@@ -348,14 +345,14 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 			return status;
 		}
 
-		status = bufferToMainMemoryWritePageAT45DB(currentBuffer);
+		status = bufferToMainMemoryWritePageAT45DB(currentBufferAT45DB);
 		if (status != kWarpStatusOK)
 		{
 			return status;
 		}
 
-		currentBuffer       = currentBuffer == bufferNumber1 ? bufferNumber2 : bufferNumber1;
-		currentBufferOffset = 0;
+		currentBufferAT45DB       = currentBufferAT45DB == bufferNumber1AT45DB ? bufferNumber2AT45DB : bufferNumber1AT45DB;
+		currentBufferOffsetAT45DB = 0;
 
 		status = saveToAT45DBFromEndBuffered(nbyte, buf);
 
@@ -364,50 +361,86 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 
 	if (nbyte > spaceAvailable)
 	{
-		uint16_t nBytesToWrite = spaceAvailable;
-		uint8_t* bufToWrite    = buf;
-
-		status = writeToBuffer(currentBuffer, currentBufferOffset, nBytesToWrite, bufToWrite);
-
+		status = writeToBufferAT45DB(currentBufferAT45DB, currentBufferOffsetAT45DB, spaceAvailable, buf);
 		if (status != kWarpStatusOK)
 		{
 			return status;
 		}
 
-		currentBufferOffset += nBytesToWrite;
+		currentBufferOffsetAT45DB += spaceAvailable;
 
-		nbyte -= nBytesToWrite;
-		buf += nBytesToWrite;
+		nbyte -= spaceAvailable;
+		buf += spaceAvailable;
 
 		status = saveToAT45DBFromEndBuffered(nbyte, buf);
 	}
 	else
 	{
-		status = writeToBuffer(currentBuffer, currentBufferOffset, nbyte, buf);
+		status = writeToBufferAT45DB(currentBufferAT45DB, currentBufferOffsetAT45DB, nbyte, buf);
 		if (status != kWarpStatusOK)
 		{
 			return status;
 		}
 
-		currentBufferOffset += nbyte;
+		currentBufferOffsetAT45DB += nbyte;
 	}
 
 	return status;
 }
 
-// void
-// writeToSoftwareBuffer(uint8_t index, size_t nbyte, uint8_t* buf)
-// {
-// 	for (size_t i = 0; i < nbyte; i++)
-// 	{
-// 		bufferAT45DB[index + i] = buf[i];
-// 	}
+WarpStatus
+loadMainMemoryPageToBuffer(uint16_t address, BufferNumberAT45DB buffer)
+{
+	WarpStatus status;
 
-// 	return;
-// }
+	uint8_t opCode;
+	if (buffer == bufferNumber1AT45DB)
+	{
+		opCode = 0x53;
+	}
+	else if (buffer == bufferNumber2AT45DB)
+	{
+		opCode = 0x55;
+	}
+
+	uint8_t ops[4] = {0};
+	ops[0]         = opCode;
+	ops[2]         = (uint8_t)(address <<= 1);
+	ops[1]         = (uint8_t)(address >>= 8);
+	ops[3]         = 0x00;
+
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+
+	waitForDeviceReady();
+
+	return status;
+}
 
 WarpStatus
-writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
+savePartialBufferToMainMemoryAndSavePagePosition()
+{
+	WarpStatus status;
+
+	status = waitForDeviceReady();
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	status = bufferToMainMemoryWriteAT45DB(currentBufferAT45DB, currentPageNumberAT45DB);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	currentPageOffsetAT45DB = currentBufferOffsetAT45DB;
+	savePagePositionAT45DB();
+
+	return status;
+}
+
+WarpStatus
+writeToBufferAT45DB(BufferNumberAT45DB buffer, uint8_t address, size_t nbyte, uint8_t* buf)
 {
 	WarpStatus status;
 
@@ -417,11 +450,11 @@ writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
 	}
 
 	uint8_t opCode;
-	if (buffer == bufferNumber1)
+	if (buffer == bufferNumber1AT45DB)
 	{
 		opCode = 0x84;
 	}
-	else if (buffer == bufferNumber2)
+	else if (buffer == bufferNumber2AT45DB)
 	{
 		opCode = 0x87;
 	}
@@ -441,46 +474,6 @@ writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
 
 	return status;
 }
-
-// WarpStatus
-// readFromBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
-// {
-// 	WarpStatus status;
-
-// 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
-// 	{
-// 		return kWarpStatusBadDeviceCommand;
-// 	}
-
-// 	uint8_t opCode;
-// 	if (buffer == bufferNumber1)
-// 	{
-// 		opCode = 0xD1;
-// 	}
-// 	else if (buffer == bufferNumber2)
-// 	{
-// 		opCode = 0xD3;
-// 	}
-
-// 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-// 	ops[0]                                       = opCode; /* PP */
-// 	ops[2]                                       = 0x00;
-// 	ops[1]                                       = 0x00;
-// 	ops[3]                                       = address;
-
-// 	for (size_t i = 0; i < nbyte; i++)
-// 	{
-// 		ops[i + 4] = buf[i];
-// 	}
-
-// 	status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
-// 	for (size_t i = 0; i < nbyte; i++)
-// 	{
-// 		buf[i] = deviceAT45DBState.spiSinkBuffer[i + 4];
-// 	}
-
-// 	return status;
-// }
 
 WarpStatus
 initiateChipEraseAT45DB()
@@ -513,7 +506,6 @@ resetAT45DB()
 {
 	WarpStatus status;
 
-	// enableAT45DBWrite();
 	warpPrint("Configuring page size...\n");
 	status = configurePageSize();
 	if (status != kWarpStatusOK)
@@ -529,17 +521,17 @@ resetAT45DB()
 	// }
 
 	warpPrint("Setting start offset...\n");
-	status = setAT45DBStartOffset(firstPageNumberAT45DB, initialPageOffset);
+	status = setAT45DBStartPosition(initialPageNumberAT45DB, initialPageOffsetAT45DB);
 	if (status != kWarpStatusOK)
 	{
 		return status;
 	}
 
-	currentPageNumber = firstPageNumberAT45DB;
-	currentPageOffset = initialPageOffset;
+	currentPageNumberAT45DB = initialPageNumberAT45DB;
+	currentPageOffsetAT45DB = initialPageOffsetAT45DB;
 
-	currentBufferOffset = 0;
-	currentBuffer       = bufferNumber1;
+	currentBufferOffsetAT45DB = initialBufferOffsetAT45DB;
+	currentBufferAT45DB       = bufferNumber1AT45DB;
 
 	return status;
 }
@@ -580,16 +572,16 @@ waitForDeviceReady()
 }
 
 WarpStatus
-bufferToMainMemoryWriteAT45DB(BufferNumber buffer, uint16_t pageNumber)
+bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber)
 {
 	WarpStatus status;
 
 	uint8_t writeOpcode;
-	if (buffer == bufferNumber1)
+	if (buffer == bufferNumber1AT45DB)
 	{
 		writeOpcode = 0x83;
 	}
-	else if (buffer == bufferNumber2)
+	else if (buffer == bufferNumber2AT45DB)
 	{
 		writeOpcode = 0x86;
 	}
@@ -606,20 +598,20 @@ bufferToMainMemoryWriteAT45DB(BufferNumber buffer, uint16_t pageNumber)
 }
 
 WarpStatus
-bufferToMainMemoryWritePageAT45DB(BufferNumber buffer)
+bufferToMainMemoryWritePageAT45DB(BufferNumberAT45DB buffer)
 {
 	WarpStatus status;
 
-	// warpPrint("\nWriting buffer %d to page %d\n", buffer, currentPageNumber);
-	status = bufferToMainMemoryWriteAT45DB(buffer, currentPageNumber);
+	// warpPrint("\nWriting buffer %d to page %d\n", buffer, currentPageNumberAT45DB);
+	status = bufferToMainMemoryWriteAT45DB(buffer, currentPageNumberAT45DB);
 	if (status != kWarpStatusOK)
 	{
 		return status;
 	}
 
-	currentPageNumber += 1;
+	currentPageNumberAT45DB += 1;
+	currentPageOffsetAT45DB = 0;
 
-	savePageOffsetAT45DB();
 	return status;
 }
 
@@ -634,11 +626,11 @@ pageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t* buf)
 	}
 
 	uint8_t opCode = 0x82;
-	if (currentBuffer == bufferNumber1)
+	if (currentBufferAT45DB == bufferNumber1AT45DB)
 	{
 		opCode = 0x82;
 	}
-	else if (currentBuffer == bufferNumber2)
+	else if (currentBufferAT45DB == bufferNumber2AT45DB)
 	{
 		opCode = 0x85;
 	}
@@ -722,18 +714,18 @@ readAllMemoryAT45DB()
 	uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
 	WarpStatus status;
 
-	uint8_t pageOffsetBuf[3];
-	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pageOffsetBuf);
+	uint8_t pagePositionBuf[3];
+	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pagePositionBuf);
 	if (status != kWarpStatusOK)
 	{
 		return status;
 	}
 
-	uint8_t pageOffset       = pageOffsetBuf[2];
-	uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
+	uint8_t pageOffset       = pagePositionBuf[2];
+	uint16_t pageNumberTotal = pagePositionBuf[1] | pagePositionBuf[0] << 8;
 
-	// warpPrint("\r\n\tPage number: %d", pageNumberTotal);
-	// warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+	warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+	warpPrint("\r\n\tPage offset: %d\n", pageOffset);
 
 	uint8_t bytesIndex       = 0;
 	uint8_t readingIndex     = 0;
@@ -748,7 +740,7 @@ readAllMemoryAT45DB()
 
 	int32_t currentReading = 0;
 
-	for (uint32_t pageNumber = firstPageNumberAT45DB; pageNumber < pageNumberTotal;
+	for (uint32_t pageNumber = initialPageNumberAT45DB; pageNumber < pageNumberTotal;
 	     pageNumber++)
 	{
 		status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, dataBuffer);
@@ -763,12 +755,14 @@ readAllMemoryAT45DB()
 				if (measurementIndex == 0)
 				{
 					// reading sensorBitField
+					// warpPrint("\n%d ", dataBuffer[i]);
 					sensorBitField = dataBuffer[i] << 8;
 					measurementIndex++;
 					continue;
 				}
 				else if (measurementIndex == 1)
 				{
+					// warpPrint("%d\n", dataBuffer[i]);
 					sensorBitField |= dataBuffer[i];
 					measurementIndex++;
 
@@ -784,7 +778,6 @@ readAllMemoryAT45DB()
 				{
 					decodeSensorBitField(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
 					// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
-					// return status;
 				}
 
 				if (readingIndex < currentSensorNumberOfReadings)
@@ -829,20 +822,88 @@ readAllMemoryAT45DB()
 		}
 	}
 
-	// status = readMemoryAT45DB(pageNumberTotal, pageOffset,
-	//                           dataBuffer);
+	status = readMemoryAT45DB(pageNumberTotal, pageOffset, dataBuffer);
 
-	// if (status != kWarpStatusOK)
-	// {
-	// 	return status;
-	// }
-	// else
-	// {
-	// 	for (size_t i = 0; i < pageOffset; i++)
-	// 	{
-	// 		warpPrint("%c", dataBuffer[i]);
-	// 	}
-	// }
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+	else
+	{
+		for (size_t i = 0; i < pageOffset; i++)
+		{
+			/*
+			 * When the code below was put into a separate function, it wouldn't work. For now, the code is repeated here.
+			 */
+			if (measurementIndex == 0)
+			{
+				// reading sensorBitField
+				// warpPrint("\n%d ", dataBuffer[i]);
+				sensorBitField = dataBuffer[i] << 8;
+				measurementIndex++;
+				continue;
+			}
+			else if (measurementIndex == 1)
+			{
+				// warpPrint("%d\n", dataBuffer[i]);
+				sensorBitField |= dataBuffer[i];
+				measurementIndex++;
+
+				currentNumberOfSensors = getNumberOfSensorsFromSensorBitField(sensorBitField);
+				sensorIndex            = 0;
+				readingIndex           = 0;
+				bytesIndex             = 0;
+
+				continue;
+			}
+
+			if (readingIndex == 0 && bytesIndex == 0)
+			{
+				decodeSensorBitField(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
+				// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+				// return status;
+			}
+
+			if (readingIndex < currentSensorNumberOfReadings)
+			{
+				if (bytesIndex < currentSensorSizePerReading)
+				{
+					currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
+					bytesIndex++;
+					measurementIndex++;
+
+					if (bytesIndex == currentSensorSizePerReading)
+					{
+						if (currentSensorSizePerReading == 4)
+						{
+							warpPrint("%d, ", (int32_t)(currentReading));
+						}
+						else if (currentSensorSizePerReading == 2)
+						{
+							warpPrint("%d, ", (int16_t)(currentReading));
+						}
+
+						currentReading = 0;
+						bytesIndex     = 0;
+						readingIndex++;
+						measurementIndex++;
+
+						if (readingIndex == currentSensorNumberOfReadings)
+						{
+							readingIndex = 0;
+							sensorIndex++;
+
+							if (sensorIndex == currentNumberOfSensors)
+							{
+								measurementIndex = 0;
+								warpPrint("\n");
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	return status;
 }

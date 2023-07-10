@@ -36,15 +36,15 @@
 */
 typedef enum
 {
-	bufferNumber1,
-	bufferNumber2,
-} BufferNumber;
+	bufferNumber1AT45DB,
+	bufferNumber2AT45DB,
+} BufferNumberAT45DB;
 
 WarpStatus initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 WarpStatus spiTransactionAT45DB(WarpSPIDeviceState volatile* deviceStatePointer, uint8_t ops[], size_t opCount);
 void enableAT45DBWrite();
 WarpStatus saveToAT45DBFromEnd(size_t nbyte, uint8_t* buf);
-WarpStatus setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset);
+WarpStatus setAT45DBStartPosition(uint16_t pageNumber, uint8_t pageOffset);
 WarpStatus readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf);
 WarpStatus pageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t* buf);
 
@@ -53,13 +53,15 @@ WarpStatus resetAT45DB();
 WarpStatus waitForDeviceReady();
 WarpStatus initiateChipEraseAndWaitAT45DB();
 WarpStatus initiateChipEraseAT45DB();
-WarpStatus writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf);
-WarpStatus bufferToMainMemoryWriteAT45DB(BufferNumber buffer, uint16_t pageNumber);
-WarpStatus bufferToMainMemoryWritePageAT45DB(BufferNumber buffer);
+WarpStatus writeToBufferAT45DB(BufferNumberAT45DB buffer, uint8_t address, size_t nbyte, uint8_t* buf);
+WarpStatus bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber);
+WarpStatus bufferToMainMemoryWritePageAT45DB(BufferNumberAT45DB buffer);
+WarpStatus loadMainMemoryPageToBuffer(uint16_t address, BufferNumberAT45DB buffer);
+
 WarpStatus configurePageSize();
 WarpStatus readAllMemoryAT45DB();
-// WarpStatus readFromBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf);
-WarpStatus savePageOffsetAT45DB();
+WarpStatus savePagePositionAT45DB();
+WarpStatus savePartialBufferToMainMemoryAndSavePagePosition();
 
 uint8_t getNumberOfSensorsFromSensorBitField(uint16_t sensorBitField);
 void decodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
