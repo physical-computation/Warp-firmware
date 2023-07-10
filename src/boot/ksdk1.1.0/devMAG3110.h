@@ -43,4 +43,6 @@ WarpStatus readSensorRegisterMAG3110(uint8_t deviceRegister, int numberOfBytes);
 void printSensorDataMAG3110(bool hexModeFlag);
 uint8_t appendSensorDataMAG3110(uint8_t* buf);
 
-const uint8_t bytesOfDataPerMeasurementMAG3110 = 8;
+const uint8_t bytesPerMeasurementMAG3110            = 8;
+const uint8_t bytesPerReadingMAG3110                = 2;
+const uint8_t numberOfReadingsPerMeasurementMAG3110 = 4;

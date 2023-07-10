@@ -37,7 +37,7 @@
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF    1
 #define WARP_BUILD_BOOT_TO_CSVSTREAM           0
-#define WARP_BUILD_BOOT_TO_VLPR                1
+#define WARP_BUILD_BOOT_TO_VLPR                0
 #define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT 0
 #define WARP_BUILD_DUMP_FLASH                  0
 
@@ -138,32 +138,32 @@ typedef enum
 	/*
 	 *	Speeds
 	 */
-	kWarpDefaultI2cBaudRateKbps                    = 200,
-	kWarpDefaultUartBaudRateBps                    = 115200,
-	kWarpDefaultSpiBaudRateKbps                    = 10000,
+	kWarpDefaultI2cBaudRateKbps = 200,
+	kWarpDefaultUartBaudRateBps = 115200,
+	kWarpDefaultSpiBaudRateKbps = 10000,
 
 	/*
 	 *	Times
 	 */
-	kWarpDefaultSleeptimeSeconds                   = 60,
-	kWarpDefaultI2cTimeoutMilliseconds             = 5,
-	kWarpDefaultUartTimeoutMilliseconds            = 1000,
-	kWarpDefaultSpiTimeoutMicroseconds             = 5,
-	kWarpDefaultMenuPrintDelayMilliseconds         = 10,
-	kWarpDefaultSupplySettlingDelayMilliseconds    = 1,
+	kWarpDefaultSleeptimeSeconds                = 60,
+	kWarpDefaultI2cTimeoutMilliseconds          = 5,
+	kWarpDefaultUartTimeoutMilliseconds         = 1000,
+	kWarpDefaultSpiTimeoutMicroseconds          = 5,
+	kWarpDefaultMenuPrintDelayMilliseconds      = 10,
+	kWarpDefaultSupplySettlingDelayMilliseconds = 1,
 
 	/*
 	 *	Sizes
 	 */
-	kWarpDefaultPrintBufferSizeBytes               = 64,
-	kWarpMemoryCommonSpiBufferBytes                = 64,
-	kWarpSizesI2cBufferBytes                       = 4,
-	kWarpSizesSpiBufferBytes                       = 7,
-	kWarpSizesUartBufferBytes                      = 8,
-	kWarpSizesBME680CalibrationValuesCount         = 41,
-	kWarpSizeAT45DBPageSizeBytes                   = 256,
-	kWarpSizeAT45DBNPages                          = 32768,
-	kWarpWriteToFlash                              = 0,
+	kWarpDefaultPrintBufferSizeBytes       = 64,
+	kWarpMemoryCommonSpiBufferBytes        = 64,
+	kWarpSizesI2cBufferBytes               = 4,
+	kWarpSizesSpiBufferBytes               = 7,
+	kWarpSizesUartBufferBytes              = 8,
+	kWarpSizesBME680CalibrationValuesCount = 41,
+	kWarpSizeAT45DBPageSizeBytes           = 256,
+	kWarpSizeAT45DBNPages                  = 32768,
+	kWarpWriteToFlash                      = 0,
 
 	/*
 	 *	Voltages

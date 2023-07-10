@@ -42,5 +42,6 @@ WarpStatus readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes);
 void printSensorDataCCS811(bool hexModeFlag);
 uint8_t appendSensorDataCC811(uint8_t* buf);
 
-const uint8_t bytesOfDataPerMeasurementCCS811 = 10;
-const uint8_t bytesPerReadingCCS811           = 2;
+const uint8_t bytesPerMeasurementCCS811            = 10;
+const uint8_t bytesPerReadingCCS811                = 2;
+const uint8_t numberOfReadingsPerMeasurementCCS811 = 5;

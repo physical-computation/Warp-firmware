@@ -42,5 +42,6 @@ WarpStatus readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes);
 void printSensorDataHDC1000(bool hexModeFlag);
 uint8_t appendSensorDataHDC1000(uint8_t* buf);
 
-const uint8_t bytesOfDataPerMeasurementHDC1000 = 4;
-const uint8_t bytesPerReadingHDC1000           = 2;
+const uint8_t bytesPerMeasurementHDC1000            = 4;
+const uint8_t bytesPerReadingHDC1000                = 2;
+const uint8_t numberOfReadingsPerMeasurementHDC1000 = 2;

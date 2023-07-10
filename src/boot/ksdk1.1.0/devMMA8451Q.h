@@ -44,5 +44,6 @@ WarpStatus configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_R
 void printSensorDataMMA8451Q(bool hexModeFlag);
 uint8_t appendSensorDataMMA8451Q(uint8_t* buf);
 
-const uint8_t bytesOfDataPerMeasurementMMA8451Q = 6;
-const uint8_t bytesPerReadingMMA8451Q           = 2;
+const uint8_t bytesPerMeasurementMMA8451Q            = 6;
+const uint8_t bytesPerReadingMMA8451Q                = 2;
+const uint8_t numberOfReadingsPerMeasurementMMA8451Q = 3;

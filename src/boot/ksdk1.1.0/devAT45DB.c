@@ -57,6 +57,16 @@
 #include "warp.h"
 #include "devAT45DB.h"
 
+#include "devADXL362.h"
+#include "devAMG8834.h"
+#include "devMMA8451Q.h"
+#include "devMAG3110.h"
+#include "devL3GD20H.h"
+#include "devBME680.h"
+#include "devBMX055.h"
+#include "devCCS811.h"
+#include "devHDC1000.h"
+
 extern volatile WarpSPIDeviceState deviceAT45DBState;
 extern volatile uint32_t gWarpSpiTimeoutMicroseconds;
 extern uint8_t gWarpSpiCommonSourceBuffer[];
@@ -64,101 +74,107 @@ extern uint8_t gWarpSpiCommonSinkBuffer[];
 extern uint8_t gWarpWriteToFlash;
 
 /* Read commands */
-#define AT45DB_RDMN          0xd2 /* Main Memory Page Read */
-#define AT45DB_RDARRY        0xe8 /* Continuous Array Read (Legacy Command) */
-#define AT45DB_RDARRAYLF     0x03 /* Continuous Array Read (Low Frequency) */
-#define AT45DB_RDARRAYHF     0x0b /* Continuous Array Read (High Frequency) */
-#define AT45DB_RDBF1LF       0xd1 /* Buffer 1 Read (Low Frequency) */
-#define AT45DB_RDBF2LF       0xd3 /* Buffer 2 Read (Low Frequency) */
-#define AT45DB_RDBF1         0xd4 /* Buffer 1 Read */
-#define AT45DB_RDBF2         0xd6 /* Buffer 2 Read */
+#define AT45DB_RDMN               0xd2 /* Main Memory Page Read */
+#define AT45DB_RDARRY             0xe8 /* Continuous Array Read (Legacy Command) */
+#define AT45DB_RDARRAYLF          0x03 /* Continuous Array Read (Low Frequency) */
+#define AT45DB_RDARRAYHF          0x0b /* Continuous Array Read (High Frequency) */
+#define AT45DB_RDBF1LF            0xd1 /* Buffer 1 Read (Low Frequency) */
+#define AT45DB_RDBF2LF            0xd3 /* Buffer 2 Read (Low Frequency) */
+#define AT45DB_RDBF1              0xd4 /* Buffer 1 Read */
+#define AT45DB_RDBF2              0xd6 /* Buffer 2 Read */
 
 /* Program and Erase Commands */
-#define AT45DB_WRBF1         0x84 /* Buffer 1 Write */
-#define AT45DB_WRBF2         0x87 /* Buffer 2 Write */
-#define AT45DB_BF1TOMNE      0x83 /* Buffer 1 to Main Memory Page Program with Built-in Erase */
-#define AT45DB_BF2TOMNE      0x86 /* Buffer 2 to Main Memory Page Program with Built-in Erase */
-#define AT45DB_BF1TOMN       0x88 /* Buffer 1 to Main Memory Page Program without Built-in Erase */
-#define AT45DB_BF2TOMN       0x89 /* Buffer 2 to Main Memory Page Program without Built-in Erase  */
-#define AT45DB_PGERASE       0x81 /* Page Erase */
-#define AT45DB_BLKERASE      0x50 /* Block Erase */
-#define AT45DB_SECTERASE     0x7c /* Sector Erase */
-#define AT45DB_CHIPERASE1    0xc7 /* Chip Erase - byte 1 */
-#define AT45DB_CHIPERASE2    0x94 /* Chip Erase - byte 2 */
-#define AT45DB_CHIPERASE3    0x80 /* Chip Erase - byte 3 */
-#define AT45DB_CHIPERASE4    0x9a /* Chip Erase - byte 4 */
-#define AT45DB_MNTHRUBF1     0x82 /* Main Memory Page Program Through Buffer 1 */
-#define AT45DB_MNTHRUBF2     0x85 /* Main Memory Page Program Through Buffer 2 */
+#define AT45DB_WRBF1              0x84 /* Buffer 1 Write */
+#define AT45DB_WRBF2              0x87 /* Buffer 2 Write */
+#define AT45DB_BF1TOMNE           0x83 /* Buffer 1 to Main Memory Page Program with Built-in Erase */
+#define AT45DB_BF2TOMNE           0x86 /* Buffer 2 to Main Memory Page Program with Built-in Erase */
+#define AT45DB_BF1TOMN            0x88 /* Buffer 1 to Main Memory Page Program without Built-in Erase */
+#define AT45DB_BF2TOMN            0x89 /* Buffer 2 to Main Memory Page Program without Built-in Erase  */
+#define AT45DB_PGERASE            0x81 /* Page Erase */
+#define AT45DB_BLKERASE           0x50 /* Block Erase */
+#define AT45DB_SECTERASE          0x7c /* Sector Erase */
+#define AT45DB_CHIPERASE1         0xc7 /* Chip Erase - byte 1 */
+#define AT45DB_CHIPERASE2         0x94 /* Chip Erase - byte 2 */
+#define AT45DB_CHIPERASE3         0x80 /* Chip Erase - byte 3 */
+#define AT45DB_CHIPERASE4         0x9a /* Chip Erase - byte 4 */
+#define AT45DB_MNTHRUBF1          0x82 /* Main Memory Page Program Through Buffer 1 */
+#define AT45DB_MNTHRUBF2          0x85 /* Main Memory Page Program Through Buffer 2 */
 
 /* Protection and Security Commands */
-#define AT45DB_ENABPROT1     0x3d /* Enable Sector Protection - byte 1 */
-#define AT45DB_ENABPROT2     0x2a /* Enable Sector Protection - byte 2 */
-#define AT45DB_ENABPROT3     0x7f /* Enable Sector Protection - byte 3 */
-#define AT45DB_ENABPROT4     0xa9 /* Enable Sector Protection - byte 4 */
-#define AT45DB_DISABPROT1    0x3d /* Disable Sector Protection - byte 1 */
-#define AT45DB_DISABPROT2    0x2a /* Disable Sector Protection - byte 2 */
-#define AT45DB_DISABPROT3    0x7f /* Disable Sector Protection - byte 3 */
-#define AT45DB_DISABPROT4    0x9a /* Disable Sector Protection - byte 4 */
-#define AT45DB_ERASEPROT1    0x3d /* Erase Sector Protection Register - byte 1 */
-#define AT45DB_ERASEPROT2    0x2a /* Erase Sector Protection Register - byte 2 */
-#define AT45DB_ERASEPROT3    0x7f /* Erase Sector Protection Register - byte 3 */
-#define AT45DB_ERASEPROT4    0xcf /* Erase Sector Protection Register - byte 4 */
-#define AT45DB_PROGPROT1     0x3d /* Program Sector Protection Register - byte 1 */
-#define AT45DB_PROGPROT2     0x2a /* Program Sector Protection Register - byte 2 */
-#define AT45DB_PROGPROT3     0x7f /* Program Sector Protection Register - byte 3 */
-#define AT45DB_PROGPROT4     0xfc /* Program Sector Protection Register - byte 4 */
-#define AT45DB_RDPROT        0x32 /* Read Sector Protection Register */
-#define AT45DB_LOCKDOWN1     0x3d /* Sector Lockdown - byte 1 */
-#define AT45DB_LOCKDOWN2     0x2a /* Sector Lockdown - byte 2 */
-#define AT45DB_LOCKDOWN3     0x7f /* Sector Lockdown - byte 3 */
-#define AT45DB_LOCKDOWN4     0x30 /* Sector Lockdown - byte 4 */
-#define AT45DB_RDLOCKDOWN    0x35 /* Read Sector Lockdown Register  */
-#define AT45DB_PROGSEC1      0x9b /* Program Security Register - byte 1 */
-#define AT45DB_PROGSEC2      0x00 /* Program Security Register - byte 2 */
-#define AT45DB_PROGSEC3      0x00 /* Program Security Register - byte 3 */
-#define AT45DB_PROGSEC4      0x00 /* Program Security Register - byte 4 */
-#define AT45DB_RDSEC         0x77 /* Read Security Register */
+#define AT45DB_ENABPROT1          0x3d /* Enable Sector Protection - byte 1 */
+#define AT45DB_ENABPROT2          0x2a /* Enable Sector Protection - byte 2 */
+#define AT45DB_ENABPROT3          0x7f /* Enable Sector Protection - byte 3 */
+#define AT45DB_ENABPROT4          0xa9 /* Enable Sector Protection - byte 4 */
+#define AT45DB_DISABPROT1         0x3d /* Disable Sector Protection - byte 1 */
+#define AT45DB_DISABPROT2         0x2a /* Disable Sector Protection - byte 2 */
+#define AT45DB_DISABPROT3         0x7f /* Disable Sector Protection - byte 3 */
+#define AT45DB_DISABPROT4         0x9a /* Disable Sector Protection - byte 4 */
+#define AT45DB_ERASEPROT1         0x3d /* Erase Sector Protection Register - byte 1 */
+#define AT45DB_ERASEPROT2         0x2a /* Erase Sector Protection Register - byte 2 */
+#define AT45DB_ERASEPROT3         0x7f /* Erase Sector Protection Register - byte 3 */
+#define AT45DB_ERASEPROT4         0xcf /* Erase Sector Protection Register - byte 4 */
+#define AT45DB_PROGPROT1          0x3d /* Program Sector Protection Register - byte 1 */
+#define AT45DB_PROGPROT2          0x2a /* Program Sector Protection Register - byte 2 */
+#define AT45DB_PROGPROT3          0x7f /* Program Sector Protection Register - byte 3 */
+#define AT45DB_PROGPROT4          0xfc /* Program Sector Protection Register - byte 4 */
+#define AT45DB_RDPROT             0x32 /* Read Sector Protection Register */
+#define AT45DB_LOCKDOWN1          0x3d /* Sector Lockdown - byte 1 */
+#define AT45DB_LOCKDOWN2          0x2a /* Sector Lockdown - byte 2 */
+#define AT45DB_LOCKDOWN3          0x7f /* Sector Lockdown - byte 3 */
+#define AT45DB_LOCKDOWN4          0x30 /* Sector Lockdown - byte 4 */
+#define AT45DB_RDLOCKDOWN         0x35 /* Read Sector Lockdown Register  */
+#define AT45DB_PROGSEC1           0x9b /* Program Security Register - byte 1 */
+#define AT45DB_PROGSEC2           0x00 /* Program Security Register - byte 2 */
+#define AT45DB_PROGSEC3           0x00 /* Program Security Register - byte 3 */
+#define AT45DB_PROGSEC4           0x00 /* Program Security Register - byte 4 */
+#define AT45DB_RDSEC              0x77 /* Read Security Register */
 
 /* Additional commands */
-#define AT45DB_MNTOBF1XFR    0x53 /* Main Memory Page to Buffer 1 Transfer */
-#define AT45DB_MNTOBF2XFR    0x55 /* Main Memory Page to Buffer 2 Transfer */
-#define AT45DB_MNBF1CMP      0x60 /* Main Memory Page to Buffer 1 Compare  */
-#define AT45DB_MNBF2CMP      0x61 /* Main Memory Page to Buffer 2 Compare */
-#define AT45DB_AUTOWRBF1     0x58 /* Auto Page Rewrite through Buffer 1 */
-#define AT45DB_AUTOWRBF2     0x59 /* Auto Page Rewrite through Buffer 2 */
-#define AT45DB_PWRDOWN       0xb9 /* Deep Power-down */
-#define AT45DB_RESUME        0xab /* Resume from Deep Power-down */
-#define AT45DB_RDSR          0xd7 /* Status Register Read */
-#define AT45DB_RDDEVID       0x9f /* Manufacturer and Device ID Read */
+#define AT45DB_MNTOBF1XFR         0x53 /* Main Memory Page to Buffer 1 Transfer */
+#define AT45DB_MNTOBF2XFR         0x55 /* Main Memory Page to Buffer 2 Transfer */
+#define AT45DB_MNBF1CMP           0x60 /* Main Memory Page to Buffer 1 Compare  */
+#define AT45DB_MNBF2CMP           0x61 /* Main Memory Page to Buffer 2 Compare */
+#define AT45DB_AUTOWRBF1          0x58 /* Auto Page Rewrite through Buffer 1 */
+#define AT45DB_AUTOWRBF2          0x59 /* Auto Page Rewrite through Buffer 2 */
+#define AT45DB_PWRDOWN            0xb9 /* Deep Power-down */
+#define AT45DB_RESUME             0xab /* Resume from Deep Power-down */
+#define AT45DB_RDSR               0xd7 /* Status Register Read */
+#define AT45DB_RDDEVID            0x9f /* Manufacturer and Device ID Read */
 
-#define AT45DB_MANUFACTURER  0x1f /* Manufacturer ID: Atmel */
-#define AT45DB_DEVID1_CAPMSK 0x1f /* Bits 0-4: Capacity */
-#define AT45DB_DEVID1_1MBIT  0x02 /* xxx0 0010 = 1Mbit AT45DB011 */
-#define AT45DB_DEVID1_2MBIT  0x03 /* xxx0 0012 = 2Mbit AT45DB021 */
-#define AT45DB_DEVID1_4MBIT  0x04 /* xxx0 0100 = 4Mbit AT45DB041 */
-#define AT45DB_DEVID1_8MBIT  0x05 /* xxx0 0101 = 8Mbit AT45DB081 */
-#define AT45DB_DEVID1_16MBIT 0x06 /* xxx0 0110 = 16Mbit AT45DB161 */
-#define AT45DB_DEVID1_32MBIT 0x07 /* xxx0 0111 = 32Mbit AT45DB321 */
-#define AT45DB_DEVID1_64MBIT 0x08 /* xxx0 1000 = 32Mbit AT45DB641 */
-#define AT45DB_DEVID1_FAMMSK 0xe0 /* Bits 5-7: Family */
-#define AT45DB_DEVID1_DFLASH 0x20 /* 001x xxxx = Dataflash */
-#define AT45DB_DEVID1_AT26DF 0x40 /* 010x xxxx = AT26DFxxx series (Not supported) */
-#define AT45DB_DEVID2_VERMSK 0x1f /* Bits 0-4: MLC mask */
-#define AT45DB_DEVID2_MLCMSK 0xe0 /* Bits 5-7: MLC mask */
+#define AT45DB_MANUFACTURER       0x1f /* Manufacturer ID: Atmel */
+#define AT45DB_DEVID1_CAPMSK      0x1f /* Bits 0-4: Capacity */
+#define AT45DB_DEVID1_1MBIT       0x02 /* xxx0 0010 = 1Mbit AT45DB011 */
+#define AT45DB_DEVID1_2MBIT       0x03 /* xxx0 0012 = 2Mbit AT45DB021 */
+#define AT45DB_DEVID1_4MBIT       0x04 /* xxx0 0100 = 4Mbit AT45DB041 */
+#define AT45DB_DEVID1_8MBIT       0x05 /* xxx0 0101 = 8Mbit AT45DB081 */
+#define AT45DB_DEVID1_16MBIT      0x06 /* xxx0 0110 = 16Mbit AT45DB161 */
+#define AT45DB_DEVID1_32MBIT      0x07 /* xxx0 0111 = 32Mbit AT45DB321 */
+#define AT45DB_DEVID1_64MBIT      0x08 /* xxx0 1000 = 32Mbit AT45DB641 */
+#define AT45DB_DEVID1_FAMMSK      0xe0 /* Bits 5-7: Family */
+#define AT45DB_DEVID1_DFLASH      0x20 /* 001x xxxx = Dataflash */
+#define AT45DB_DEVID1_AT26DF      0x40 /* 010x xxxx = AT26DFxxx series (Not supported) */
+#define AT45DB_DEVID2_VERMSK      0x1f /* Bits 0-4: MLC mask */
+#define AT45DB_DEVID2_MLCMSK      0xe0 /* Bits 5-7: MLC mask */
 
 /* Status register bit definitions */
-#define AT45DB_SR_RDY        (1 << 7) /* Bit 7: RDY/ Not BUSY */
-#define AT45DB_SR_COMP       (1 << 6) /* Bit 6: COMP */
-#define AT45DB_SR_PROTECT    (1 << 1) /* Bit 1: PROTECT */
-#define AT45DB_SR_PGSIZE     (1 << 0) /* Bit 0: PAGE_SIZE */
+#define AT45DB_SR_RDY             (1 << 7) /* Bit 7: RDY/ Not BUSY */
+#define AT45DB_SR_COMP            (1 << 6) /* Bit 6: COMP */
+#define AT45DB_SR_PROTECT         (1 << 1) /* Bit 1: PROTECT */
+#define AT45DB_SR_PGSIZE          (1 << 0) /* Bit 0: PAGE_SIZE */
 
-const uint16_t bufferSizeAT45D           = 256;
-const uint16_t pageSizeAT45D             = 256;
-BufferNumber currentBuffer               = bufferNumber1;
-uint16_t currentBufferOffset             = 0;
+#define kWarpSizeAT45DBBufferSize 256
+// #define kWarpSizeAT45DBPageSizeBytes 256
 
-const uint16_t firstPageNumberAT45DB     = 1;
-const uint8_t initialPageOffset          = 0;
+uint16_t kWarpAT45DBPageOffsetStoragePage = 0;
+size_t kWarpAT45DBPageOffsetStorageSize   = 3;
+
+BufferNumber currentBuffer   = bufferNumber1;
+uint16_t currentBufferOffset = 0;
+
+// uint8_t bufferAT45DB[kWarpSizeAT45DBBufferSize] = {0};
+
+const uint16_t firstPageNumberAT45DB = 1;
+const uint8_t initialPageOffset      = 0;
 
 const uint16_t pageOffsetStorePageNumber = 0;
 const uint8_t pageOffsetStoreNBytes      = 3;
@@ -178,7 +194,7 @@ initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	deviceAT45DBState.operatingVoltageMillivolts = operatingVoltageMillivolts;
 
 	uint8_t pageOffsetBuf[3];
-	status = readMemoryAT45DB(0, 3, pageOffsetBuf);
+	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pageOffsetBuf);
 	if (status != kWarpStatusOK)
 	{
 		return status;
@@ -284,103 +300,6 @@ enableAT45DBWrite()
 }
 
 WarpStatus
-saveToAT45DBFromEnd(size_t nbyte, uint8_t* buf)
-{
-	// assume that nbyte < 60
-	WarpStatus status;
-	int writeToFlash  = gWarpWriteToFlash;
-	gWarpWriteToFlash = kWarpWriteToFlash;
-
-	uint8_t pageOffsetBuf[3];
-	readMemoryAT45DB(0, 3, pageOffsetBuf);
-
-	uint8_t pageOffset    = pageOffsetBuf[2];
-	uint16_t pageNumber   = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-
-	bool nextPageRequired = nbyte + pageOffset > kWarpSizeAT45DBPageSizeBytes;
-
-	if (!nextPageRequired)
-	{
-		uint8_t fullBufSize = nbyte + pageOffset;
-		uint8_t fullBuf[fullBufSize];
-
-		if (pageOffset > 0)
-		{
-			status = readMemoryAT45DB(pageNumber, pageOffset, fullBuf);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("Error: readMemoryAT45DB failed\n");
-				return status;
-			}
-		}
-
-		for (int i = 0; i < nbyte; i++)
-		{
-			fullBuf[pageOffset + i] = buf[i];
-		}
-
-		status = pageProgramAT45DB(pageNumber, fullBufSize, fullBuf);
-
-		setAT45DBStartOffset(pageNumber, fullBufSize);
-	}
-	else
-	{
-		uint8_t firstBufSize = kWarpSizeAT45DBPageSizeBytes - pageOffset;
-		uint8_t firstBuf[kWarpSizeAT45DBPageSizeBytes];
-
-		if (pageOffset > 0)
-		{
-			status = readMemoryAT45DB(pageNumber, pageOffset, firstBuf);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("Error: readMemoryAT45DB failed\n");
-				return status;
-			}
-		}
-
-		for (int i = 0; i < firstBufSize; i++)
-		{
-			firstBuf[pageOffset + i] = buf[i];
-		}
-
-		status = pageProgramAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, firstBuf);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("Error: PageProgramAT45DB failed\n");
-			return status;
-		}
-
-		uint8_t middleBufSize = nbyte - firstBufSize;
-		size_t nIterations    = middleBufSize / kWarpSizeAT45DBPageSizeBytes;
-
-		size_t excess         = middleBufSize % kWarpSizeAT45DBPageSizeBytes;
-		uint8_t* middleBuf    = buf + firstBufSize;
-
-		for (int i = 0; i < nIterations; i++)
-		{
-			status = pageProgramAT45DB((pageNumber += 1), kWarpSizeAT45DBPageSizeBytes, middleBuf + (i * kWarpSizeAT45DBPageSizeBytes));
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("Error: PageProgramAT45DB failed\n");
-				return status;
-			}
-		}
-
-		status = pageProgramAT45DB((pageNumber += 1), excess, middleBuf + (nIterations * kWarpSizeAT45DBPageSizeBytes));
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("Error: PageProgramAT45DB failed\n");
-			return status;
-		}
-
-		setAT45DBStartOffset(pageNumber, excess);
-	}
-
-	gWarpWriteToFlash = writeToFlash;
-	return kWarpStatusOK;
-}
-
-WarpStatus
 setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 {
 	WarpStatus status;
@@ -390,7 +309,7 @@ setAT45DBStartOffset(uint16_t pageNumber, uint8_t pageOffset)
 	initialNANDStartPosition[0] = (uint8_t)(pageNumber >>= 8);
 	initialNANDStartPosition[2] = pageOffset;
 
-	status                      = pageProgramAT45DB(0, 3, initialNANDStartPosition);
+	status = pageProgramAT45DB(0, 3, initialNANDStartPosition);
 
 	if (status != kWarpStatusOK)
 	{
@@ -406,17 +325,19 @@ savePageOffsetAT45DB()
 {
 	WarpStatus status;
 
+	// warpPrint("Saving page: %d\n", currentPageNumber);
 	status = setAT45DBStartOffset(currentPageNumber, 0);
 
 	return status;
 }
+
 WarpStatus
 saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 {
 	WarpStatus status;
 
 	// write to buffer
-	uint16_t spaceAvailable  = bufferSizeAT45D - currentBufferOffset;
+	uint16_t spaceAvailable = kWarpSizeAT45DBBufferSize - currentBufferOffset;
 
 	bool currentBufferIsFull = spaceAvailable == 0;
 	if (currentBufferIsFull)
@@ -436,8 +357,7 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 		currentBuffer       = currentBuffer == bufferNumber1 ? bufferNumber2 : bufferNumber1;
 		currentBufferOffset = 0;
 
-		// savePageOffsetAT45DB();
-		status              = saveToAT45DBFromEndBuffered(nbyte, buf);
+		status = saveToAT45DBFromEndBuffered(nbyte, buf);
 
 		return status;
 	}
@@ -447,7 +367,8 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 		uint16_t nBytesToWrite = spaceAvailable;
 		uint8_t* bufToWrite    = buf;
 
-		status                 = writeToBuffer(currentBuffer, currentBufferOffset, nBytesToWrite, bufToWrite);
+		status = writeToBuffer(currentBuffer, currentBufferOffset, nBytesToWrite, bufToWrite);
+
 		if (status != kWarpStatusOK)
 		{
 			return status;
@@ -473,6 +394,17 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 
 	return status;
 }
+
+// void
+// writeToSoftwareBuffer(uint8_t index, size_t nbyte, uint8_t* buf)
+// {
+// 	for (size_t i = 0; i < nbyte; i++)
+// 	{
+// 		bufferAT45DB[index + i] = buf[i];
+// 	}
+
+// 	return;
+// }
 
 WarpStatus
 writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
@@ -510,45 +442,45 @@ writeToBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
 	return status;
 }
 
-WarpStatus
-readFromBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
-{
-	WarpStatus status;
+// WarpStatus
+// readFromBuffer(BufferNumber buffer, uint8_t address, size_t nbyte, uint8_t* buf)
+// {
+// 	WarpStatus status;
 
-	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
-	{
-		return kWarpStatusBadDeviceCommand;
-	}
+// 	if (nbyte > kWarpMemoryCommonSpiBufferBytes - 4)
+// 	{
+// 		return kWarpStatusBadDeviceCommand;
+// 	}
 
-	uint8_t opCode;
-	if (buffer == bufferNumber1)
-	{
-		opCode = 0xD1;
-	}
-	else if (buffer == bufferNumber2)
-	{
-		opCode = 0xD3;
-	}
+// 	uint8_t opCode;
+// 	if (buffer == bufferNumber1)
+// 	{
+// 		opCode = 0xD1;
+// 	}
+// 	else if (buffer == bufferNumber2)
+// 	{
+// 		opCode = 0xD3;
+// 	}
 
-	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0]                                       = opCode; /* PP */
-	ops[2]                                       = 0x00;
-	ops[1]                                       = 0x00;
-	ops[3]                                       = address;
+// 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+// 	ops[0]                                       = opCode; /* PP */
+// 	ops[2]                                       = 0x00;
+// 	ops[1]                                       = 0x00;
+// 	ops[3]                                       = address;
 
-	for (size_t i = 0; i < nbyte; i++)
-	{
-		ops[i + 4] = buf[i];
-	}
+// 	for (size_t i = 0; i < nbyte; i++)
+// 	{
+// 		ops[i + 4] = buf[i];
+// 	}
 
-	status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
-	for (size_t i = 0; i < nbyte; i++)
-	{
-		buf[i] = deviceAT45DBState.spiSinkBuffer[i + 4];
-	}
+// 	status = spiTransactionAT45DB(&deviceAT45DBState, ops, nbyte + 4);
+// 	for (size_t i = 0; i < nbyte; i++)
+// 	{
+// 		buf[i] = deviceAT45DBState.spiSinkBuffer[i + 4];
+// 	}
 
-	return status;
-}
+// 	return status;
+// }
 
 WarpStatus
 initiateChipEraseAT45DB()
@@ -560,7 +492,7 @@ initiateChipEraseAT45DB()
 	ops[2]         = 0x80;
 	ops[3]         = 0x9A;
 
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 
 	return status;
 }
@@ -581,7 +513,7 @@ resetAT45DB()
 {
 	WarpStatus status;
 
-	enableAT45DBWrite();
+	// enableAT45DBWrite();
 	warpPrint("Configuring page size...\n");
 	status = configurePageSize();
 	if (status != kWarpStatusOK)
@@ -606,6 +538,9 @@ resetAT45DB()
 	currentPageNumber = firstPageNumberAT45DB;
 	currentPageOffset = initialPageOffset;
 
+	currentBufferOffset = 0;
+	currentBuffer       = bufferNumber1;
+
 	return status;
 }
 
@@ -620,7 +555,7 @@ configurePageSize()
 	ops[2]         = 0x80;
 	ops[3]         = 0xA6;
 
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 	waitForDeviceReady();
 	return status;
 }
@@ -628,11 +563,11 @@ configurePageSize()
 WarpStatus
 waitForDeviceReady()
 {
-	WarpStatus status;
-	uint8_t ops[2]     = {0};
-	ops[0]             = 0xD7; /* RDSR (SPI Mode) */
-	ops[1]             = 0x0;
-	ops[2]             = 0x0;
+	WarpStatus status = kWarpStatusOK;
+	uint8_t ops[3]    = {0};
+	ops[0]            = 0xD7; /* RDSR (SPI Mode) */
+	ops[1]            = 0x0;
+	ops[2]            = 0x0;
 
 	uint8_t statusByte = 0x00;
 	while ((statusByte & 0x80) == 0)
@@ -665,7 +600,7 @@ bufferToMainMemoryWriteAT45DB(BufferNumber buffer, uint16_t pageNumber)
 	ops[1]         = (uint8_t)(pageNumber >>= 8);
 	ops[3]         = 0x00;
 
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
+	status = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
 
 	return status;
 }
@@ -698,7 +633,7 @@ pageProgramAT45DB(uint16_t pageNumber, size_t nbyte, uint8_t* buf)
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	uint8_t opCode;
+	uint8_t opCode = 0x82;
 	if (currentBuffer == bufferNumber1)
 	{
 		opCode = 0x82;
@@ -729,13 +664,13 @@ readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf)
 {
 	WarpStatus status;
 
-	if (nbyte > pageSizeAT45D)
+	if (nbyte > kWarpSizeAT45DBPageSizeBytes)
 	{
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	size_t nIterations                           = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
-	size_t excessBytes                           = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
+	size_t nIterations = nbyte / (kWarpMemoryCommonSpiBufferBytes - 8);
+	size_t excessBytes = nbyte % (kWarpMemoryCommonSpiBufferBytes - 8);
 
 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
 	ops[0]                                       = 0xD2; /* NORD */
@@ -782,64 +717,13 @@ readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf)
 }
 
 WarpStatus
-eraseSectorAT45DB(uint32_t address)
-{
-	WarpStatus status;
-	uint8_t ops[4] = {0};
-	ops[0]         = 0x7C; /* SER (SPI Mode) */
-	ops[1]         = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2]         = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3]         = (uint8_t)((address & 0x000F));
-
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("Error: communication failed\n");
-		return status;
-	}
-}
-
-WarpStatus
-erase32kBlockAT45DB(uint32_t address)
-{
-	WarpStatus status;
-	uint8_t ops[4] = {0};
-	ops[0]         = 0x12; /* BER32K (SPI Mode) */
-	ops[1]         = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2]         = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3]         = (uint8_t)((address & 0x000F));
-
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("Error: communication failed\n");
-		return status;
-	}
-}
-
-WarpStatus
-chipEraseAT45DB()
-{
-	WarpStatus status;
-	uint8_t ops[4] = {0};
-	ops[0]         = 0xC7; /* CER (SPI Mode) */
-	ops[1]         = 0x94;
-	ops[2]         = 0x80;
-	ops[3]         = 0x9A;
-
-	status         = spiTransactionAT45DB(&deviceAT45DBState, ops, 4);
-
-	return status;
-}
-
-WarpStatus
 readAllMemoryAT45DB()
 {
 	uint8_t dataBuffer[kWarpSizeAT45DBPageSizeBytes];
 	WarpStatus status;
 
 	uint8_t pageOffsetBuf[3];
-	status = readMemoryAT45DB(0, 3, pageOffsetBuf);
+	status = readMemoryAT45DB(kWarpAT45DBPageOffsetStoragePage, kWarpAT45DBPageOffsetStorageSize, pageOffsetBuf);
 	if (status != kWarpStatusOK)
 	{
 		return status;
@@ -848,40 +732,280 @@ readAllMemoryAT45DB()
 	uint8_t pageOffset       = pageOffsetBuf[2];
 	uint16_t pageNumberTotal = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
-	warpPrint("\r\n\tPage number: %d", pageNumberTotal);
-	warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+	// warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+	// warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+
+	uint8_t bytesIndex       = 0;
+	uint8_t readingIndex     = 0;
+	uint8_t sensorIndex      = 0;
+	uint8_t measurementIndex = 0;
+
+	uint8_t currentSensorNumberOfReadings = 0;
+	uint8_t currentSensorSizePerReading   = 0;
+
+	uint16_t sensorBitField        = 0;
+	uint8_t currentNumberOfSensors = 0;
+
+	int32_t currentReading = 0;
+
 	for (uint32_t pageNumber = firstPageNumberAT45DB; pageNumber < pageNumberTotal;
 	     pageNumber++)
 	{
-		status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes,
-		                          dataBuffer);
+		status = readMemoryAT45DB(pageNumber, kWarpSizeAT45DBPageSizeBytes, dataBuffer);
 		if (status != kWarpStatusOK)
 		{
-			warpPrint("\r\n\treadMemoryAT45DB failed: %d", status);
+			return status;
 		}
 		else
 		{
 			for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++)
 			{
-				warpPrint("%c", dataBuffer[i]);
+				if (measurementIndex == 0)
+				{
+					// reading sensorBitField
+					sensorBitField = dataBuffer[i] << 8;
+					measurementIndex++;
+					continue;
+				}
+				else if (measurementIndex == 1)
+				{
+					sensorBitField |= dataBuffer[i];
+					measurementIndex++;
+
+					currentNumberOfSensors = getNumberOfSensorsFromSensorBitField(sensorBitField);
+					sensorIndex            = 0;
+					readingIndex           = 0;
+					bytesIndex             = 0;
+
+					continue;
+				}
+
+				if (readingIndex == 0 && bytesIndex == 0)
+				{
+					decodeSensorBitField(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
+					// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+					// return status;
+				}
+
+				if (readingIndex < currentSensorNumberOfReadings)
+				{
+					if (bytesIndex < currentSensorSizePerReading)
+					{
+						currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
+						bytesIndex++;
+						measurementIndex++;
+
+						if (bytesIndex == currentSensorSizePerReading)
+						{
+							if (currentSensorSizePerReading == 4)
+							{
+								warpPrint("%d, ", (int32_t)(currentReading));
+							}
+							else if (currentSensorSizePerReading == 2)
+							{
+								warpPrint("%d, ", (int16_t)(currentReading));
+							}
+
+							currentReading = 0;
+							bytesIndex     = 0;
+							readingIndex++;
+							measurementIndex++;
+
+							if (readingIndex == currentSensorNumberOfReadings)
+							{
+								readingIndex = 0;
+								sensorIndex++;
+
+								if (sensorIndex == currentNumberOfSensors)
+								{
+									measurementIndex = 0;
+									warpPrint("\n");
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
 
-	status = readMemoryAT45DB(pageNumberTotal, pageOffset,
-	                          dataBuffer);
+	// status = readMemoryAT45DB(pageNumberTotal, pageOffset,
+	//                           dataBuffer);
 
-	if (status != kWarpStatusOK)
+	// if (status != kWarpStatusOK)
+	// {
+	// 	return status;
+	// }
+	// else
+	// {
+	// 	for (size_t i = 0; i < pageOffset; i++)
+	// 	{
+	// 		warpPrint("%c", dataBuffer[i]);
+	// 	}
+	// }
+
+	return status;
+}
+
+uint8_t
+getNumberOfSensorsFromSensorBitField(uint16_t sensorBitField)
+{
+	uint8_t numberOfSensors = 0;
+
+	while (sensorBitField != 0)
 	{
-		return status;
+		sensorBitField = sensorBitField & (sensorBitField - 1);
+		numberOfSensors++;
 	}
-	else
+
+	return numberOfSensors;
+}
+
+void
+decodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings)
+{
+	uint8_t numberOfSensorsFound = 0;
+
+	if (sensorBitField & 0b1)
 	{
-		for (size_t i = 0; i < pageOffset; i++)
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
 		{
-			warpPrint("%c", dataBuffer[i]);
+			*sizePerReading   = 4;
+			*numberOfReadings = 1;
+			return;
 		}
 	}
 
-	return status;
+	if (sensorBitField & 0b10)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingADXL362;
+			*numberOfReadings = numberOfReadingsPerMeasurementADXL362;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingAMG8834;
+			*numberOfReadings = numberOfReadingsPerMeasurementAMG8834;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingMMA8451Q;
+			*numberOfReadings = numberOfReadingsPerMeasurementMMA8451Q;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingMAG3110;
+			*numberOfReadings = numberOfReadingsPerMeasurementMAG3110;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingAL3GD20H;
+			*numberOfReadings = numberOfReadingsPerMeasurementL3GD20H;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingBME680;
+			*numberOfReadings = numberOfReadingsPerMeasurementBME680;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingBMX055;
+			*numberOfReadings = numberOfReadingsPerMeasurementBMX055;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingCCS811;
+			*numberOfReadings = numberOfReadingsPerMeasurementCCS811;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = bytesPerReadingHDC1000;
+			*numberOfReadings = numberOfReadingsPerMeasurementHDC1000;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading   = 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
 }
