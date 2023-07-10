@@ -56,12 +56,12 @@ WarpStatus initiateChipEraseAT45DB();
 WarpStatus writeToBufferAT45DB(BufferNumberAT45DB buffer, uint8_t address, size_t nbyte, uint8_t* buf);
 WarpStatus bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber);
 WarpStatus bufferToMainMemoryWritePageAT45DB(BufferNumberAT45DB buffer);
-WarpStatus loadMainMemoryPageToBuffer(uint16_t address, BufferNumberAT45DB buffer);
+WarpStatus loadMainMemoryPageToBuffer(BufferNumberAT45DB buffer, uint16_t address);
 
 WarpStatus configurePageSize();
 WarpStatus readAllMemoryAT45DB();
 WarpStatus savePagePositionAT45DB();
 WarpStatus savePartialBufferToMainMemoryAndSavePagePosition();
 
-uint8_t getNumberOfSensorsFromSensorBitField(uint16_t sensorBitField);
-void decodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
+uint8_t getNSensorsFromSensorBitFieldAT45DB(uint16_t sensorBitField);
+void decodeSensorBitFieldAT45DB(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
