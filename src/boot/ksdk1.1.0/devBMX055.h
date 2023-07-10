@@ -57,13 +57,13 @@ WarpStatus readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfByt
 WarpStatus readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes);
 
-void printSensorDataBMX055accel(bool hexModeFlag);
-void printSensorDataBMX055gyro(bool hexModeFlag);
-void printSensorDataBMX055mag(bool hexModeFlag);
+void 		printSensorDataBMX055accel(bool hexModeFlag);
+void 		printSensorDataBMX055gyro(bool hexModeFlag);
+void 		printSensorDataBMX055mag(bool hexModeFlag);
 
-uint8_t appendSensorDataBMX055accel(uint8_t* buf);
-uint8_t appendSensorDataBMX055gyro(uint8_t* buf);
-uint8_t appendSensorDataBMX055mag(uint8_t* buf);
+uint8_t 	appendSensorDataBMX055accel(uint8_t* buf);
+uint8_t 	appendSensorDataBMX055gyro(uint8_t* buf);
+uint8_t 	appendSensorDataBMX055mag(uint8_t* buf);
 
 const uint8_t bytesPerMeasurementBMX055            = 16;
 const uint8_t bytesPerReadingBMX055                = 2;
