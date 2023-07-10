@@ -1892,15 +1892,16 @@ main(void)
 			}
 		}
 
-		warpScaleSupplyVoltage(3300);
+		// warpScaleSupplyVoltage(3300);
 
 #if (WARP_CSVSTREAM_TO_FLASH)
-			gWarpWriteToFlash = true;
-			printAllSensors(false, false, 1, true);
-			gWarpWriteToFlash = false;
+		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
+		gWarpWriteToFlash = true;
+		printAllSensors(false, false, 1, true);
+		gWarpWriteToFlash = false;
 
 #else
-			printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
+		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
 						0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 #endif
 

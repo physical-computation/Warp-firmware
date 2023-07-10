@@ -179,6 +179,8 @@ const uint8_t pageOffsetStoreNBytesAT45DB			= 3;
 volatile uint16_t currentPageNumberAT45DB;
 volatile uint8_t currentPageOffsetAT45DB;
 
+bool AT45DBFull = false;
+
 WarpStatus
 initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
@@ -211,6 +213,16 @@ initAT45DB(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 	 */
 	status = loadMainMemoryPageToBuffer(currentPageNumberAT45DB, currentBufferAT45DB);
 	warpPrint("\nAT45DB global variables set to page %d, offset %d, buffer offset %d\n", currentPageNumberAT45DB, currentPageOffsetAT45DB, currentBufferOffsetAT45DB);
+
+
+	/*
+	* Check if the flash is full. If so, set AT45DBFull to true.
+	*/
+	if (currentPageNumberAT45DB == kWarpSizeAT45DBNPages && currentPageOffsetAT45DB == kWarpSizeAT45DBPageSizeBytes - 1)
+	{
+		AT45DBFull = true;
+		warpPrint("\nAT45DB is full\n");
+	}
 	return status;
 }
 
@@ -441,7 +453,10 @@ savePartialBufferToMainMemoryAndSavePagePosition()
 	}
 
 	status = bufferToMainMemoryWriteAT45DB(currentBufferAT45DB, currentPageNumberAT45DB);
-	if (status != kWarpStatusOK)
+	if (status == kWarpStatusFlashFull)
+	{
+		return kWarpStatusOK;
+	} else if (status != kWarpStatusOK)
 	{
 		return status;
 	}
@@ -594,6 +609,17 @@ bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber)
 {
 	WarpStatus status;
 
+	if (AT45DBFull)
+	{
+		/*
+		* If we have reached the end of the memory, don't do anything.
+		*/
+		return kWarpStatusFlashFull;
+	}
+
+	/*
+	* We are using buffer to main memory WITH built-in erase because it makes dealing with partial buffers easier.  Furthermore, using WITHOUT built-in erase doesn't provide much of an increase in the write-rate.
+	*/
 	uint8_t writeOpcode;
 	if (buffer == bufferNumber1AT45DB)
 	{
@@ -621,15 +647,29 @@ bufferToMainMemoryWritePageAT45DB(BufferNumberAT45DB buffer)
 {
 	WarpStatus status;
 
-	// warpPrint("\nWriting buffer %d to page %d\n", buffer, currentPageNumberAT45DB);
 	status = bufferToMainMemoryWriteAT45DB(buffer, currentPageNumberAT45DB);
-	if (status != kWarpStatusOK)
+	if (status == kWarpStatusFlashFull)
+	{
+		/*
+		* If we have reached the end of the memory, don't do anything, and return ok.
+		*/
+		return kWarpStatusOK;
+	} else if (status != kWarpStatusOK)
 	{
 		return status;
 	}
 
 	currentPageNumberAT45DB += 1;
 	currentPageOffsetAT45DB = 0;
+
+
+	if (currentPageNumberAT45DB == (uint16_t)(kWarpSizeAT45DBNPages)) {
+		AT45DBFull = true;
+
+		currentPageNumberAT45DB = kWarpSizeAT45DBNPages;
+		currentPageOffsetAT45DB = kWarpSizeAT45DBPageSizeBytes-1;
+		setAT45DBStartPosition(currentPageNumberAT45DB, currentPageOffsetAT45DB);
+	}
 
 	return status;
 }

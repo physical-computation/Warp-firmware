@@ -12,7 +12,7 @@
        (byte & 0x08 ? '1' : '0'), \
        (byte & 0x04 ? '1' : '0'), \
        (byte & 0x02 ? '1' : '0'), \
-       (byte & 0x01 ? '1' : '0') 
+       (byte & 0x01 ? '1' : '0')
 
 /*
  *	On Glaux, we use PTA0/IRQ0/LLWU_P7 (SWD_CLK) as the interrupt line
@@ -52,6 +52,10 @@ typedef enum
 	kWarpStatusErrorPowerSysSetmode,
 	kWarpStatusBadPowerModeSpecified,
 
+	/*
+	 *	Errors with flash
+	*/
+	kWarpStatusFlashFull,
 	/*
 	 *	Always keep this as the last item.
 	 */
@@ -188,7 +192,7 @@ typedef enum
 	kWarpSensorOutputRegisterAMG8834TTHL				= 0x0E,
 	kWarpSensorOutputRegisterAMG8834TTHH				= 0x0F,
 	kWarpSensorOutputRegisterAMG8834T01L				= 0x80,
-	kWarpSensorOutputRegisterAMG8834T64H				= 0xFF,	
+	kWarpSensorOutputRegisterAMG8834T64H				= 0xFF,
 
 	kWarpSensorOutputRegisterCCS811ALG_DATA				= 0x02,
 	kWarpSensorOutputRegisterCCS811RAW_DATA				= 0x03,
