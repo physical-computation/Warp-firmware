@@ -40,7 +40,7 @@ WarpStatus	writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t* payload);
 WarpStatus	configureSensorCCS811(uint8_t* payloadMEAS_MODE);
 WarpStatus	readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes);
 void		printSensorDataCCS811(bool hexModeFlag);
-uint8_t		appendSensorDataCC811(uint8_t* buf);
+uint8_t		appendSensorDataCCS811(uint8_t* buf);
 
 const uint8_t bytesPerMeasurementCCS811            = 10;
 const uint8_t bytesPerReadingCCS811                = 2;

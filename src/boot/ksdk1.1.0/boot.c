@@ -148,7 +148,7 @@
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
 	#include "devCCS811.h"
-	olatile WarpI2CDeviceState			deviceCCS811State;
+	volatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)

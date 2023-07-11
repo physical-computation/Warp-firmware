@@ -353,7 +353,7 @@ printSensorDataCCS811(bool hexModeFlag)
 }
 
 uint8_t
-appendSensorDataCC811(uint8_t* buf)
+appendSensorDataCCS811(uint8_t* buf)
 {
 	uint8_t index = 0;
 
