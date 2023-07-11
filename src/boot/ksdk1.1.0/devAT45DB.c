@@ -769,6 +769,81 @@ readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf)
 	return kWarpStatusOK;
 }
 
+void
+handleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading)
+{
+	if (*measurementIndex == 0)
+	{
+		// reading sensorBitField
+		// warpPrint("\n%d ", readByte);
+		*sensorBitField = readByte << 8;
+		*measurementIndex = *measurementIndex + 1;
+
+		return;
+	}
+	else if (*measurementIndex == 1)
+	{
+		// warpPrint("%d\n", readByte);
+		*sensorBitField |= readByte;
+		*measurementIndex = *measurementIndex + 1;
+
+		*currentNumberOfSensors = getNSensorsFromSensorBitFieldAT45DB(*sensorBitField);
+
+		*sensorIndex	= 0;
+		*readingIndex	= 0;
+		*bytesIndex		= 0;
+
+		return;
+	}
+
+	if (*readingIndex == 0 && *bytesIndex == 0)
+	{
+		decodeSensorBitFieldAT45DB(*sensorBitField, *sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+		// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+	}
+
+	if (*readingIndex < *currentSensorNumberOfReadings)
+	{
+		if (*bytesIndex < *currentSensorSizePerReading)
+		{
+			*currentReading |= readByte << (8 * (*currentSensorSizePerReading - *bytesIndex - 1));
+			*bytesIndex = *bytesIndex + 1;
+			*measurementIndex = *measurementIndex + 1;
+
+			if (*bytesIndex == *currentSensorSizePerReading)
+			{
+				if (*currentSensorSizePerReading == 4)
+				{
+					warpPrint("%d, ", (int32_t)(*currentReading));
+				}
+				else if (*currentSensorSizePerReading == 2)
+				{
+					warpPrint("%d, ", (int16_t)(*currentReading));
+				}
+
+				*currentReading	= 0;
+				*bytesIndex		= 0;
+
+				*readingIndex = *readingIndex + 1;
+				*measurementIndex = *measurementIndex + 1;
+
+				if (*readingIndex == *currentSensorNumberOfReadings)
+				{
+					*readingIndex = 0;
+					*sensorIndex = *sensorIndex + 1;
+
+					if (*sensorIndex == *currentNumberOfSensors)
+					{
+						*measurementIndex = 0;
+						warpPrint("\b\b \n");
+					}
+				}
+			}
+		}
+	}
+}
+
+
 WarpStatus
 readAllMemoryAT45DB()
 {
@@ -822,73 +897,7 @@ readAllMemoryAT45DB()
 		{
 			for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++)
 			{
-				if (measurementIndex == 0)
-				{
-					// reading sensorBitField
-					// warpPrint("\n%d ", dataBuffer[i]);
-					sensorBitField = dataBuffer[i] << 8;
-					measurementIndex++;
-					continue;
-				}
-				else if (measurementIndex == 1)
-				{
-					// warpPrint("%d\n", dataBuffer[i]);
-					sensorBitField |= dataBuffer[i];
-					measurementIndex++;
-
-					currentNumberOfSensors = getNSensorsFromSensorBitFieldAT45DB(sensorBitField);
-
-					sensorIndex	 = 0;
-					readingIndex = 0;
-					bytesIndex	 = 0;
-
-					continue;
-				}
-
-				if (readingIndex == 0 && bytesIndex == 0)
-				{
-					decodeSensorBitFieldAT45DB(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
-					// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
-				}
-
-				if (readingIndex < currentSensorNumberOfReadings)
-				{
-					if (bytesIndex < currentSensorSizePerReading)
-					{
-						currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
-						bytesIndex++;
-						measurementIndex++;
-
-						if (bytesIndex == currentSensorSizePerReading)
-						{
-							if (currentSensorSizePerReading == 4)
-							{
-								warpPrint("%d, ", (int32_t)(currentReading));
-							}
-							else if (currentSensorSizePerReading == 2)
-							{
-								warpPrint("%d, ", (int16_t)(currentReading));
-							}
-
-							currentReading = 0;
-							bytesIndex		 = 0;
-							readingIndex++;
-							measurementIndex++;
-
-							if (readingIndex == currentSensorNumberOfReadings)
-							{
-								readingIndex = 0;
-								sensorIndex++;
-
-								if (sensorIndex == currentNumberOfSensors)
-								{
-									measurementIndex = 0;
-									warpPrint("\b\b \n");
-								}
-							}
-						}
-					}
-				}
+				handleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 			}
 		}
 	}
@@ -903,77 +912,7 @@ readAllMemoryAT45DB()
 	{
 		for (size_t i = 0; i < pageOffset; i++)
 		{
-			/*
-			 * When the code below was put into a separate function, it wouldn't work. For now, the code is repeated here.
-			 */
-			if (measurementIndex == 0)
-			{
-				// reading sensorBitField
-				// warpPrint("\n%d ", dataBuffer[i]);
-				sensorBitField = dataBuffer[i] << 8;
-				measurementIndex++;
-				continue;
-			}
-			else if (measurementIndex == 1)
-			{
-				// warpPrint("%d\n", dataBuffer[i]);
-				sensorBitField |= dataBuffer[i];
-				measurementIndex++;
-
-				currentNumberOfSensors = getNSensorsFromSensorBitFieldAT45DB(sensorBitField);
-
-				sensorIndex	 = 0;
-				readingIndex = 0;
-				bytesIndex	 = 0;
-
-				continue;
-			}
-
-			if (readingIndex == 0 && bytesIndex == 0)
-			{
-				decodeSensorBitFieldAT45DB(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
-				// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
-				// return status;
-			}
-
-			if (readingIndex < currentSensorNumberOfReadings)
-			{
-				if (bytesIndex < currentSensorSizePerReading)
-				{
-					currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
-					bytesIndex++;
-					measurementIndex++;
-
-					if (bytesIndex == currentSensorSizePerReading)
-					{
-						if (currentSensorSizePerReading == 4)
-						{
-							warpPrint("%d, ", (int32_t)(currentReading));
-						}
-						else if (currentSensorSizePerReading == 2)
-						{
-							warpPrint("%d, ", (int16_t)(currentReading));
-						}
-
-						currentReading = 0;
-						bytesIndex		 = 0;
-						readingIndex++;
-						measurementIndex++;
-
-						if (readingIndex == currentSensorNumberOfReadings)
-						{
-							readingIndex = 0;
-							sensorIndex++;
-
-							if (sensorIndex == currentNumberOfSensors)
-							{
-								measurementIndex = 0;
-								warpPrint("\b\b \n");
-							}
-						}
-					}
-				}
-			}
+			handleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 		}
 	}
 
