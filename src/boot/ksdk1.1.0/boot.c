@@ -4434,7 +4434,7 @@ activateAllLowPowerSensorModes(bool verbose)
  *	POR state seems to be powered down.
  */
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
+		WarpStatus status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 							true				/*	sendCommandByte		*/,
 							0x20				/*	commandByte		*/,
 							true				/*	sendPayloadByte		*/,
