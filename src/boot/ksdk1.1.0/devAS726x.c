@@ -63,8 +63,8 @@ WarpStatus
 ledOnAS726x(uint8_t i2cAddress)
 {
 	i2c_status_t	status1, status2;
-	uint8_t		cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
-	uint8_t		cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
+	uint8_t			cmdBuf_LEDCTRL[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x87};
+	uint8_t			cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
 	
 	i2c_device_t slave =
 	{ 

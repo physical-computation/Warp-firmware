@@ -40,3 +40,8 @@ WarpStatus	readSensorRegisterADXL362(uint8_t deviceRegister, int numberOfBytes);
 WarpStatus	readFIFObytesADXL362(void);
 WarpStatus	writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writeValue, int numberOfBytes);
 void		printSensorDataADXL362(bool hexModeFlag);
+uint8_t		appendSensorDataADXL362(uint8_t* buf);
+
+const uint8_t bytesPerMeasurementADXL362			= 8;
+const uint8_t bytesPerReadingADXL362				= 2;
+const uint8_t numberOfReadingsPerMeasurementADXL362	= 4;

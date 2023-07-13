@@ -37,6 +37,11 @@
 */
 
 void		initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts);
-WarpStatus	writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload, uint16_t menuI2cPullupValue);
+WarpStatus	writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload);
 WarpStatus	readSensorRegisterHDC1000(uint8_t deviceRegister, int numberOfBytes);
 void		printSensorDataHDC1000(bool hexModeFlag);
+uint8_t		appendSensorDataHDC1000(uint8_t* buf);
+
+const uint8_t bytesPerMeasurementHDC1000            = 4;
+const uint8_t bytesPerReadingHDC1000                = 2;
+const uint8_t numberOfReadingsPerMeasurementHDC1000 = 2;

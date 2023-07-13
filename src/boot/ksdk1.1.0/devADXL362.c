@@ -69,8 +69,8 @@ extern uint8_t				gWarpSpiCommonSinkBuffer[];
  *	From device manual, Rev. B, Page 19 of 44:
  *
  *		"
- *		The SPI port uses a multibyte structure 
- *		wherein the first byte is a command. The 
+ *		The SPI port uses a multibyte structure
+ *		wherein the first byte is a command. The
  *		ADXL362 command set is:
  *
  *		-	0x0A: write register
@@ -99,7 +99,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorConfigurationRegisterADXL362RESET		/*	The register to write			*/,
 						kWarpSensorConfigConstADXL362resetCode			/*	writeValue				*/,
 						0							/*	number of additional dummy bytes	*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -113,7 +113,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorOutputRegisterADXL362POWER_CTL		/*	The register to write			*/,
 						0x06							/*	writeValue				*/,
 						0							/*	number of additional dummy bytes	*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -126,7 +126,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorOutputRegisterADXL362FILTER_CTL		/*	The register to write			*/,
 						0x07							/*	writeValue				*/,
 						0							/*	number of additional dummy bytes	*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -139,7 +139,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorOutputRegisterADXL362FIFO_CONTROL		/*	The register to write			*/,
 						0x06							/*	writeValue				*/,
 						0							/*	number of additional dummy bytes	*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -156,7 +156,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorOutputRegisterADXL362FIFO_SAMPLES		/*	The register to write			*/,
 						ADXL362_FIFO_ENTRIES					/*	writeValue				*/,
 						0							/*	number of additional dummy bytes	*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -169,7 +169,7 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 						kWarpSensorOutputRegisterADXL362ACT_INACT_CTL		/*	ACT_INACT_CTL register			*/,
 						0x35							/*	writeValue				*/,
 						0							/*	numberOfAdditionalDummyBytes		*/
-					);
+	);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint(gWarpEsensorConfig);
@@ -225,7 +225,7 @@ writeSensorRegisterADXL362(uint8_t command, uint8_t deviceRegister, uint8_t writ
 					(const uint8_t * restrict)deviceADXL362State.spiSourceBuffer,
 					(uint8_t * restrict)deviceADXL362State.spiSinkBuffer,
 					totalTransactionBytes						/* transfer size */,
-					gWarpSpiTimeoutMicroseconds);
+											gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
 
 	/*
@@ -276,7 +276,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_CONTROL	--> [0x%02x]\n",
-				deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -290,7 +290,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("Status		--> [0x%02x]\n",
-				deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -304,7 +304,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_SAMPLES	--> [0x%02x]\n",
-				deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -318,7 +318,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_L	--> [0x%02x]\n",
-				deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 	/*
@@ -332,7 +332,7 @@ readFIFObytesADXL362(void)
 	else
 	{
 		warpPrint("FIFO_ENTRIES_H	--> [0x%02x]\n",
-				deviceADXL362State.spiSinkBuffer[2]);
+				  deviceADXL362State.spiSinkBuffer[2]);
 	}
 
 
@@ -365,17 +365,17 @@ readFIFObytesADXL362(void)
 	 *	finally, here, we issue an SPI transaction with a transfer size which is one
 	 *	more than ADXL362_FIFO_ENTRIES to account for the leading command byte and its
 	 *	associated dummy receive byte.
-	 *	
+	 *
 	 */
 	transferSize = ADXL362_FIFO_ENTRIES + 1;
 	GPIO_DRV_ClearPinOutput(deviceADXL362State.chipSelectIoPinID);
 	warpEnableSPIpins();
 	spi_status_t ksdkStatus = SPI_DRV_MasterTransferBlocking(0 /* master instance */,
-						NULL /* spi_master_user_config_t */,
+															 NULL /* spi_master_user_config_t */,
 						(const uint8_t *restrict)deviceADXL362State.spiSourceBuffer,
 						(uint8_t * restrict) deviceADXL362State.spiSinkBuffer,
-						transferSize /* transfer size */,
-						gWarpSpiTimeoutMicroseconds /* timeout in microseconds (unlike I2C which is ms) */);
+															 transferSize /* transfer size */,
+															 gWarpSpiTimeoutMicroseconds /* timeout in microseconds (unlike I2C which is ms) */);
 	warpDisableSPIpins();
 	GPIO_DRV_SetPinOutput(deviceADXL362State.chipSelectIoPinID);
 
@@ -388,13 +388,13 @@ readFIFObytesADXL362(void)
 	for (int i = 1; i < kWarpMemoryCommonSpiBufferBytes - 8; i += 8)
 	{
 		warpPrint("0x%02x 0x%02x\t0x%02x 0x%02x\t0x%02x 0x%02x\t0x%02x 0x%02x\n",
-				deviceADXL362State.spiSinkBuffer[i + 0],
-				deviceADXL362State.spiSinkBuffer[i + 1],
-				deviceADXL362State.spiSinkBuffer[i + 2],
-				deviceADXL362State.spiSinkBuffer[i + 3],
-				deviceADXL362State.spiSinkBuffer[i + 4],
-				deviceADXL362State.spiSinkBuffer[i + 5],
-				deviceADXL362State.spiSinkBuffer[i + 6],
+				  deviceADXL362State.spiSinkBuffer[i + 0],
+				  deviceADXL362State.spiSinkBuffer[i + 1],
+				  deviceADXL362State.spiSinkBuffer[i + 2],
+				  deviceADXL362State.spiSinkBuffer[i + 3],
+				  deviceADXL362State.spiSinkBuffer[i + 4],
+				  deviceADXL362State.spiSinkBuffer[i + 5],
+				  deviceADXL362State.spiSinkBuffer[i + 6],
 				deviceADXL362State.spiSinkBuffer[i + 7]
 			);
 	}
@@ -533,4 +533,150 @@ printSensorDataADXL362(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+}
+
+uint8_t
+appendSensorDataADXL362(uint8_t* buf)
+{
+	uint8_t index = 0;
+	uint8_t readSensorRegisterValueLSB;
+	uint8_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+
+	WarpStatus status;
+
+	/*
+	 *			Read X, Y, Z, TEMP
+	 */
+	status = readSensorRegisterADXL362(kWarpSensorOutputRegisterADXL362XDATA_L, 8 /* numberOfBytes */);
+
+	/*
+	 *			Append X
+	 */
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 *	Recall that the index [0] and [1] of the spiSinkBuffer are
+		 *	bytes that were shifted in when sending out the instruction
+		 *	and address bytes. We therefore look in indices [2] and [3].
+		 */
+		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[2];
+		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[3];
+		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	/*
+	 *			Print Y
+	 */
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 *	Recall that the index [0] and [1] of the spiSinkBuffer are
+		 *	bytes that were shifted in when sending out the instruction
+		 *	and address bytes. We therefore look in indices [2] and [3].
+		 */
+		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[4];
+		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[5];
+		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	/*
+	 *			Print Z
+	 */
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 *	Recall that the index [0] and [1] of the spiSinkBuffer are
+		 *	bytes that were shifted in when sending out the instruction
+		 *	and address bytes. We therefore look in indices [2] and [3].
+		 */
+		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[6];
+		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[7];
+		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	/*
+	 *			Print TEMP
+	 */
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 *	Recall that the index [0] and [1] of the spiSinkBuffer are
+		 *	bytes that were shifted in when sending out the instruction
+		 *	and address bytes. We therefore look in indices [2] and [3].
+		 */
+		readSensorRegisterValueLSB      = deviceADXL362State.spiSinkBuffer[8];
+		readSensorRegisterValueMSB      = deviceADXL362State.spiSinkBuffer[9];
+		readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	return index;
 }

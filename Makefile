@@ -102,5 +102,8 @@ load-warp:
 load-glaux:
 	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/glaux.jlink.commands
 
+connect-warp:
+	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/connect.jlink.commands
+
 clean:
 	rm -rf build/ksdk1.1/work

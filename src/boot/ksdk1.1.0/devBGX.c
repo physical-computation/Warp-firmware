@@ -56,9 +56,9 @@
 #include "SEGGER_RTT.h"
 #include "warp.h"
 
-extern volatile lpuart_state_t		lpuartState;
+extern volatile lpuart_state_t			lpuartState;
 extern volatile lpuart_user_config_t	lpuartUserConfig;
-extern volatile WarpUARTDeviceState	deviceBGXState;
+extern volatile WarpUARTDeviceState		deviceBGXState;
 
 static void				uartRxCallback(uint32_t instance, void * uartState);
 static void				powerUpBGX(void);

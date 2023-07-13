@@ -76,7 +76,7 @@ initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t* payload)
 {
 	uint8_t		commandByte[1];
 	uint8_t		payloadSize;
@@ -130,7 +130,7 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceCCS811State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -142,24 +142,24 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 	if(payloadSize)
 	{
 		status = I2C_DRV_MasterSendDataBlocking(
-								0 /* I2C instance */,
-								&slave,
-								commandByte,
-								1,
-								payload,
-								payloadSize,
-								gWarpI2cTimeoutMilliseconds);
+			0 /* I2C instance */,
+			&slave,
+			commandByte,
+			1,
+			payload,
+			payloadSize,
+			gWarpI2cTimeoutMilliseconds);
 	}
 	else
 	{
 		status = I2C_DRV_MasterSendDataBlocking(
-						0 /* I2C instance */,
-						&slave,
-						commandByte,
-						1,
-						NULL,
-						0,
-						gWarpI2cTimeoutMilliseconds);
+			0 /* I2C instance */,
+			&slave,
+			commandByte,
+			1,
+			NULL,
+			0,
+			gWarpI2cTimeoutMilliseconds);
 	}
 
 	if (status != kStatus_I2C_Success)
@@ -171,7 +171,7 @@ writeSensorRegisterCCS811(uint8_t deviceRegister, uint8_t *payload, uint16_t men
 }
 
 WarpStatus
-configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
+configureSensorCCS811(uint8_t* payloadMEAS_MODE)
 {
 	WarpStatus	status1, status2;
 
@@ -187,8 +187,8 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811APP_START /* register address APP_START */,
-							payloadMEAS_MODE /* Dummy value */,
-							menuI2cPullupValue);
+										payloadMEAS_MODE /* Dummy value */
+	);
 
 	/*
 	 *	Wait for the sensor to change to application mode
@@ -196,8 +196,8 @@ configureSensorCCS811(uint8_t *payloadMEAS_MODE, uint16_t menuI2cPullupValue)
 	OSA_TimeDelay(500);
 
 	status2 = writeSensorRegisterCCS811(kWarpSensorConfigurationRegisterCCS811MEAS_MODE /* register address MEAS_MODE */,
-							payloadMEAS_MODE /* payload: 3F initial reset */,
-							menuI2cPullupValue);
+										payloadMEAS_MODE /* payload: 3F initial reset */
+	);
 
 	/*
 	 *	After writing to MEAS_MODE to configure the sensor in mode 1-4,
@@ -220,7 +220,7 @@ readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceCCS811State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -230,13 +230,13 @@ readSensorRegisterCCS811(uint8_t deviceRegister, int numberOfBytes)
 	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	returnValue = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceCCS811State.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t*)deviceCCS811State.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if (returnValue != kStatus_I2C_Success)
 	{
@@ -269,10 +269,10 @@ printSensorDataCCS811(bool hexModeFlag)
 		if (hexModeFlag)
 		{
 			warpPrint(" 0x%02x 0x%02x, 0x%02x 0x%02x,",
-				deviceCCS811State.i2cBuffer[3],
-				deviceCCS811State.i2cBuffer[2],
-				deviceCCS811State.i2cBuffer[1],
-				deviceCCS811State.i2cBuffer[0]);
+					  deviceCCS811State.i2cBuffer[3],
+					  deviceCCS811State.i2cBuffer[2],
+					  deviceCCS811State.i2cBuffer[1],
+					  deviceCCS811State.i2cBuffer[0]);
 		}
 		else
 		{
@@ -288,8 +288,8 @@ printSensorDataCCS811(bool hexModeFlag)
 	 *	RAW ADC value. See CCS811 manual, Figure 15:
 	 */
 	readSensorRegisterValueCombined =
-						((readSensorRegisterValueLSB & 0x03) << 8) |
-						(readSensorRegisterValueMSB & 0xFF);
+		((readSensorRegisterValueLSB & 0x03) << 8) |
+		(readSensorRegisterValueMSB & 0xFF);
 	if (i2cReadStatus != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
@@ -350,4 +350,141 @@ printSensorDataCCS811(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+}
+
+uint8_t
+appendSensorDataCCS811(uint8_t* buf)
+{
+	uint8_t index = 0;
+
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	int16_t equivalentCO2, TVOC;
+	WarpStatus i2cReadStatus;
+
+	warpScaleSupplyVoltage(deviceCCS811State.operatingVoltageMillivolts);
+	i2cReadStatus = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811ALG_DATA, 4 /* numberOfBytes */);
+	equivalentCO2 = (deviceCCS811State.i2cBuffer[0] << 8) | deviceCCS811State.i2cBuffer[1];
+	TVOC          = (deviceCCS811State.i2cBuffer[2] << 8) | deviceCCS811State.i2cBuffer[3];
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(equivalentCO2 >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(equivalentCO2);
+		index += 1;
+
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(TVOC >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(TVOC);
+		index += 1;
+	}
+
+	i2cReadStatus              = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_DATA, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceCCS811State.i2cBuffer[1];
+
+	/*
+	 *	RAW ADC value. See CCS811 manual, Figure 15:
+	 */
+	readSensorRegisterValueCombined =
+		((readSensorRegisterValueLSB & 0x03) << 8) |
+		(readSensorRegisterValueMSB & 0xFF);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+	/*
+	 *	Get Voltage across V_REF
+	 */
+	i2cReadStatus                   = readSensorRegisterCCS811(kWarpSensorOutputRegisterCCS811RAW_REF_NTC, 4 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceCCS811State.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceCCS811State.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+	/*
+	 *	Get Voltage across R_NTC
+	 */
+	readSensorRegisterValueLSB      = deviceCCS811State.i2cBuffer[2];
+	readSensorRegisterValueMSB      = deviceCCS811State.i2cBuffer[3];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB) << 8) | (readSensorRegisterValueLSB);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	return index;
 }

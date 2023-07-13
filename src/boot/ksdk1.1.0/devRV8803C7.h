@@ -53,22 +53,22 @@ typedef enum
 
 typedef enum
 {
-	kWarpRV8803RegSec			= 0x00,
-	kWarpRV8803RegMin			= 0x01,
-	kWarpRV8803RegHour			= 0x02,
-	kWarpRV8803RegWeekday			= 0x03,
-	kWarpRV8803RegDate			= 0x04,
-	kWarpRV8803RegMonth			= 0x05,
-	kWarpRV8803RegYear			= 0x06,
-	kWarpRV8803RegRAM			= 0x07,
-	kWarpRV8803RegMinAlarm			= 0x08,
-	kWarpRV8803RegHourAlarm			= 0x09,
+	kWarpRV8803RegSec					= 0x00,
+	kWarpRV8803RegMin					= 0x01,
+	kWarpRV8803RegHour					= 0x02,
+	kWarpRV8803RegWeekday				= 0x03,
+	kWarpRV8803RegDate					= 0x04,
+	kWarpRV8803RegMonth					= 0x05,
+	kWarpRV8803RegYear					= 0x06,
+	kWarpRV8803RegRAM					= 0x07,
+	kWarpRV8803RegMinAlarm				= 0x08,
+	kWarpRV8803RegHourAlarm				= 0x09,
 	kWarpRV8803RegWeekdayOrDateAlarm	= 0x0A,
-	kWarpRV8803RegTimerCounter0		= 0x0B,
-	kWarpRV8803RegTimerCounter1		= 0x0C,
-	kWarpRV8803RegExt			= 0x0D,
-	kWarpRV8803RegFlag			= 0x0E,
-	kWarpRV8803RegCtrl			= 0x0F,
+	kWarpRV8803RegTimerCounter0			= 0x0B,
+	kWarpRV8803RegTimerCounter1			= 0x0C,
+	kWarpRV8803RegExt					= 0x0D,
+	kWarpRV8803RegFlag					= 0x0E,
+	kWarpRV8803RegCtrl					= 0x0F,
 } WarpRV8803Reg;
 
 #define BIT(n) (uint8_t)1U << n
@@ -99,7 +99,7 @@ typedef enum
 
 typedef enum
 {
-	kWarpRV8803CtrlRESET			= BIT(0),
+	kWarpRV8803CtrlRESET		= BIT(0),
 	kWarpRV8803CtrlEIE			= BIT(2),
 	kWarpRV8803CtrlAIE			= BIT(3),
 	kWarpRV8803CtrlTIE			= BIT(4),

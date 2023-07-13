@@ -79,7 +79,7 @@ initBMX055accel(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -90,10 +90,10 @@ writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceBMX055accelState.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		};
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
@@ -101,13 +101,13 @@ writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t
 	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		1,
+		gWarpI2cTimeoutMilliseconds);
 	if (status != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -117,19 +117,18 @@ writeSensorRegisterBMX055accel(uint8_t deviceRegister, uint8_t payload, uint16_t
 }
 
 WarpStatus
-configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW, uint16_t menuI2cPullupValue)
+configureSensorBMX055accel(uint8_t payloadPMU_RANGE, uint8_t payloadACCD_HBW)
 {
-	WarpStatus	status1, status2;
+	WarpStatus status1, status2;
 
 	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterBMX055accel(kWarpSensorConfigurationRegisterBMX055accelPMU_RANGE /* register address PMU_RANGE */,
-							payloadPMU_RANGE /* payload */,
-							menuI2cPullupValue);
+											 payloadPMU_RANGE /* payload */
+	);
 
 	status2 = writeSensorRegisterBMX055accel(kWarpSensorConfigurationRegisterBMX055accelACCD_HBW /* register address ACCD_HBW */,
-							payloadACCD_HBW /* payload */,
-							menuI2cPullupValue);
-
+											 payloadACCD_HBW /* payload */
+	);
 	return (status1 | status2);
 }
 
@@ -142,11 +141,12 @@ readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 
 	if (deviceRegister > 0x3F)
 	{
+		warpPrint("kWarpStatusBadDeviceCommand\n...");
 		return kWarpStatusBadDeviceCommand;
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceBMX055accelState.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -156,13 +156,13 @@ readSensorRegisterBMX055accel(uint8_t deviceRegister, int numberOfBytes)
 	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceBMX055accelState.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t*)deviceBMX055accelState.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -182,7 +182,7 @@ initBMX055mag(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -193,10 +193,9 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t m
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceBMX055magState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceBMX055magState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
@@ -204,13 +203,13 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t m
 	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		1,
+		gWarpI2cTimeoutMilliseconds);
 	if (status != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -220,21 +219,20 @@ writeSensorRegisterBMX055mag(uint8_t deviceRegister, uint8_t payload, uint16_t m
 }
 
 WarpStatus
-configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode, uint16_t menuI2cPullupValue)
+configureSensorBMX055mag(uint8_t payloadPowerCtrl, uint8_t payloadOpMode)
 {
 	WarpStatus	status1, status2;
 
 	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	status1 = writeSensorRegisterBMX055mag(
-							kWarpSensorConfigurationRegisterBMX055magPowerCtrl /* Power and operation modes, self-test, data output rate control registers */,
-							payloadPowerCtrl /* payload */,
-							menuI2cPullupValue);
+		kWarpSensorConfigurationRegisterBMX055magPowerCtrl /* Power and operation modes, self-test, data output rate control registers */,
+		payloadPowerCtrl /* payload */
+	);
 
 	status2 = writeSensorRegisterBMX055mag(
-							kWarpSensorConfigurationRegisterBMX055magOpMode /* Operation mode, output data rate and self-test control register */,
-							payloadOpMode /* payload */,
-							menuI2cPullupValue);
-
+		kWarpSensorConfigurationRegisterBMX055magOpMode /* Operation mode, output data rate and self-test control register */,
+		payloadOpMode /* payload */
+	);
 	return (status1 | status2);
 }
 
@@ -251,23 +249,22 @@ readSensorRegisterBMX055mag(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceBMX055magState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceBMX055magState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	cmdBuf[0] = deviceRegister;
 
 	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceBMX055magState.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t*)deviceBMX055magState.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -287,7 +284,7 @@ initBMX055gyro(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 }
 
 WarpStatus
-writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t menuI2cPullupValue)
+writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload)
 {
 	uint8_t		payloadByte[1], commandByte[1];
 	i2c_status_t	status;
@@ -298,10 +295,9 @@ writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t 
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceBMX055gyroState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceBMX055gyroState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
@@ -309,13 +305,13 @@ writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t 
 	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		1,
+		gWarpI2cTimeoutMilliseconds);
 	if (status != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -325,7 +321,7 @@ writeSensorRegisterBMX055gyro(uint8_t deviceRegister, uint8_t payload, uint16_t 
 }
 
 WarpStatus
-configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t payloadLPM1, uint8_t payloadRATE_HBW, uint16_t menuI2cPullupValue)
+configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t payloadLPM1, uint8_t payloadRATE_HBW)
 {
 	WarpStatus	status1, status2, status3, status4;
 
@@ -333,21 +329,20 @@ configureSensorBMX055gyro(uint8_t payloadRANGE, uint8_t payloadBW, uint8_t paylo
 	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 
 	status1 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRANGE /* register address RANGE */,
-							payloadRANGE /* payload */, 
-							menuI2cPullupValue);
+											payloadRANGE /* payload */
+	);
 
-	status2 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroBW/* register address filter bandwidth */,
-							payloadBW /* payload */,
-							menuI2cPullupValue);
+	status2 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroBW /* register address filter bandwidth */,
+											payloadBW /* payload */
+	);
 
-	status3 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroLPM1/* register address LPM1 */,
-							payloadLPM1 /* payload */,
-							menuI2cPullupValue);
+	status3 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroLPM1 /* register address LPM1 */,
+											payloadLPM1 /* payload */
+	);
 
-	status4 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRATE_HBW/* register address RATE_HBW */,
-							payloadLPM1 /* payload */,
-							menuI2cPullupValue);
-
+	status4 = writeSensorRegisterBMX055gyro(kWarpSensorConfigurationRegisterBMX055gyroRATE_HBW /* register address RATE_HBW */,
+											payloadRATE_HBW /* payload */
+	);
 	return (status1 | status2 | status3 | status4);
 }
 
@@ -365,23 +360,22 @@ readSensorRegisterBMX055gyro(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceBMX055gyroState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address       = deviceBMX055gyroState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	cmdBuf[0] = deviceRegister;
 
 	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
 	warpEnableI2Cpins();
 	status = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceBMX055gyroState.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t*)deviceBMX055gyroState.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -704,4 +698,371 @@ printSensorDataBMX055mag(bool hexModeFlag)
 			warpPrint(" %d,", readSensorRegisterValueCombined);
 		}
 	}
+}
+
+uint8_t
+appendSensorDataBMX055accel(uint8_t* buf)
+{
+	uint8_t index = 0;
+
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	warpScaleSupplyVoltage(deviceBMX055accelState.operatingVoltageMillivolts);
+	i2cReadStatus                   = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_X_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055accelState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
+
+	/*
+	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_Y_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055accelState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
+
+	/*
+	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_Z_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055accelState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055accelState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 4) | (readSensorRegisterValueLSB >> 4);
+
+	/*
+	 *	Sign extend the 12-bit value based on knowledge that upper 4 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 11)) - (1 << 11);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055accel(kWarpSensorOutputRegisterBMX055accelACCD_TEMP, 1 /* numberOfBytes */);
+	readSensorRegisterValueCombined = deviceBMX055accelState.i2cBuffer[0];
+
+	/*
+	 *	Sign extend the 8-bit value based on knowledge that upper 8 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 7)) - (1 << 7);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	return index;
+}
+
+uint8_t
+appendSensorDataBMX055gyro(uint8_t* buf)
+{
+	uint8_t index = 0;
+
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	warpScaleSupplyVoltage(deviceBMX055gyroState.operatingVoltageMillivolts);
+	i2cReadStatus                   = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_X_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055gyroState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_Y_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055gyroState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055gyro(kWarpSensorOutputRegisterBMX055gyroRATE_Z_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055gyroState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055gyroState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 8) | (readSensorRegisterValueLSB & 0xFF);
+
+	/*
+	 *	NOTE: Here, we don't need to manually sign extend since we are packing directly into an int16_t
+	 */
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	return index;
+}
+
+uint8_t
+appendSensorDataBMX055mag(uint8_t* buf)
+{
+	uint8_t index = 0;
+
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
+
+	warpScaleSupplyVoltage(deviceBMX055magState.operatingVoltageMillivolts);
+	i2cReadStatus                   = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magX_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055magState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
+
+	/*
+	 *	Sign extend the 13-bit value based on knowledge that upper 3 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 12)) - (1 << 12);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magY_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055magState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 5) | (readSensorRegisterValueLSB >> 3);
+
+	/*
+	 *	Sign extend the 13-bit value based on knowledge that upper 4 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 12)) - (1 << 12);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magZ_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055magState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 7) | (readSensorRegisterValueLSB >> 1);
+
+	/*
+	 *	Sign extend the 15-bit value based on knowledge that upper 1 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 14)) - (1 << 14);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	i2cReadStatus                   = readSensorRegisterBMX055mag(kWarpSensorOutputRegisterBMX055magRHALL_LSB, 2 /* numberOfBytes */);
+	readSensorRegisterValueLSB      = deviceBMX055magState.i2cBuffer[0];
+	readSensorRegisterValueMSB      = deviceBMX055magState.i2cBuffer[1];
+	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
+
+	/*
+	 *	Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
+	 */
+	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		/*
+		 * MSB first
+		 */
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined >> 8);
+		index += 1;
+
+		buf[index] = (uint8_t)(readSensorRegisterValueCombined);
+		index += 1;
+	}
+
+	return index;
 }
