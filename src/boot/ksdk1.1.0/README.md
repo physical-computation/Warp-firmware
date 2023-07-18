@@ -151,18 +151,18 @@ While this protocol makes writing and reading to flash more useful, it also mean
 ### The structure of the sensor configuration bitfield.
 In the current version,  13 out of the 16 bits are used. They correspond to the following sensors being active.
 
-* `0b1`: 	the measurement number,
-* `0b10`: 	the `RTC->TSR` time stamp,
-* `0b100`: 	the `RTC->TPR` time stamp,
-* `0b1000`:	the `ADXL362` sensor,
-* `0b10000`:	the `AMG8834` sensor,
-* `0b100000`:	the `MMA8451Q` sensor,
-* `0b1000000`:	the `MAG3110` sensor,
-* `0b10000000`:	the `L3GD20H` sensor,
-* `0b100000000`:	the `BME680` sensor,
-* `0b1000000000`:	the `BMX055` sensor,
-* `0b10000000000`:	the `CCS811` sensor,
-* `0b100000000000`:	the `HDC1000` sensor,
+* `0b0000000000000001`: 	the measurement number,
+* `0b0000000000000010`: 	the `RTC->TSR` time stamp,
+* `0b0000000000000100`: 	the `RTC->TPR` time stamp,
+* `0b0000000000001000`:	the `ADXL362` sensor,
+* `0b0000000000010000`:	the `AMG8834` sensor,
+* `0b0000000000100000`:	the `MMA8451Q` sensor,
+* `0b0000000001000000`:	the `MAG3110` sensor,
+* `0b0000000010000000`:	the `L3GD20H` sensor,
+* `0b0000000100000000`:	the `BME680` sensor,
+* `0b0000001000000000`:	the `BMX055` sensor,
+* `0b0000010000000000`:	the `CCS811` sensor,
+* `0b0000100000000000`:	the `HDC1000` sensor,
 * `0b1000000000000000`:	the number of config errors.
 
 *As an important note, this bitfield represents the order in which the readings from the sensors are used to create a measurement.* The first element represents the least significant bit. For example, if the bitfield is `0b00000000100101111`, then the following readings are expected:
