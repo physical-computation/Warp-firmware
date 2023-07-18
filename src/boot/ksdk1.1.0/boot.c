@@ -3210,7 +3210,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 	/*
 	 *	The first 3 bit fields are reserved for the measurement number, and the 2 time stamps.
 	 */
-	uint16_t sensorBitField		= 0b0000000000111;
+	uint16_t sensorBitField		= 0b0000000000000111;
 	uint8_t	 flashWriteBuf[128] = {0};
 
 	int rttKey = -1;
@@ -3505,27 +3505,25 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
 			bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
 #endif
+
 			/*
-			 *	Removed flashing of number of config errors.
-			 */
+			*	Number of config errors.
+			*	Uncomment to write to flash. Don't forget to
+			*update the initial bitfield at the start of this
+			*function.
+			*/
 			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
 			// bytesWrittenIndex++;
 			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 16);
 			// bytesWrittenIndex++;
 			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
 			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
+			// flashWriteBuf[bytesWrittenIndex] =(uint8_t)(numberOfConfigErrors);
 			// bytesWrittenIndex++;
 
-			/*
+                        /*
 			 *	Dump to flash
 			 */
-			// warpPrint("Writing %d bytes to flash\n", bytesWrittenIndex);
-			// for (int i = 0; i < bytesWrittenIndex; i++)
-			// {
-			// 	warpPrint("%d ", flashWriteBuf[i]);
-			// }
-			// warpPrint("\n");
 			saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
 		}
 
