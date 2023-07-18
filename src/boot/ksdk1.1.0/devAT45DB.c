@@ -1070,7 +1070,7 @@ decodeSensorBitFieldAT45DB(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t
 		}
 	}
 
-	if (sensorBitField & 0b1000000000000)
+	if (sensorBitField & 0b1000000000000000)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)

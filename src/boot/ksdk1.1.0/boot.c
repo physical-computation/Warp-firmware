@@ -4327,6 +4327,7 @@ powerupAllSensors(void)
 void
 activateAllLowPowerSensorModes(bool verbose)
 {
+	WarpStatus	status;
 /*
  *	ADXL362:	See Power Control Register (Address: 0x2D, Reset: 0x00).
  *
@@ -4350,7 +4351,7 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
  */
 #if WARP_BUILD_ENABLE_DEVBMX055
-		WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
+		status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
 							true					/*	sendCommandByte		*/,
 							0x11					/*	commandByte		*/,
 							true					/*	sendPayloadByte		*/,
@@ -4434,7 +4435,7 @@ activateAllLowPowerSensorModes(bool verbose)
  *	POR state seems to be powered down.
  */
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		WarpStatus status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
+		status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 							true				/*	sendCommandByte		*/,
 							0x20				/*	commandByte		*/,
 							true				/*	sendPayloadByte		*/,
