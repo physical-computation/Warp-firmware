@@ -3508,9 +3508,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 
 			/*
 			*	Number of config errors.
-			*	Uncomment to write to flash. Don't forget to
-			*update the initial bitfield at the start of this
-			*function.
+			*	Uncomment to write to flash. Don't forget to update the initial bitfield at the start of this function.
 			*/
 			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
 			// bytesWrittenIndex++;
@@ -3518,12 +3516,12 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 			// bytesWrittenIndex++;
 			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
 			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] =(uint8_t)(numberOfConfigErrors);
+			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
 			// bytesWrittenIndex++;
 
-                        /*
-			 *	Dump to flash
-			 */
+			/*
+			*	Dump to flash
+			*/
 			saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
 		}
 
