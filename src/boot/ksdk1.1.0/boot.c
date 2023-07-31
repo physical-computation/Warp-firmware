@@ -223,6 +223,7 @@ static void						activateAllLowPowerSensorModes(bool verbose);
 static void						powerupAllSensors(void);
 static uint8_t						readHexByte(void);
 static int						read4digits(void);
+static void 					writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever);
 static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
 
 /*
@@ -2720,7 +2721,7 @@ main(void)
 			 */
 			case 'z':
 			{
-				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
+				warpPrint("\r\n\tSet the time delay between each reading in milliseconds (e.g., '1234')> ");
 				uint16_t menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.",
 						  menuDelayBetweenEachRun);
@@ -2733,8 +2734,7 @@ main(void)
 				if (gWarpWriteToFlash)
 				{
 					warpPrint("\r\n\tWriting to flash. Press 'q' to exit back to menu\n");
-					printAllSensors(false /* printHeadersAndCalibration */, false,
-								menuDelayBetweenEachRun, true /* loopForever */);
+					writeAllSensorsToFlash(menuDelayBetweenEachRun, true /* loopForever */);
 					gWarpWriteToFlash = false;
 				} else
 				{
@@ -3196,8 +3196,7 @@ main(void)
 }
 
 void
-printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
-				int menuDelayBetweenEachRun, bool loopForever)
+writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 {
 	uint32_t timeAtStart = OSA_TimeGetMsec();
 	/*
@@ -3268,6 +3267,224 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 	);
 
 	sensorBitField = sensorBitField | 0b100000000;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBMX055)
+	numberOfConfigErrors += configureSensorBMX055accel(
+		0b00000011, /* Payload:+-2g range */
+		0b10000000	/* Payload:unfiltered data, shadowing enabled */
+	);
+	numberOfConfigErrors += configureSensorBMX055mag(
+		0b00000001, /* Payload:from suspend mode to sleep mode*/
+		0b00000001	/* Default 10Hz data rate, forced mode*/
+	);
+	numberOfConfigErrors += configureSensorBMX055gyro(
+		0b00000100, /* +- 125degrees/s */
+		0b00000000, /* ODR 2000 Hz, unfiltered */
+		0b00000000, /* normal mode */
+		0b10000000	/* unfiltered data, shadowing enabled */
+	);
+
+	sensorBitField = sensorBitField | 0b1000000000;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVCCS811)
+	uint8_t payloadCCS811[1];
+	payloadCCS811[0] = 0b01000000; /* Constant power, measurement every 250ms */
+	numberOfConfigErrors += configureSensorCCS811(payloadCCS811);
+
+	sensorBitField = sensorBitField | 0b10000000000;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVHDC1000)
+	numberOfConfigErrors += writeSensorRegisterHDC1000(
+		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration register	*/
+		(0b1010000 << 8));
+
+	sensorBitField = sensorBitField | 0b100000000000;
+#endif
+
+	// Add readingCount, 1 x timing, numberofConfigErrors
+	uint8_t sensorBitFieldSize = 2;
+	uint8_t bytesWrittenIndex  = 0;
+
+	/*
+		* Write sensorBitField to flash first, outside of the loop.
+		*/
+	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField >> 8);
+	bytesWrittenIndex++;
+	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField);
+	bytesWrittenIndex++;
+
+	do
+	{
+		bytesWrittenIndex = sensorBitFieldSize;
+
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount);
+		bytesWrittenIndex++;
+
+		uint32_t currentRTC_TSR = RTC->TSR;
+		uint32_t currentRTC_TPR = RTC->TPR;
+
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR);
+		bytesWrittenIndex++;
+
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR);
+		bytesWrittenIndex++;
+
+#if (WARP_BUILD_ENABLE_DEVADXL362)
+		bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVAMG8834)
+		bytesWrittenIndex += appendSensorDataAMG8834(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+		bytesWrittenIndex += appendSensorDataMMA8451Q(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMAG3110)
+		bytesWrittenIndex += appendSensorDataMAG3110(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVL3GD20H)
+		bytesWrittenIndex += appendSensorDataL3GD20H(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBME680)
+		bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBMX055)
+		bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
+		bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
+		// bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
+
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVCCS811)
+		bytesWrittenIndex += appendSensorDataCCS811(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVHDC1000)
+		bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+		/*
+		*	Number of config errors.
+		*	Uncomment to write to flash. Don't forget to update the initial bitfield at the start of this function.
+		*/
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 16);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
+		// bytesWrittenIndex++;
+
+		/*
+		*	Dump to flash
+		*/
+		saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
+
+		if (menuDelayBetweenEachRun > 0)
+		{
+			while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
+			{
+			}
+
+			timeAtStart = OSA_TimeGetMsec();
+		}
+
+		readingCount++;
+
+		rttKey = SEGGER_RTT_GetKey();
+
+		if (rttKey == 'q')
+		{
+			gWarpWriteToFlash = 0;
+			savePartialBufferToMainMemoryAndSavePagePosition();
+			break;
+		}
+	}
+	while (loopForever);
+}
+
+void
+printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
+				int menuDelayBetweenEachRun, bool loopForever)
+{
+	uint32_t timeAtStart = OSA_TimeGetMsec();
+	/*
+	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling
+	 *at 60fps
+	 */
+	uint32_t readingCount		  = 0;
+	uint32_t numberOfConfigErrors = 0;
+
+
+	int rttKey = -1;
+
+
+#if (WARP_BUILD_ENABLE_DEVAMG8834)
+	numberOfConfigErrors += configureSensorAMG8834(0x3F, /* Initial reset */
+												   0x01	 /* Frame rate 1 FPS */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+	numberOfConfigErrors += configureSensorMMA8451Q(
+		0x00, /* Payload: Disable FIFO */
+		0x01  /* Normal read 8bit, 800Hz, normal, active mode */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMAG3110)
+	numberOfConfigErrors += configureSensorMAG3110(
+		0x00, /*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode
+							 to set up register*/
+		0xA0, /*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+		0x10);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVL3GD20H)
+	numberOfConfigErrors += configureSensorL3GD20H(
+		0b11111111, /* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z
+										 enable */
+		0b00100000,
+		0b00000000 /* normal mode, disable FIFO, disable high pass filter */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBME680)
+	numberOfConfigErrors += configureSensorBME680(
+		0b00000001, /*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x
+					 */
+		0b00100100, /*	payloadCtrl_Meas: Temperature oversample 1x, pressure
+										 overdsample 1x, mode 00	*/
+		0b00001000	/*	payloadGas_0: Turn off heater
+					 */
+	);
 
 	if (printHeadersAndCalibration)
 	{
@@ -3302,25 +3519,18 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		0b00000000, /* normal mode */
 		0b10000000	/* unfiltered data, shadowing enabled */
 	);
-
-	sensorBitField = sensorBitField | 0b1000000000;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
 	uint8_t payloadCCS811[1];
 	payloadCCS811[0] = 0b01000000; /* Constant power, measurement every 250ms */
 	numberOfConfigErrors += configureSensorCCS811(payloadCCS811);
-
-	sensorBitField = sensorBitField | 0b10000000000;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
 	numberOfConfigErrors += writeSensorRegisterHDC1000(
-		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration
-																															 register	*/
+		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration register	*/
 		(0b1010000 << 8));
-
-	sensorBitField = sensorBitField | 0b100000000000;
 #endif
 
 	if (printHeadersAndCalibration)
@@ -3373,157 +3583,49 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		warpPrint("\n\n");
 	}
 
-	// Add readingCount, 1 x timing, numberofConfigErrors
-	uint8_t sensorBitFieldSize = 2;
-	uint8_t bytesWrittenIndex  = 0;
-
-	if (gWarpWriteToFlash)
-	{
-		/*
-		 * Write sensorBitField to flash first, outside of the loop.
-		 */
-		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField >> 8);
-		bytesWrittenIndex++;
-		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField);
-		bytesWrittenIndex++;
-	}
 	do
 	{
-		if (!gWarpWriteToFlash)
-		{
-			warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
+		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
-			printSensorDataADXL362(hexModeFlag);
+		printSensorDataADXL362(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
-			printSensorDataAMG8834(hexModeFlag);
+		printSensorDataAMG8834(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			printSensorDataMMA8451Q(hexModeFlag);
+		printSensorDataMMA8451Q(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
-			printSensorDataMAG3110(hexModeFlag);
+		printSensorDataMAG3110(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-			printSensorDataL3GD20H(hexModeFlag);
+		printSensorDataL3GD20H(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
-			printSensorDataBME680(hexModeFlag);
+		printSensorDataBME680(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
-			printSensorDataBMX055accel(hexModeFlag);
-			printSensorDataBMX055mag(hexModeFlag);
-			printSensorDataBMX055gyro(hexModeFlag);
+		printSensorDataBMX055accel(hexModeFlag);
+		printSensorDataBMX055mag(hexModeFlag);
+		printSensorDataBMX055gyro(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
-			printSensorDataCCS811(hexModeFlag);
+		printSensorDataCCS811(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
-			printSensorDataHDC1000(hexModeFlag);
+		printSensorDataHDC1000(hexModeFlag);
 #endif
 
-			warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
-		}
-		else
-		{
-			bytesWrittenIndex = sensorBitFieldSize;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount);
-			bytesWrittenIndex++;
-
-			uint32_t currentRTC_TSR = RTC->TSR;
-			uint32_t currentRTC_TPR = RTC->TPR;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR);
-			bytesWrittenIndex++;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR);
-			bytesWrittenIndex++;
-
-#if (WARP_BUILD_ENABLE_DEVADXL362)
-			bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVAMG8834)
-			bytesWrittenIndex += appendSensorDataAMG8834(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			bytesWrittenIndex += appendSensorDataMMA8451Q(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVMAG3110)
-			bytesWrittenIndex += appendSensorDataMAG3110(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-			bytesWrittenIndex += appendSensorDataL3GD20H(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVBME680)
-			bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVBMX055)
-			bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
-			bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
-			// bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
-
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVCCS811)
-			bytesWrittenIndex += appendSensorDataCCS811(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVHDC1000)
-			bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-			/*
-			*	Number of config errors.
-			*	Uncomment to write to flash. Don't forget to update the initial bitfield at the start of this function.
-			*/
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 16);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
-			// bytesWrittenIndex++;
-
-			/*
-			*	Dump to flash
-			*/
-			saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
-		}
+		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
 
 		if (menuDelayBetweenEachRun > 0)
 		{
@@ -3540,8 +3642,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 
 		if (rttKey == 'q')
 		{
-			gWarpWriteToFlash = 0;
-			savePartialBufferToMainMemoryAndSavePagePosition();
 			break;
 		}
 	}
