@@ -4687,14 +4687,14 @@ flashReadAllMemory()
 	int pageSizeBytes;
 	uint16_t pageOffsetStoragePage;
 	size_t pageOffsetStorageSize;
-	int intialPageNumber;
+	int initialPageNumber;
 	int initialPageOffset;
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
 	pageSizeBytes				= kWarpSizeAT45DBPageSizeBytes;
 	pageOffsetStoragePage		= kWarpAT45DBPageOffsetStoragePage;
 	pageOffsetStorageSize		= kWarpAT45DBPageOffsetStorageSize;
-	intialPageNumber			= kWarpInitialPageNumberAT45DB;
+	initialPageNumber			= kWarpInitialPageNumberAT45DB;
 	initialPageOffset			= kWarpInitialPageOffsetAT45DB;
 #endif
 
@@ -4731,8 +4731,6 @@ flashReadAllMemory()
 
 	int rttKey = -1;
 
-	int initialPageNumber;
-
 	for (uint32_t pageNumber = initialPageNumber; pageNumber < pageNumberTotal;
 			 pageNumber++)
 	{
@@ -4750,76 +4748,7 @@ flashReadAllMemory()
 
 		for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++)
 		{
-			// flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
-			if (measurementIndex == 0)
-			{
-				// reading sensorBitField
-				// warpPrint("\n%d ", readByte);
-				sensorBitField = dataBuffer[i] << 8;
-				measurementIndex++;
-
-				continue;
-			}
-			else if (measurementIndex == 1)
-			{
-				// warpPrint("%d\n", readByte);
-				sensorBitField |= dataBuffer[i];
-				measurementIndex++;
-
-				currentNumberOfSensors = flashGetNSensorsFromSensorBitField(sensorBitField);
-
-				sensorIndex		= 0;
-				readingIndex	= 0;
-				bytesIndex		= 0;
-
-				continue;
-			}
-
-			if (readingIndex == 0 && bytesIndex == 0)
-			{
-				flashDecodeSensorBitField(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
-				// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
-			}
-
-			if (readingIndex < currentSensorNumberOfReadings)
-			{
-				if (bytesIndex < currentSensorSizePerReading)
-				{
-					currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
-					bytesIndex++;
-					measurementIndex++;
-
-					if (bytesIndex == currentSensorSizePerReading)
-					{
-						if (currentSensorSizePerReading == 4)
-						{
-							warpPrint("%d, ", (int32_t)(currentReading));
-						}
-						else if (currentSensorSizePerReading == 2)
-						{
-							warpPrint("%d, ", (int16_t)(currentReading));
-						}
-
-						currentReading	= 0;
-						bytesIndex		= 0;
-
-						readingIndex = readingIndex + 1;
-						measurementIndex = measurementIndex + 1;
-
-						if (readingIndex == currentSensorNumberOfReadings)
-						{
-							readingIndex = 0;
-							sensorIndex++;
-
-							if (sensorIndex == currentNumberOfSensors)
-							{
-								measurementIndex = 0;
-								warpPrint("\b\b \n");
-							}
-						}
-					}
-				}
-			}
+			flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 		}
 	}
 
@@ -4832,7 +4761,7 @@ flashReadAllMemory()
 
 	for (size_t i = 0; i < pageOffset; i++)
 	{
-		// flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
+		flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 	}
 
 
