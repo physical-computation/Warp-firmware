@@ -34,6 +34,15 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+#define kWarpSizeAT45DBBufferSize 		256
+#define kWarpInitialPageNumberAT45DB	1
+#define kWarpInitialPageOffsetAT45DB	0
+#define kWarpInitialBufferOffsetAT45DB	0
+
+const uint16_t	kWarpAT45DBPageOffsetStoragePage	= 0;
+const size_t	kWarpAT45DBPageOffsetStorageSize	= 3;
+
 typedef enum
 {
 	bufferNumber1AT45DB,
@@ -49,13 +58,12 @@ WarpStatus	readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf);
 WarpStatus	pageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t* buf);
 WarpStatus	saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf);
 
-WarpStatus resetAT45DB();
+WarpStatus	resetAT45DB();
 WarpStatus	waitForDeviceReady();
 WarpStatus	initiateChipEraseAndWaitAT45DB();
 WarpStatus	initiateChipEraseAT45DB();
 
 WarpStatus	configurePageSize();
-WarpStatus	readAllMemoryAT45DB();
 WarpStatus	savePagePositionAT45DB();
 WarpStatus	savePartialBufferToMainMemoryAndSavePagePosition();
 
@@ -63,6 +71,3 @@ WarpStatus	writeToBufferAT45DB(BufferNumberAT45DB buffer, uint8_t address, size_
 WarpStatus	bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber);
 WarpStatus	bufferToMainMemoryWritePageAT45DB(BufferNumberAT45DB buffer);
 WarpStatus	loadMainMemoryPageToBuffer(BufferNumberAT45DB buffer, uint16_t address);
-
-uint8_t	getNSensorsFromSensorBitFieldAT45DB(uint16_t sensorBitField);
-void	decodeSensorBitFieldAT45DB(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t *  sizePerReading, uint8_t *  numberOfReadings);

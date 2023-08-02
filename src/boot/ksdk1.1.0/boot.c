@@ -67,9 +67,25 @@
 #define							kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
+#if (WARP_BUILD_ENABLE_DEVAT45DB || WARP_BUILD_ENABLE_DEVIS25xP)
+	#define WARP_BUILD_ENABLE_FLASH 1
+#else
+	#define WARP_BUILD_ENABLE_FLASH 0
+#endif
+/*
+* Include all sensors because they will be needed to decode flash.
+*/
+#include "devADXL362.h"
+#include "devAMG8834.h"
+#include "devMMA8451Q.h"
+#include "devMAG3110.h"
+#include "devL3GD20H.h"
+#include "devBME680.h"
+#include "devBMX055.h"
+#include "devCCS811.h"
+#include "devHDC1000.h"
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
-	#include "devADXL362.h"
 	volatile WarpSPIDeviceState			deviceADXL362State;
 #endif
 
@@ -94,14 +110,12 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
-	#include "devBMX055.h"
 	volatile WarpI2CDeviceState			deviceBMX055accelState;
 	volatile WarpI2CDeviceState			deviceBMX055gyroState;
 	volatile WarpI2CDeviceState			deviceBMX055magState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
@@ -111,12 +125,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
-	#include "devHDC1000.h"
 	volatile WarpI2CDeviceState			deviceHDC1000State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
-	#include "devMAG3110.h"
 	volatile WarpI2CDeviceState			deviceMAG3110State;
 #endif
 
@@ -126,12 +138,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
-	#include "devBME680.h"
 	volatile WarpI2CDeviceState			deviceBME680State;
 	volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
 #endif
@@ -147,12 +157,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
-	#include "devCCS811.h"
 	volatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
-	#include "devAMG8834.h"
 	volatile WarpI2CDeviceState			deviceAMG8834State;
 #endif
 
@@ -235,7 +243,16 @@ WarpStatus						writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
 
 void							warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
 
-
+/*
+* Flash related functions
+*/
+#if (WARP_BUILD_ENABLE_FLASH)
+	WarpStatus					flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf);
+	WarpStatus					flashReadAllMemory();
+	void 						flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading);
+	uint8_t						flashGetNSensorsFromSensorBitField(uint16_t sensorBitField);
+	void						flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
+#endif
 
 /*
  *	Derived from KSDK power_manager_demo.c BEGIN>>>
@@ -1898,7 +1915,7 @@ main(void)
 #if (WARP_CSVSTREAM_TO_FLASH)
 		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
 		gWarpWriteToFlash = true;
-		printAllSensors(false, false, 1, true);
+		writeAllSensorsToFlash(1, true);
 		gWarpWriteToFlash = false;
 
 #else
@@ -2763,7 +2780,7 @@ main(void)
 				gWarpWriteToFlash = false;
 				WarpStatus status;
 
-				status = readAllMemoryAT45DB();
+				status = flashReadAllMemory();
 				if (status != kWarpStatusOK)
 				{
 					warpPrint("\r\n\treadAllMemoryAT45DB failed: %d", status);
@@ -4580,3 +4597,408 @@ activateAllLowPowerSensorModes(bool verbose)
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 #endif
 }
+
+#if (WARP_BUILD_ENABLE_FLASH)
+WarpStatus
+flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf)
+{
+	#if (WARP_BUILD_ENABLE_DEVAT45DB)
+		return readMemoryAT45DB(startPageNumber, nbyte, buf);
+	#endif
+}
+
+void
+flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading)
+{
+	if (*measurementIndex == 0)
+	{
+		// reading sensorBitField
+		// warpPrint("\n%d ", readByte);
+		*sensorBitField = readByte << 8;
+		*measurementIndex = *measurementIndex + 1;
+
+		return;
+	}
+	else if (*measurementIndex == 1)
+	{
+		// warpPrint("%d\n", readByte);
+		*sensorBitField |= readByte;
+		*measurementIndex = *measurementIndex + 1;
+
+		*currentNumberOfSensors = flashGetNSensorsFromSensorBitField(*sensorBitField);
+
+		*sensorIndex	= 0;
+		*readingIndex	= 0;
+		*bytesIndex		= 0;
+
+		return;
+	}
+
+	if (*readingIndex == 0 && *bytesIndex == 0)
+	{
+		flashDecodeSensorBitField(*sensorBitField, *sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+		// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+	}
+
+	if (*readingIndex < *currentSensorNumberOfReadings)
+	{
+		if (*bytesIndex < *currentSensorSizePerReading)
+		{
+			*currentReading |= readByte << (8 * (*currentSensorSizePerReading - *bytesIndex - 1));
+			*bytesIndex = *bytesIndex + 1;
+			*measurementIndex = *measurementIndex + 1;
+
+			if (*bytesIndex == *currentSensorSizePerReading)
+			{
+				if (*currentSensorSizePerReading == 4)
+				{
+					warpPrint("%d, ", (int32_t)(*currentReading));
+				}
+				else if (*currentSensorSizePerReading == 2)
+				{
+					warpPrint("%d, ", (int16_t)(*currentReading));
+				}
+
+				*currentReading	= 0;
+				*bytesIndex		= 0;
+
+				*readingIndex = *readingIndex + 1;
+				*measurementIndex = *measurementIndex + 1;
+
+				if (*readingIndex == *currentSensorNumberOfReadings)
+				{
+					*readingIndex = 0;
+					*sensorIndex = *sensorIndex + 1;
+
+					if (*sensorIndex == *currentNumberOfSensors)
+					{
+						*measurementIndex = 0;
+						warpPrint("\b\b \n");
+					}
+				}
+			}
+		}
+	}
+}
+
+WarpStatus
+flashReadAllMemory()
+{
+	int pageSizeBytes;
+	uint16_t pageOffsetStoragePage;
+	size_t pageOffsetStorageSize;
+	int intialPageNumber;
+	int initialPageOffset;
+
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
+	pageSizeBytes				= kWarpSizeAT45DBPageSizeBytes;
+	pageOffsetStoragePage		= kWarpAT45DBPageOffsetStoragePage;
+	pageOffsetStorageSize		= kWarpAT45DBPageOffsetStorageSize;
+	intialPageNumber			= kWarpInitialPageNumberAT45DB;
+	initialPageOffset			= kWarpInitialPageOffsetAT45DB;
+#endif
+
+	uint8_t dataBuffer[pageSizeBytes];
+	WarpStatus status;
+
+	uint8_t pagePositionBuf[3];
+
+	status = flashReadMemory(pageOffsetStoragePage, 0, pageOffsetStorageSize, pagePositionBuf);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	uint8_t pageOffset			= pagePositionBuf[2];
+	uint16_t pageNumberTotal 	= pagePositionBuf[1] | pagePositionBuf[0] << 8;
+
+	warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+	warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+	warpPrint("\r\n\tReading memory. Press 'q' to stop.\n\n");
+
+	uint8_t bytesIndex			= 0;
+	uint8_t readingIndex		= 0;
+	uint8_t sensorIndex			= 0;
+	uint8_t measurementIndex	= 0;
+
+	uint8_t currentSensorNumberOfReadings	= 0;
+	uint8_t currentSensorSizePerReading		= 0;
+
+	uint16_t sensorBitField			= 0;
+	uint8_t currentNumberOfSensors	= 0;
+
+	int32_t currentReading = 0;
+
+	int rttKey = -1;
+
+	int initialPageNumber;
+
+	for (uint32_t pageNumber = initialPageNumber; pageNumber < pageNumberTotal;
+			 pageNumber++)
+	{
+		rttKey = SEGGER_RTT_GetKey();
+		if (rttKey == 'q')
+		{
+			return kWarpStatusOK;
+		}
+
+		status = flashReadMemory(pageNumber, 0, pageSizeBytes, dataBuffer);
+		if (status != kWarpStatusOK)
+		{
+			return status;
+		}
+
+		for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++)
+		{
+			// flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
+			if (measurementIndex == 0)
+			{
+				// reading sensorBitField
+				// warpPrint("\n%d ", readByte);
+				sensorBitField = dataBuffer[i] << 8;
+				measurementIndex++;
+
+				continue;
+			}
+			else if (measurementIndex == 1)
+			{
+				// warpPrint("%d\n", readByte);
+				sensorBitField |= dataBuffer[i];
+				measurementIndex++;
+
+				currentNumberOfSensors = flashGetNSensorsFromSensorBitField(sensorBitField);
+
+				sensorIndex		= 0;
+				readingIndex	= 0;
+				bytesIndex		= 0;
+
+				continue;
+			}
+
+			if (readingIndex == 0 && bytesIndex == 0)
+			{
+				flashDecodeSensorBitField(sensorBitField, sensorIndex, &currentSensorSizePerReading, &currentSensorNumberOfReadings);
+				// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+			}
+
+			if (readingIndex < currentSensorNumberOfReadings)
+			{
+				if (bytesIndex < currentSensorSizePerReading)
+				{
+					currentReading |= dataBuffer[i] << (8 * (currentSensorSizePerReading - bytesIndex - 1));
+					bytesIndex++;
+					measurementIndex++;
+
+					if (bytesIndex == currentSensorSizePerReading)
+					{
+						if (currentSensorSizePerReading == 4)
+						{
+							warpPrint("%d, ", (int32_t)(currentReading));
+						}
+						else if (currentSensorSizePerReading == 2)
+						{
+							warpPrint("%d, ", (int16_t)(currentReading));
+						}
+
+						currentReading	= 0;
+						bytesIndex		= 0;
+
+						readingIndex = readingIndex + 1;
+						measurementIndex = measurementIndex + 1;
+
+						if (readingIndex == currentSensorNumberOfReadings)
+						{
+							readingIndex = 0;
+							sensorIndex++;
+
+							if (sensorIndex == currentNumberOfSensors)
+							{
+								measurementIndex = 0;
+								warpPrint("\b\b \n");
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	status = flashReadMemory(pageNumberTotal, 0, pageOffset, dataBuffer);
+
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	for (size_t i = 0; i < pageOffset; i++)
+	{
+		// flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
+	}
+
+
+	return status;
+}
+
+uint8_t
+flashGetNSensorsFromSensorBitField(uint16_t sensorBitField)
+{
+	uint8_t numberOfSensors = 0;
+
+	while (sensorBitField != 0)
+	{
+		sensorBitField = sensorBitField & (sensorBitField - 1);
+		numberOfSensors++;
+	}
+
+	return numberOfSensors;
+}
+
+void
+flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings)
+{
+	uint8_t numberOfSensorsFound = 0;
+
+	if (sensorBitField & 0b1)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingADXL362;
+			*numberOfReadings = numberOfReadingsPerMeasurementADXL362;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingAMG8834;
+			*numberOfReadings = numberOfReadingsPerMeasurementAMG8834;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingMMA8451Q;
+			*numberOfReadings = numberOfReadingsPerMeasurementMMA8451Q;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingMAG3110;
+			*numberOfReadings = numberOfReadingsPerMeasurementMAG3110;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingAL3GD20H;
+			*numberOfReadings = numberOfReadingsPerMeasurementL3GD20H;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingBME680;
+			*numberOfReadings = numberOfReadingsPerMeasurementBME680;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingBMX055;
+			*numberOfReadings = numberOfReadingsPerMeasurementBMX055;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b10000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingCCS811;
+			*numberOfReadings = numberOfReadingsPerMeasurementCCS811;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b100000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingHDC1000;
+			*numberOfReadings = numberOfReadingsPerMeasurementHDC1000;
+			return;
+		}
+	}
+
+	if (sensorBitField & 0b1000000000000000)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+}
+#endif
