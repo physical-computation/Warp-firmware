@@ -56,7 +56,7 @@ WarpStatus	saveToAT45DBFromEnd(size_t nbyte, uint8_t* buf);
 WarpStatus	setAT45DBStartPosition(uint16_t pageNumber, uint8_t pageOffset);
 WarpStatus	readMemoryAT45DB(uint16_t pageNumber, size_t nbyte, void* buf);
 WarpStatus	pageProgramAT45DB(uint16_t startAddress, size_t nbyte, uint8_t* buf);
-WarpStatus	saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf);
+WarpStatus	writeToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf);
 
 WarpStatus	resetAT45DB();
 WarpStatus	waitForDeviceReady();
@@ -65,7 +65,7 @@ WarpStatus	initiateChipEraseAT45DB();
 
 WarpStatus	configurePageSize();
 WarpStatus	savePagePositionAT45DB();
-WarpStatus	savePartialBufferToMainMemoryAndSavePagePosition();
+WarpStatus	writeBufferAndSavePagePositionAT45DB();
 
 WarpStatus	writeToBufferAT45DB(BufferNumberAT45DB buffer, uint8_t address, size_t nbyte, uint8_t *  buf);
 WarpStatus	bufferToMainMemoryWriteAT45DB(BufferNumberAT45DB buffer, uint16_t pageNumber);

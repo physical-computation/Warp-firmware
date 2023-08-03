@@ -334,7 +334,7 @@ savePagePositionAT45DB()
 }
 
 WarpStatus
-saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
+writeToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 {
 	WarpStatus status;
 
@@ -361,7 +361,7 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 		currentBufferAT45DB				= currentBufferAT45DB == bufferNumber1AT45DB ? bufferNumber2AT45DB : bufferNumber1AT45DB;
 		currentBufferOffsetAT45DB = 0;
 
-		status = saveToAT45DBFromEndBuffered(nbyte, buf);
+		status = writeToAT45DBFromEndBuffered(nbyte, buf);
 
 		return status;
 	}
@@ -382,7 +382,7 @@ saveToAT45DBFromEndBuffered(size_t nbyte, uint8_t* buf)
 		nbyte -= spaceAvailable;
 		buf += spaceAvailable;
 
-		status = saveToAT45DBFromEndBuffered(nbyte, buf);
+		status = writeToAT45DBFromEndBuffered(nbyte, buf);
 	}
 	else
 
@@ -432,7 +432,7 @@ loadMainMemoryPageToBuffer(BufferNumberAT45DB buffer, uint16_t address)
 }
 
 WarpStatus
-savePartialBufferToMainMemoryAndSavePagePosition()
+writeBufferAndSavePagePositionAT45DB()
 {
 	WarpStatus status;
 

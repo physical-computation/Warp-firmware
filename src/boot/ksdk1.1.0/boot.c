@@ -247,6 +247,8 @@ void							warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsInto
 * Flash related functions
 */
 #if (WARP_BUILD_ENABLE_FLASH)
+	WarpStatus 					flashHandleEndOfWriteAllSensors();
+	WarpStatus					flashWriteFromEnd(size_t nbyte, uint8_t* buf);
 	WarpStatus					flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf);
 	WarpStatus					flashReadAllMemory();
 	void 						flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading);
@@ -3230,6 +3232,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	uint8_t	 flashWriteBuf[128] = {0};
 
 	int rttKey = -1;
+	WarpStatus status;
 
 #if (WARP_BUILD_DEVADXL362)
 
@@ -3422,7 +3425,12 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		/*
 		*	Dump to flash
 		*/
-		saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
+		status = flashWriteFromEnd(bytesWrittenIndex, flashWriteBuf);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("\r\n\tflashWriteFromEnd failed: %d", status);
+			return;
+		}
 
 		if (menuDelayBetweenEachRun > 0)
 		{
@@ -3440,12 +3448,17 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		if (rttKey == 'q')
 		{
 			gWarpWriteToFlash = 0;
-			savePartialBufferToMainMemoryAndSavePagePosition();
+			status = flashHandleEndOfWriteAllSensors();
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("\r\n\tflashHandleEndOfWriteAllSensors failed: %d", status);
+			}
 			break;
 		}
 	}
 	while (loopForever);
 }
+
 
 void
 printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
@@ -4599,6 +4612,28 @@ activateAllLowPowerSensorModes(bool verbose)
 }
 
 #if (WARP_BUILD_ENABLE_FLASH)
+
+WarpStatus
+flashWriteFromEnd(size_t nbyte, uint8_t* buf)
+{
+	#if (WARP_BUILD_ENABLE_DEVAT45DB)
+		return writeToAT45DBFromEndBuffered(nbyte, buf);
+	#endif
+}
+
+
+WarpStatus
+flashHandleEndOfWriteAllSensors()
+{
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
+	/*
+	 *	Flush the buffer to flash
+	 */
+	writeBufferAndSavePagePositionAT45DB();
+#endif
+}
+
+
 WarpStatus
 flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf)
 {
