@@ -469,8 +469,6 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 	return readMemoryIS25xP(nextPageNumber, nextPageOffset, nBytesRemaining, (uint8_t *)buf + nBytesBeingRead);
 }
 
-
-
 WarpStatus
 programPageIS25xP(uint16_t startPageAddress, uint8_t startPageOffset, size_t nbyte, uint8_t *buf)
 {

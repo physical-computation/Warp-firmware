@@ -629,9 +629,9 @@ debugPrintSPIsinkBuffer(void)
 void
 warpEnableI2Cpins(void)
 {
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		return;
-	#else
+#else
 	CLOCK_SYS_EnableI2cClock(0);
 
 	/*
@@ -644,7 +644,7 @@ warpEnableI2Cpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
-	#endif
+#endif
 }
 
 
@@ -652,9 +652,9 @@ warpEnableI2Cpins(void)
 void
 warpDisableI2Cpins(void)
 {
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		return;
-	#else
+#else
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 
 	/*
@@ -667,7 +667,7 @@ warpDisableI2Cpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
 	CLOCK_SYS_DisableI2cClock(0);
-	#endif
+#endif
 }
 
 
@@ -1707,6 +1707,7 @@ main(void)
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
+		warpPrint("hyere");
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 	if (status != kWarpStatusOK)
 	{
