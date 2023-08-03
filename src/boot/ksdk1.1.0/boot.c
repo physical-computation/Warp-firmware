@@ -630,7 +630,7 @@ void
 warpEnableI2Cpins(void)
 {
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		return;
+		// return;
 #else
 	CLOCK_SYS_EnableI2cClock(0);
 
@@ -653,7 +653,7 @@ void
 warpDisableI2Cpins(void)
 {
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		return;
+		// return;
 #else
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 
@@ -1707,7 +1707,6 @@ main(void)
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
-		warpPrint("hyere");
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 	if (status != kWarpStatusOK)
 	{
