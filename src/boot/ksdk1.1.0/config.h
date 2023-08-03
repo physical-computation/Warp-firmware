@@ -163,6 +163,7 @@ typedef enum
 	kWarpSizesBME680CalibrationValuesCount = 41,
 	kWarpSizeAT45DBPageSizeBytes           = 256,
 	kWarpSizeAT45DBNPages                  = 32768,
+	kWarpSizeIS25xPPageSizeBytes           = 256,
 	kWarpWriteToFlash                      = 0,
 
 	/*

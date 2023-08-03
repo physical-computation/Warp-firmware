@@ -35,6 +35,13 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define kWarpInitialPageNumberIS25xP		0x10
+#define kWarpInitialPageOffsetIS25xP		0x00
+
+const uint16_t 	kWarpIS25xPPageOffsetStoragePage 	= 0;
+const uint8_t 	kWarpIS25xPPageOffsetStorageOffset 	= 0;
+const size_t 	kWarpIS25xPPageOffsetStorageSize	= 3;
+
 void		initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts);
 
 /**
@@ -67,7 +74,7 @@ WarpStatus 	erase64kBlockIS25xP(uint32_t address);
 WarpStatus 	chipEraseIS25xP();
 WarpStatus 	programPageNumberAndOffset(uint16_t pageNumber, uint8_t pageOffset);
 WarpStatus 	resetIS25xP();
-WarpStatus 	saveToIS25xPFromEnd(size_t nbyte, uint8_t* buf);
+WarpStatus 	writeToIS25xPFromEnd(size_t nbyte, uint8_t* buf);
 void 		enableIS25xPWrite();
 void 		disableIS25xPWrite();
 WarpStatus 	flashStatusIS25xP();
