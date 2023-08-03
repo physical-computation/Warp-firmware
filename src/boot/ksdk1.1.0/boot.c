@@ -1964,7 +1964,7 @@ main(void)
 			{
 #if (WARP_CSVSTREAM_TO_FLASH)
 				gWarpWriteToFlash = true;
-				writeAllSensorsToFlash(1, false);
+				writeAllSensorsToFlash(1, true);
 				gWarpWriteToFlash = false;
 
 #else
