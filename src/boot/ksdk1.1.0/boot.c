@@ -629,9 +629,12 @@ debugPrintSPIsinkBuffer(void)
 void
 warpEnableI2Cpins(void)
 {
-#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+	/*
+	* Returning here if Glaux variant doesn't work. The program hangs. It seems to be okay if it is done only in the disable function.
+	*/
+// #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		// return;
-#else
+// #else
 	CLOCK_SYS_EnableI2cClock(0);
 
 	/*
@@ -644,7 +647,7 @@ warpEnableI2Cpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
-#endif
+// #endif
 }
 
 
@@ -653,7 +656,7 @@ void
 warpDisableI2Cpins(void)
 {
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		// return;
+		return;
 #else
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 
@@ -1945,7 +1948,7 @@ main(void)
 	int rttKey = -1;
 
 	warpPrint("Press any key to show menu...\n");
-	while (rttKey < 0 && timer < 3000)
+	while (rttKey < 0 && timer < 1000)
 	{
 		rttKey = SEGGER_RTT_GetKey();
 		OSA_TimeDelay(1);
@@ -2760,6 +2763,7 @@ main(void)
 				}
 
 				warpPrint("\r\n\tFlash reset\n");
+
 				break;
 
 #else
@@ -2776,17 +2780,6 @@ main(void)
 					warpPrint("\r\n\tresetIS25xP failed: %d", status);
 					break;
 				}
-				uint8_t pageOffsetBuf[3];
-				status = readMemoryIS25xP(0, 0, 3, pageOffsetBuf);
-				if (status != kWarpStatusOK)
-				{
-					warpPrint("\r\n\treadMemoryIS25xP failed: %d", status);
-					return status;
-				}
-				uint8_t	 pageOffset = pageOffsetBuf[2];
-				uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-				warpPrint("pageOffset, : %d, pageNumber, %d", pageOffset, pageNumber);
-
 				warpPrint("\r\n\tFlash reset\n");
 				break;
 #else

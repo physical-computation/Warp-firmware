@@ -132,11 +132,11 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 	 */
 	warpEnableSPIpins();
 	status = SPI_DRV_MasterTransferBlocking(0 /*	master instance			*/,
-																					NULL /*	spi_master_user_config_t	*/,
-																					(const uint8_t *restrict)deviceIS25xPState.spiSourceBuffer /*	source buffer			*/,
-																					(uint8_t *restrict)deviceIS25xPState.spiSinkBuffer /*	receive buffer			*/,
-																					opCount /*	transfer size			*/,
-																					gWarpSpiTimeoutMicroseconds);
+											NULL /*	spi_master_user_config_t	*/,
+											(const uint8_t *restrict)deviceIS25xPState.spiSourceBuffer /*	source buffer			*/,
+											(uint8_t *restrict)deviceIS25xPState.spiSinkBuffer /*	receive buffer			*/,
+											opCount /*	transfer size			*/,
+											gWarpSpiTimeoutMicroseconds);
 	warpDisableSPIpins();
 
 	/*
@@ -155,7 +155,7 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 void enableIS25xPWrite()
 {
 	WarpStatus status;
-	uint8_t ops[] =
+	uint8_t ops[1] =
 	{
 			0x06, /* WREN */
 	};
@@ -164,6 +164,7 @@ void enableIS25xPWrite()
 	{
 		warpPrint("\r\n\tError: Communication failed: %d", status);
 	}
+	flashStatusIS25xP();
 }
 
 void disableIS25xPWrite()
@@ -323,7 +324,7 @@ resetIS25xP()
 		return status;
 	}
 
-	// warpPrint("start pageOffset, : %d, start pageNumber, %d\n", kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
+	warpPrint("start pageOffset, : %d, start pageNumber, %d\n", kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
 
 	status = programPageNumberAndOffset(kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
 	if (status != kWarpStatusOK)
@@ -331,6 +332,17 @@ resetIS25xP()
 		warpPrint("\r\n\tError: programPageNumberAndOffset failed");
 		return status;
 	}
+	uint8_t pageOffsetBuf[3];
+	status = readMemoryIS25xP(kWarpIS25xPPageOffsetStoragePage, kWarpIS25xPPageOffsetStorageOffset, kWarpIS25xPPageOffsetStorageSize, pageOffsetBuf);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	uint8_t pageOffset = pageOffsetBuf[2];
+	uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
+
+	warpPrint("\r\n\tPage number: %d\t page offset: %d\n", pageNumber, pageOffset);
 
 	return kWarpStatusOK;
 }
@@ -400,6 +412,7 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 {
 	WarpStatus status;
 
+	warpPrint("\r\n\tReading %d bytes from page %d, offset %d\n", nbyte, startPageNumber, startPageOffset);
 	if (nbyte > kWarpSizeAT45DBPageSizeBytes)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -411,6 +424,8 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 
 	size_t nBytesRemainingInPage 	= kWarpSizeAT45DBPageSizeBytes - startPageOffset;
 	size_t nBytesSpiLimit 			= kWarpMemoryCommonSpiBufferBytes - 4;
+	warpPrint("\r\n\tBytes remaining in page: %d\n", nBytesRemainingInPage);
+
 	if (nBytesRemainingInPage < nbyte)
 	{
 		if (nBytesRemainingInPage > nBytesSpiLimit)
@@ -426,7 +441,7 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 		}
 	} else
 	{
-		if (nBytesRemainingInPage > nBytesSpiLimit)
+		if (nbyte > nBytesSpiLimit)
 		{
 			nBytesBeingRead = nBytesSpiLimit;
 			nextPageNumber 	= startPageNumber;
@@ -439,6 +454,7 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 		}
 	}
 
+	warpPrint("\r\n\tReading %d bytes from page %d, offset %d\n", nBytesBeingRead, startPageNumber, startPageOffset);
 	size_t nBytesRemaining	= nbyte - nBytesBeingRead;
 
 	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
@@ -605,12 +621,12 @@ chipEraseIS25xP()
 WarpStatus
 flashStatusIS25xP()
 {
-	uint8_t ops4[] = {
+	uint8_t ops4[2] = {
 			/* Read Status Register */
 			0x05, /* Byte0 */
 			0x00, /* Dummy Byte1 */
 	};
-	WarpStatus status = spiTransactionIS25xP(ops4, sizeof(ops4) / sizeof(uint8_t) /* opCount */);
+	WarpStatus status = spiTransactionIS25xP(ops4, 2 /* opCount */);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("SPI transaction to read Flash ID failed...\n");
@@ -639,6 +655,8 @@ waitForWriteCompletion()
 		warpPrint("\r\n\tError: communication failed");
 		return status;
 	}
+
+	flashStatusIS25xP();
 
 	while ((deviceIS25xPState.spiSinkBuffer[1] & 0x1))
 	{

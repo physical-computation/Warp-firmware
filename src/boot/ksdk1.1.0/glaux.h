@@ -39,6 +39,6 @@
 
 typedef enum
 {
-	kGlauxSleepSecondsBetweenSensorRepetitions	=	10,
+	kGlauxSleepSecondsBetweenSensorRepetitions	= 10,
 	kGlauxSensorRepetitionsPerSleepIteration	=	1,
 } Glaux;
