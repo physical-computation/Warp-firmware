@@ -120,17 +120,17 @@ This section describes the protocol that is used to store measurements into flas
 
 The Warp hardware comes with a selection of _sensors_ which can be activated by setting the appropriate flag in `config.h`. An example of a sensor is the `MAG3110`. Each sensor produces a number of _readings_. Each such reading consists of a signed integer; the maximum size of a reading will depend on the sensor.
 
-A collection of such readings from the activated sensors is a _measurement_. A measurement is an ordered sequence of readings from all the activated sensors. The `printAllSensors` function in `boot.c` generates such a measurement, and either prints them to `stdout` or writes them to flash.
+A collection of such readings from the activated sensors is a _measurement_. A measurement is an ordered sequence of readings from all the activated sensors. The `writeAllSensorsToFlash` function in `boot.c` generates such a measurement, and writes them to flash.
 
 When printing to `stdout`, the `printSensorData<sensor>` function of the sensor (found in `dev<sensor>.h`) is called. Here `<sensor>` is `MAG3110` for example. This function simply sequentially prints out readings as characters. Since we don't need to do any thing further, this process is fairly straightforward.
 
-In order to write to flash, the `printAllSensors` function creates an array of bytes that corresponds to the measurement. For each activated sensor `<sensor>`, its `appendSensorData<sensor>` function is called to append its readings to a buffer.
+In order to write to flash, the `writeAllSensorsToFlash` function creates an array of bytes that corresponds to the measurement. For each activated sensor `<sensor>`, its `appendSensorData<sensor>` function is called to append its readings to a buffer.
 
 The purpose of writing to flash is to eventually read back and print out the measurements in a form that is similar to if we had printed to `stdout` in the first place. If we kept the configuration of active sensors the same, we know exactly how many bytes correspond to a measurement, and the byte configuration of readings from any active sensor, allowing us to sequentially decode measurements easily.
 
-However, for ease of use, we have made it is possible to write to flash with different configurations of the sensors, across multiple calls to `printAllSensors`. This means that, when reading from the flash, we need to know which sensors were active when a particular measurement was written. This is done by first creating a 16b bitfield in front of each measurement which encodes the active sensor configuration.
+However, for ease of use, we have made it is possible to write to flash with different configurations of the sensors, across multiple calls to `writeAllSensorsToFlash`. This means that, when reading from the flash, we need to know which sensors were active when a particular measurement was written. This is done by first creating a 16b bitfield in front of each measurement which encodes the active sensor configuration.
 
-We can see that this is done in `printAllSensors`, as soon as an active sensor is configured. For example, the following is an excerpt from `boot.c`:
+We can see that this is done in `writeAllSensorsToFlash`, as soon as an active sensor is configured. For example, the following is an excerpt from `boot.c`:
 ```C
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
 	numberOfConfigErrors += configureSensorMAG3110(
@@ -197,7 +197,7 @@ When writing a new sensor, the following guidelines should be followed in additi
 	sensorBitField = sensorBitField | 0b<bitfield value>;
 	```
 
-4) Following the pattern of the `printAllSensors` function, use the `printSensorData<sensor>` and the `appnedSensorData<sensor>` functions to print out and append the readings to the buffer, respectively. *Note that you must do this in the order that is specified by the bitfield.* Otherwise, the data won't be stored in the correct order, and will be impossible to decode when reading from flash.
+4) Following the pattern of the `writeAllSensorsToFlash` function, use the `appnedSensorData<sensor>` functions to append the readings to the buffer, respectively. *Note that you must do this in the order that is specified by the bitfield.* Otherwise, the data won't be stored in the correct order, and will be impossible to decode when reading from flash.
 
 	When writing the `appendSensorData<sensor>` function, you must use the following template:
 	```C
@@ -207,7 +207,7 @@ When writing a new sensor, the following guidelines should be followed in additi
 
 
 
-5) Add a decoding case to the `decodeSensorBitFieldAT45DB` function in `devAT45DB.c`, in the correct order. For example, if the new sensor is designated the 13th bit, then the following should be added AFTER the 12th case:
+5) Add a decoding case to the `writeAllSensorsToFlash` function in `boot.c`, in the correct order. For example, if the new sensor is designated the 13th bit, then the following should be added AFTER the 12th case:
 	```C
 	if (sensorBitField & 0b1000000000000) {
 		numberOfSensorsFound++;
