@@ -65,6 +65,8 @@ extern uint16_t 					gWarpBuffAddress;
 
 uint8_t 	gFlashWriteLimit 		= 0x20;
 
+uint8_t		deviceOpsBuffer[kWarpMemoryCommonSpiBufferBytes];
+
 void initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
 	deviceIS25xPState.chipSelectIoPinID 			= chipSelectIoPinID;
@@ -164,7 +166,6 @@ void enableIS25xPWrite()
 	{
 		warpPrint("\r\n\tError: Communication failed: %d", status);
 	}
-	flashStatusIS25xP();
 }
 
 void disableIS25xPWrite()
@@ -324,25 +325,12 @@ resetIS25xP()
 		return status;
 	}
 
-	warpPrint("start pageOffset, : %d, start pageNumber, %d\n", kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
-
 	status = programPageNumberAndOffset(kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("\r\n\tError: programPageNumberAndOffset failed");
 		return status;
 	}
-	uint8_t pageOffsetBuf[3];
-	status = readMemoryIS25xP(kWarpIS25xPPageOffsetStoragePage, kWarpIS25xPPageOffsetStorageOffset, kWarpIS25xPPageOffsetStorageSize, pageOffsetBuf);
-	if (status != kWarpStatusOK)
-	{
-		return status;
-	}
-
-	uint8_t pageOffset = pageOffsetBuf[2];
-	uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-
-	warpPrint("\r\n\tPage number: %d\t page offset: %d\n", pageNumber, pageOffset);
 
 	return kWarpStatusOK;
 }
@@ -412,7 +400,6 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 {
 	WarpStatus status;
 
-	warpPrint("\r\n\tReading %d bytes from page %d, offset %d\n", nbyte, startPageNumber, startPageOffset);
 	if (nbyte > kWarpSizeAT45DBPageSizeBytes)
 	{
 		return kWarpStatusBadDeviceCommand;
@@ -421,13 +408,15 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 	size_t 		nBytesBeingRead;
 	uint16_t 	nextPageNumber;
 	uint8_t 	nextPageOffset;
+	// warpPrint("\nReading %d bytes from page %d, offset %d\n", nbyte, startPageNumber, startPageOffset);
 
 	size_t nBytesRemainingInPage 	= kWarpSizeAT45DBPageSizeBytes - startPageOffset;
 	size_t nBytesSpiLimit 			= kWarpMemoryCommonSpiBufferBytes - 4;
-	warpPrint("\r\n\tBytes remaining in page: %d\n", nBytesRemainingInPage);
+	// warpPrint("nBytesRemaining: %d, nByte: %d\n", nBytesRemainingInPage, nbyte);
 
 	if (nBytesRemainingInPage < nbyte)
 	{
+		// warpPrint("nBytesRemainingInPage < nbyte\n");
 		if (nBytesRemainingInPage > nBytesSpiLimit)
 		{
 			nBytesBeingRead = nBytesSpiLimit;
@@ -441,6 +430,7 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 		}
 	} else
 	{
+		// warpPrint("nBytesRemainingInPage >= nbyte\n");
 		if (nbyte > nBytesSpiLimit)
 		{
 			nBytesBeingRead = nBytesSpiLimit;
@@ -453,18 +443,17 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 			nextPageOffset 	= startPageOffset + nbyte;
 		}
 	}
+	// warpPrint("nBytesBeingRead: %d\n", nBytesBeingRead);
 
-	warpPrint("\r\n\tReading %d bytes from page %d, offset %d\n", nBytesBeingRead, startPageNumber, startPageOffset);
 	size_t nBytesRemaining	= nbyte - nBytesBeingRead;
+	// warpPrint("nBytesRemaining: %d\n", nBytesRemaining);
 
-	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
+	deviceOpsBuffer[0] = 0x03; /* NORD */
+	deviceOpsBuffer[2] = (uint8_t)(startPageNumber);
+	deviceOpsBuffer[1] = (uint8_t)(startPageNumber >> 8);
+	deviceOpsBuffer[3] = startPageOffset;
 
-	ops[0] = 0x03; /* NORD */
-	ops[2] = (uint8_t)(startPageNumber);
-	ops[1] = (uint8_t)(startPageNumber >> 8);
-	ops[3] = startPageOffset;
-
-	status = spiTransactionIS25xP(ops, nBytesBeingRead + 4);
+	status = spiTransactionIS25xP(deviceOpsBuffer, nBytesBeingRead + 4);
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("\r\n\tError: communication failed");
@@ -481,7 +470,6 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 		return kWarpStatusOK;
 
 	}
-
 	return readMemoryIS25xP(nextPageNumber, nextPageOffset, nBytesRemaining, (uint8_t *)buf + nBytesBeingRead);
 }
 
@@ -655,8 +643,6 @@ waitForWriteCompletion()
 		warpPrint("\r\n\tError: communication failed");
 		return status;
 	}
-
-	flashStatusIS25xP();
 
 	while ((deviceIS25xPState.spiSinkBuffer[1] & 0x1))
 	{

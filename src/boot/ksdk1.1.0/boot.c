@@ -1643,8 +1643,8 @@ main(void)
  */
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 	blinkLED(kGlauxPinLED);
-	blinkLED(kGlauxPinLED);
-	blinkLED(kGlauxPinLED);
+	// blinkLED(kGlauxPinLED);
+	// blinkLED(kGlauxPinLED);
 #endif
 
 /*
@@ -1924,7 +1924,6 @@ main(void)
 			}
 		}
 
-		// warpScaleSupplyVoltage(3300);
 
 #if (WARP_CSVSTREAM_TO_FLASH)
 		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
@@ -1944,6 +1943,8 @@ main(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
+	warpScaleSupplyVoltage(3300);
+
 	int timer  = 0;
 	int rttKey = -1;
 
@@ -2721,7 +2722,6 @@ main(void)
 			 */
 			case 'R':
 			{
-#if (WARP_BUILD_ENABLE_DEVAT45DB)
 				/* read from the page */
 				gWarpWriteToFlash = false;
 				WarpStatus status;
@@ -2729,19 +2729,29 @@ main(void)
 				status = flashReadAllMemory();
 				if (status != kWarpStatusOK)
 				{
-					warpPrint("\r\n\treadAllMemoryAT45DB failed: %d", status);
+					warpPrint("\r\n\tflashReadAllMemory failed: %d", status);
 				}
+// #if (WARP_BUILD_ENABLE_DEVAT45DB)
+// 				/* read from the page */
+// 				gWarpWriteToFlash = false;
+// 				WarpStatus status;
 
-#endif
-#if (WARP_BUILD_ENABLE_DEVIS25xP)
-				/* read from the page */
-				gWarpWriteToFlash = false;
-				status			  = readAllMemoryIS25xP();
-				if (status != kWarpStatusOK)
-				{
-					warpPrint("\r\n\treadAllMemoryIS25xP failed: %d", status);
-				}
-#endif
+// 				status = flashReadAllMemory();
+// 				if (status != kWarpStatusOK)
+// 				{
+// 					warpPrint("\r\n\treadAllMemoryAT45DB failed: %d", status);
+// 				}
+
+// #endif
+// #if (WARP_BUILD_ENABLE_DEVIS25xP)
+// 				/* read from the page */
+// 				gWarpWriteToFlash = false;
+// 				status			  = flashReadAllMemory();
+// 				if (status != kWarpStatusOK)
+// 				{
+// 					warpPrint("\r\n\treadAllMemoryIS25xP failed: %d", status);
+// 				}
+// #endif
 
 				break;
 			}
@@ -4688,6 +4698,7 @@ flashReadAllMemory()
 	uint8_t pagePositionBuf[3];
 
 	status = flashReadMemory(pageOffsetStoragePage, 0, pageOffsetStorageSize, pagePositionBuf);
+	warpPrint("Goth here");
 	if (status != kWarpStatusOK)
 	{
 		return status;
@@ -4734,6 +4745,11 @@ flashReadAllMemory()
 		{
 			flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 		}
+	}
+
+	if (pageOffset <= 0)
+	{
+		return status;
 	}
 
 	status = flashReadMemory(pageNumberTotal, 0, pageOffset, dataBuffer);
