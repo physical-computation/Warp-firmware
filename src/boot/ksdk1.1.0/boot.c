@@ -1943,6 +1943,7 @@ main(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
+	warpScaleSupplyVoltage(3300);
 	int timer  = 0;
 	int rttKey = -1;
 
