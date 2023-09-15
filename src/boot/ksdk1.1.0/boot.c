@@ -185,6 +185,23 @@
 	volatile WarpUARTDeviceState			deviceBGXState;
 #endif
 
+typedef enum
+{
+	kWarpFlashReadingCountBitField 	= 0b1,
+	kWarpFlashRTCTSRBitField 		= 0b10,
+	kWarpFlashRTCTPRBitField 		= 0b100,
+	kWarpFlashADXL362BitField 		= 0b1000,
+	kWarpFlashAMG8834BitField 		= 0b10000,
+	kWarpFlashMMA8541QBitField		= 0b100000,
+	kWarpFlashMAG3110BitField		= 0b1000000,
+	kWarpFlashL3GD20HBitField		= 0b10000000,
+	kWarpFlashBME680BitField		= 0b100000000,
+	kWarpFlashBMX055BitField		= 0b1000000000,
+	kWarpFlashCCS811BitField		= 0b10000000000,
+	kWarpFlashHDC1000BitField		= 0b100000000000,
+	kWarpFlashNumConfigErrors		= 0b1000000000000000,
+} WarpFlashSensorBitFieldEncoding;
+
 volatile i2c_master_state_t		  i2cMasterState;
 volatile spi_master_state_t		  spiMasterState;
 volatile spi_master_user_config_t spiUserConfig;
@@ -3179,7 +3196,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 
 #if (WARP_BUILD_DEVADXL362)
 
-	sensorBitField = sensorBitField | 0b1000;
+	sensorBitField = sensorBitField | kWarpFlashADXL362BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
@@ -3187,7 +3204,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 												   0x01	 /* Frame rate 1 FPS */
 	);
 
-	sensorBitField = sensorBitField | 0b10000;
+	sensorBitField = sensorBitField | kWarpFlashAMG8834BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
@@ -3195,7 +3212,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		0x00, /* Payload: Disable FIFO */
 		0x01  /* Normal read 8bit, 800Hz, normal, active mode */
 	);
-	sensorBitField = sensorBitField | 0b100000;
+	sensorBitField = sensorBitField | kWarpFlashMMA8451QBitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
@@ -3205,7 +3222,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		0xA0, /*	Payload: AUTO_MRST_EN enable, RAW value without offset */
 		0x10);
 
-	sensorBitField = sensorBitField | 0b1000000;
+	sensorBitField = sensorBitField | kWarpFlashMAG3110BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
@@ -3216,7 +3233,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		0b00000000 /* normal mode, disable FIFO, disable high pass filter */
 	);
 
-	sensorBitField = sensorBitField | 0b10000000;
+	sensorBitField = sensorBitField | kWarpFlashL3GD20HBitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
@@ -3229,7 +3246,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 					 */
 	);
 
-	sensorBitField = sensorBitField | 0b100000000;
+	sensorBitField = sensorBitField | kWarpFlashBME680BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
@@ -3248,7 +3265,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		0b10000000	/* unfiltered data, shadowing enabled */
 	);
 
-	sensorBitField = sensorBitField | 0b1000000000;
+	sensorBitField = sensorBitField | kWarpFlashBMX055BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
@@ -3256,7 +3273,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	payloadCCS811[0] = 0b01000000; /* Constant power, measurement every 250ms */
 	numberOfConfigErrors += configureSensorCCS811(payloadCCS811);
 
-	sensorBitField = sensorBitField | 0b10000000000;
+	sensorBitField = sensorBitField | kWarpFlashCCS811BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
@@ -3264,7 +3281,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration register	*/
 		(0b1010000 << 8));
 
-	sensorBitField = sensorBitField | 0b100000000000;
+	sensorBitField = sensorBitField | kWarpFlashHDC1000BitField;
 #endif
 
 	// Add readingCount, 1 x timing, numberofConfigErrors
@@ -4786,7 +4803,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 {
 	uint8_t numberOfSensorsFound = 0;
 
-	if (sensorBitField & 0b1)
+	/*
+		readingCount
+	*/
+	if (sensorBitField & kWarpFlashReadingCountBitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4797,7 +4817,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b10)
+	/*
+		RTC->TSR
+	*/
+	if (sensorBitField & kWarpFlashRTCTSRBitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4808,7 +4831,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b100)
+	/*
+		RTC->TPR
+	*/
+	if (sensorBitField & kWarpFlashRTCTPRBitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4819,7 +4845,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b1000)
+	/*
+		ADXL362
+	*/
+	if (sensorBitField & kWarpFlashADXL362BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4830,7 +4859,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b10000)
+	/*
+		AMG8834
+	*/
+	if (sensorBitField & kWarpFlashAMG8834BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4841,7 +4873,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b100000)
+	/*
+		MMA8451Q
+	*/
+	if (sensorBitField & kWarpFlashMMA8541QBitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4852,7 +4887,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b1000000)
+	/*
+		MAG3110
+	*/
+	if (sensorBitField & kWarpFlashMAG3110BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4863,18 +4901,24 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b10000000)
+	/*
+		L3GD0H
+	*/
+	if (sensorBitField & kWarpFlashL3GD20HBitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
 		{
-			*sizePerReading		= bytesPerReadingAL3GD20H;
+			*sizePerReading		= bytesPerReadingL3GD20H;
 			*numberOfReadings = numberOfReadingsPerMeasurementL3GD20H;
 			return;
 		}
 	}
 
-	if (sensorBitField & 0b100000000)
+	/*
+		BME680
+	*/
+	if (sensorBitField & kWarpFlashBME680BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4885,7 +4929,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b1000000000)
+	/*
+		BMX055
+	*/
+	if (sensorBitField & kWarpFlashBMX055BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4896,7 +4943,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b10000000000)
+	/*
+		CCS811
+	*/
+	if (sensorBitField & kWarpFlashCCS811BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4907,7 +4957,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b100000000000)
+	/*
+		HDC1000
+	*/
+	if (sensorBitField & kWarpFlashHDC1000BitField)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
@@ -4918,7 +4971,10 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 		}
 	}
 
-	if (sensorBitField & 0b1000000000000000)
+	/*
+		Number of config errors
+	*/
+	if (sensorBitField & kWarpFlashNumConfigErrors)
 	{
 		numberOfSensorsFound++;
 		if (numberOfSensorsFound - 1 == sensorIndex)
