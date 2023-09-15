@@ -427,3 +427,53 @@ setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool inter
 	return ret;
 }
 
+
+uint8_t
+appendSensorDataRV8803C7(uint8_t* buf)
+{
+	uint8_t	tmpRV8803RegisterByte;
+	WarpStatus status;
+	uint8_t index = 0;
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+
+	return index;
+}

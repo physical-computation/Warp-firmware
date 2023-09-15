@@ -85,6 +85,8 @@
 #include "devBMX055.h"
 #include "devCCS811.h"
 #include "devHDC1000.h"
+#include "devRV8803C7.h"
+
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 	volatile WarpSPIDeviceState			deviceADXL362State;
@@ -176,7 +178,6 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
-	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
 #endif
 
@@ -199,6 +200,7 @@ typedef enum
 	kWarpFlashBMX055BitField		= 0b1000000000,
 	kWarpFlashCCS811BitField		= 0b10000000000,
 	kWarpFlashHDC1000BitField		= 0b100000000000,
+	kWarpFlashRV8803C7BitField		= 0b100000000000000,
 	kWarpFlashNumConfigErrors		= 0b1000000000000000,
 } WarpFlashSensorBitFieldEncoding;
 
@@ -3188,7 +3190,12 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	/*
 	 *	The first 3 bit fields are reserved for the measurement number, and the 2 time stamps.
 	 */
-	uint16_t sensorBitField		= 0b0000000000000111;
+	uint16_t sensorBitField = 0;
+	sensorBitField = sensorBitField | kWarpFlashReadingCountBitField;
+	sensorBitField = sensorBitField | kWarpFlashRTCTSRBitField;
+	sensorBitField = sensorBitField | kWarpFlashRTCTPRBitField;
+
+	// uint16_t sensorBitField		= 0b0000000000000111;
 	uint8_t	 flashWriteBuf[128] = {0};
 
 	int rttKey = -1;
@@ -3284,13 +3291,20 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	sensorBitField = sensorBitField | kWarpFlashHDC1000BitField;
 #endif
 
+	/*
+	 * Add RV8803C7 to sensorBitField
+	*/
+#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+	sensorBitField = sensorBitField | kWarpFlashRV8803C7BitField;
+#endif
+
 	// Add readingCount, 1 x timing, numberofConfigErrors
 	uint8_t sensorBitFieldSize = 2;
 	uint8_t bytesWrittenIndex  = 0;
 
 	/*
-		* Write sensorBitField to flash first, outside of the loop.
-		*/
+	 * Write sensorBitField to flash first, outside of the loop.
+	*/
 	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField >> 8);
 	bytesWrittenIndex++;
 	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField);
@@ -3367,6 +3381,10 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
 		bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+		bytesWrittenIndex += appendSensorDataRV8803C7(flashWriteBuf + bytesWrittenIndex);
 #endif
 
 		/*
@@ -4662,6 +4680,10 @@ flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingI
 				{
 					warpPrint("%d, ", (int16_t)(*currentReading));
 				}
+				else if (*currentSensorSizePerReading == 1)
+				{
+					warpPrint("%d, ", (int8_t)(*currentReading));
+				}
 
 				*currentReading	= 0;
 				*bytesIndex		= 0;
@@ -4714,7 +4736,6 @@ flashReadAllMemory()
 	uint8_t pagePositionBuf[3];
 
 	status = flashReadMemory(pageOffsetStoragePage, 0, pageOffsetStorageSize, pagePositionBuf);
-	warpPrint("Goth here");
 	if (status != kWarpStatusOK)
 	{
 		return status;
@@ -4804,7 +4825,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	uint8_t numberOfSensorsFound = 0;
 
 	/*
-		readingCount
+	 * readingCount
 	*/
 	if (sensorBitField & kWarpFlashReadingCountBitField)
 	{
@@ -4818,7 +4839,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		RTC->TSR
+	 * RTC->TSR
 	*/
 	if (sensorBitField & kWarpFlashRTCTSRBitField)
 	{
@@ -4832,7 +4853,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		RTC->TPR
+	 * RTC->TPR
 	*/
 	if (sensorBitField & kWarpFlashRTCTPRBitField)
 	{
@@ -4846,7 +4867,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		ADXL362
+	 * ADXL362
 	*/
 	if (sensorBitField & kWarpFlashADXL362BitField)
 	{
@@ -4860,7 +4881,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		AMG8834
+	 * AMG8834
 	*/
 	if (sensorBitField & kWarpFlashAMG8834BitField)
 	{
@@ -4874,7 +4895,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		MMA8451Q
+	 * MMA8451Q
 	*/
 	if (sensorBitField & kWarpFlashMMA8541QBitField)
 	{
@@ -4888,7 +4909,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		MAG3110
+	 * MAG3110
 	*/
 	if (sensorBitField & kWarpFlashMAG3110BitField)
 	{
@@ -4902,7 +4923,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		L3GD0H
+	 * L3GD0H
 	*/
 	if (sensorBitField & kWarpFlashL3GD20HBitField)
 	{
@@ -4916,7 +4937,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		BME680
+	 * BME680
 	*/
 	if (sensorBitField & kWarpFlashBME680BitField)
 	{
@@ -4930,7 +4951,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		BMX055
+	 * BMX055
 	*/
 	if (sensorBitField & kWarpFlashBMX055BitField)
 	{
@@ -4944,7 +4965,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		CCS811
+	 * CCS811
 	*/
 	if (sensorBitField & kWarpFlashCCS811BitField)
 	{
@@ -4958,7 +4979,7 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		HDC1000
+	 * HDC1000
 	*/
 	if (sensorBitField & kWarpFlashHDC1000BitField)
 	{
@@ -4972,7 +4993,21 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 	}
 
 	/*
-		Number of config errors
+	 * RV8803C7
+	*/
+	if (sensorBitField & kWarpFlashRV8803C7BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingRV8803C7;
+			*numberOfReadings 	= numberOfReadingsPerMeasurementRV8803C7;
+			return;
+		}
+	}
+
+	/*
+	 * Number of config errors
 	*/
 	if (sensorBitField & kWarpFlashNumConfigErrors)
 	{
