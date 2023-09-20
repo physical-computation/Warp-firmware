@@ -35,11 +35,12 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
-#define WARP_BUILD_BOOT_TO_CSVSTREAM			1
-#define WARP_CSVSTREAM_TO_FLASH					1
-#define WARP_BUILD_BOOT_TO_VLPR					1
-#define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT	0
+#define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF			1
+#define WARP_BUILD_BOOT_TO_CSVSTREAM				1
+#define WARP_CSVSTREAM_TO_FLASH						1
+#define WARP_CSVSTREAM_FLASH_PRINT_METADATA			0
+#define WARP_BUILD_BOOT_TO_VLPR						1
+#define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
  *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules
@@ -151,6 +152,8 @@ typedef enum
 	kWarpDefaultSpiTimeoutMicroseconds          = 5,
 	kWarpDefaultMenuPrintDelayMilliseconds      = 10,
 	kWarpDefaultSupplySettlingDelayMilliseconds = 1,
+	kWarpCsvstreamMenuWaitTimeMilliSeconds		= 3000,
+
 
 	/*
 	 *	Sizes
