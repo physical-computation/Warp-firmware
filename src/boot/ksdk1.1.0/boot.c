@@ -1917,7 +1917,7 @@ main(void)
 	int rttKey = -1;
 
 	warpPrint("Press any key to show menu...\n");
-	while (rttKey < 0 && timer < 3000)
+	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
 		rttKey = SEGGER_RTT_GetKey();
 		OSA_TimeDelay(1);
@@ -3191,11 +3191,13 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	 *	The first 3 bit fields are reserved for the measurement number, and the 2 time stamps.
 	 */
 	uint16_t sensorBitField = 0;
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
 	sensorBitField = sensorBitField | kWarpFlashReadingCountBitField;
 	sensorBitField = sensorBitField | kWarpFlashRTCTSRBitField;
 	sensorBitField = sensorBitField | kWarpFlashRTCTPRBitField;
+#endif
 
-	// uint16_t sensorBitField		= 0b0000000000000111;
 	uint8_t	 flashWriteBuf[128] = {0};
 
 	int rttKey = -1;
@@ -3314,6 +3316,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 	{
 		bytesWrittenIndex = sensorBitFieldSize;
 
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
 		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 24);
 		bytesWrittenIndex++;
 		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 16);
@@ -3343,6 +3346,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		bytesWrittenIndex++;
 		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR);
 		bytesWrittenIndex++;
+#endif
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 		bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
@@ -3543,7 +3547,10 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 
 	if (printHeadersAndCalibration)
 	{
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
 		warpPrint("Measurement number, RTC->TSR, RTC->TPR,\t\t");
+#endif
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 		warpPrint(" ADXL362 x, ADXL362 y, ADXL362 z,");
@@ -3587,13 +3594,19 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		warpPrint(" HDC1000 Temp, HDC1000 Hum,");
 #endif
 
-		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		warpPrint(" RTC->TSR, RTC->TPR,");
+#endif
+		warpPrint(" numberOfConfigErrors");
 		warpPrint("\n\n");
 	}
 
 	do
 	{
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
 		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
+#endif
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 		printSensorDataADXL362(hexModeFlag);
@@ -3633,7 +3646,10 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		printSensorDataHDC1000(hexModeFlag);
 #endif
 
-		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		warpPrint(" %12d, %6d,", RTC->TSR, RTC->TPR);
+#endif
+		warpPrint(" %u\n", numberOfConfigErrors);
 
 		if (menuDelayBetweenEachRun > 0)
 		{
