@@ -71,7 +71,6 @@ extern volatile WarpSPIDeviceState deviceAT45DBState;
 extern volatile uint32_t gWarpSpiTimeoutMicroseconds;
 extern uint8_t gWarpSpiCommonSourceBuffer[];
 extern uint8_t gWarpSpiCommonSinkBuffer[];
-extern uint8_t gWarpWriteToFlash;
 
 /* Read commands */
 #define AT45DB_RDMN								0xd2 /* Main Memory Page Read */

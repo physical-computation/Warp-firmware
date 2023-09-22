@@ -224,7 +224,12 @@ volatile uint32_t	  gWarpSupplySettlingDelayMilliseconds = kWarpDefaultSupplySet
 volatile uint16_t	  gWarpCurrentSupplyVoltage			   = kWarpDefaultSupplyVoltageMillivolts;
 
 char		  gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
-volatile bool gWarpWriteToFlash = false;
+
+#if WARP_BUILD_EXTRA_QUIET_MODE
+	volatile bool gWarpExtraQuietMode = true;
+#else
+	volatile bool gWarpExtraQuietMode = false;
+#endif
 
 /*
  *	Since only one SPI transaction is ongoing at a time in our implementaion
@@ -1242,6 +1247,11 @@ blinkLED(int pin)
 void
 warpPrint(const char *fmt, ...)
 {
+	if (gWarpExtraQuietMode)
+	{
+		return;
+	}
+
 	int	fmtlen;
 	va_list	arg;
 
@@ -1320,18 +1330,6 @@ warpPrint(const char *fmt, ...)
 				//deinitBGX();
 	}
 	#endif
-
-	// #if (WARP_BUILD_ENABLE_DEVIS25xP)
-	// if (gWarpBooted && gWarpWriteToFlash)
-	// {
-	// 	/* Write to flash*/
-	// 	WarpStatus status = writeToIS25xPFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
-	// 	if (status != kWarpStatusOK)
-	// 	{
-	// 		warpPrint("Error writing to flash: %d\n", status);
-	// 	}
-	// }
-	// #endif
 
 #else
 	/*
@@ -1916,7 +1914,11 @@ main(void)
 	int timer  = 0;
 	int rttKey = -1;
 
+	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
+	gWarpExtraQuietMode = false;
 	warpPrint("Press any key to show menu...\n");
+	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
+
 	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
 		rttKey = SEGGER_RTT_GetKey();
@@ -1946,9 +1948,7 @@ main(void)
 
 #if (WARP_CSVSTREAM_TO_FLASH)
 		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
-		gWarpWriteToFlash = true;
 		writeAllSensorsToFlash(1, true);
-		gWarpWriteToFlash = false;
 
 #else
 		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
@@ -1966,8 +1966,12 @@ main(void)
 	int timer  = 0;
 	int rttKey = -1;
 
+	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
+	gWarpExtraQuietMode = false;
 	warpPrint("Press any key to show menu...\n");
-	while (rttKey < 0 && timer < 1000)
+	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
+
+	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
 		rttKey = SEGGER_RTT_GetKey();
 		OSA_TimeDelay(1);
@@ -1985,10 +1989,7 @@ main(void)
 			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 			{
 #if (WARP_CSVSTREAM_TO_FLASH)
-				gWarpWriteToFlash = true;
 				writeAllSensorsToFlash(1, false);
-				gWarpWriteToFlash = false;
-
 #else
 				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, false /* loopForever */);
 #endif
@@ -2026,6 +2027,7 @@ main(void)
 		 *	want to use menu to progressiveley change the machine state with various
 		 *	commands.
 		 */
+		gWarpExtraQuietMode = false;
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		warpPrint("\rSelect:\n");
@@ -2711,14 +2713,14 @@ main(void)
 				warpPrint("\r\n\tWrite sensor data to Flash? (1 or 0)>  ");
 				key = warpWaitKey();
 				warpPrint("\n");
-				gWarpWriteToFlash = (key == '1' ? true : false);
+				bool gWarpWriteToFlash = (key == '1' ? true : false);
 
 				if (gWarpWriteToFlash)
 				{
 					warpPrint("\r\n\tWriting to flash. Press 'q' to exit back to menu\n");
 					writeAllSensorsToFlash(menuDelayBetweenEachRun, true /* loopForever */);
-					gWarpWriteToFlash = false;
-				} else
+				}
+				else
 				{
 					bool		hexModeFlag;
 
@@ -2741,7 +2743,6 @@ main(void)
 			case 'R':
 			{
 				/* read from the page */
-				gWarpWriteToFlash = false;
 				WarpStatus status;
 
 				status = flashReadAllMemory();
@@ -2749,27 +2750,6 @@ main(void)
 				{
 					warpPrint("\r\n\tflashReadAllMemory failed: %d", status);
 				}
-// #if (WARP_BUILD_ENABLE_DEVAT45DB)
-// 				/* read from the page */
-// 				gWarpWriteToFlash = false;
-// 				WarpStatus status;
-
-// 				status = flashReadAllMemory();
-// 				if (status != kWarpStatusOK)
-// 				{
-// 					warpPrint("\r\n\treadAllMemoryAT45DB failed: %d", status);
-// 				}
-
-// #endif
-// #if (WARP_BUILD_ENABLE_DEVIS25xP)
-// 				/* read from the page */
-// 				gWarpWriteToFlash = false;
-// 				status			  = flashReadAllMemory();
-// 				if (status != kWarpStatusOK)
-// 				{
-// 					warpPrint("\r\n\treadAllMemoryIS25xP failed: %d", status);
-// 				}
-// #endif
 
 				break;
 			}
@@ -2777,7 +2757,6 @@ main(void)
 			case 'Z':
 			{
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
-				gWarpWriteToFlash = false;
 				warpPrint("\r\n\tResetting Flash\n");
 
 				WarpStatus status;
@@ -2799,7 +2778,6 @@ main(void)
 				// break;
 #endif
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
-				gWarpWriteToFlash = false;
 				warpPrint("\r\n\tResetting Flash\n");
 				WarpStatus status;
 				status = resetIS25xP();
@@ -3429,7 +3407,6 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 
 		if (rttKey == 'q')
 		{
-			gWarpWriteToFlash = 0;
 			status = flashHandleEndOfWriteAllSensors();
 			if (status != kWarpStatusOK)
 			{
