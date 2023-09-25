@@ -271,11 +271,11 @@ void							warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsInto
 /*
 * Flash related functions
 */
+	WarpStatus					flashReadAllMemory();
 #if (WARP_BUILD_ENABLE_FLASH)
 	WarpStatus 					flashHandleEndOfWriteAllSensors();
 	WarpStatus					flashWriteFromEnd(size_t nbyte, uint8_t* buf);
 	WarpStatus					flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf);
-	WarpStatus					flashReadAllMemory();
 	void 						flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading);
 	uint8_t						flashGetNSensorsFromSensorBitField(uint16_t sensorBitField);
 	void						flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
@@ -2710,6 +2710,7 @@ main(void)
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.",
 						  menuDelayBetweenEachRun);
 
+#if (WARP_BUILD_ENABLE_FLASH)
 				warpPrint("\r\n\tWrite sensor data to Flash? (1 or 0)>  ");
 				key = warpWaitKey();
 				warpPrint("\n");
@@ -2721,6 +2722,7 @@ main(void)
 					writeAllSensorsToFlash(menuDelayBetweenEachRun, true /* loopForever */);
 				}
 				else
+#endif
 				{
 					bool		hexModeFlag;
 
@@ -2733,7 +2735,6 @@ main(void)
 				}
 
 				warpDisableI2Cpins();
-
 				break;
 			}
 
@@ -2750,7 +2751,6 @@ main(void)
 				{
 					warpPrint("\r\n\tflashReadAllMemory failed: %d", status);
 				}
-
 				break;
 			}
 
@@ -3157,6 +3157,7 @@ main(void)
 void
 writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 {
+#if (WARP_BUILD_ENABLE_FLASH)
 	uint32_t timeAtStart = OSA_TimeGetMsec();
 	/*
 	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling
@@ -3416,8 +3417,8 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		}
 	}
 	while (loopForever);
+#endif
 }
-
 
 void
 printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
@@ -4583,7 +4584,6 @@ activateAllLowPowerSensorModes(bool verbose)
 }
 
 #if (WARP_BUILD_ENABLE_FLASH)
-
 WarpStatus
 flashWriteFromEnd(size_t nbyte, uint8_t* buf)
 {
@@ -4593,8 +4593,9 @@ flashWriteFromEnd(size_t nbyte, uint8_t* buf)
 		return writeToIS25xPFromEnd(nbyte, buf);
 	#endif
 }
+#endif
 
-
+#if (WARP_BUILD_ENABLE_FLASH)
 WarpStatus
 flashHandleEndOfWriteAllSensors()
 {
@@ -4610,8 +4611,9 @@ flashHandleEndOfWriteAllSensors()
 	return kWarpStatusOK;
 #endif
 }
+#endif
 
-
+#if (WARP_BUILD_ENABLE_FLASH)
 WarpStatus
 flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf)
 {
@@ -4621,7 +4623,9 @@ flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte,
 		return readMemoryIS25xP(startPageNumber, startPageOffset, nbyte, buf);
 	#endif
 }
+#endif
 
+#if (WARP_BUILD_ENABLE_FLASH)
 void
 flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading)
 {
@@ -4699,10 +4703,14 @@ flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingI
 		}
 	}
 }
+#endif
 
 WarpStatus
 flashReadAllMemory()
 {
+	WarpStatus status;
+
+#if (WARP_BUILD_ENABLE_FLASH)
 	int pageSizeBytes;
 	uint16_t pageOffsetStoragePage;
 	size_t pageOffsetStorageSize;
@@ -4724,7 +4732,6 @@ flashReadAllMemory()
 #endif
 
 	uint8_t dataBuffer[pageSizeBytes];
-	WarpStatus status;
 
 	uint8_t pagePositionBuf[3];
 
@@ -4793,11 +4800,12 @@ flashReadAllMemory()
 	{
 		flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
 	}
-
+#endif
 
 	return status;
 }
 
+#if (WARP_BUILD_ENABLE_FLASH)
 uint8_t
 flashGetNSensorsFromSensorBitField(uint16_t sensorBitField)
 {
@@ -4811,7 +4819,9 @@ flashGetNSensorsFromSensorBitField(uint16_t sensorBitField)
 
 	return numberOfSensors;
 }
+#endif
 
+#if (WARP_BUILD_ENABLE_FLASH)
 void
 flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings)
 {
