@@ -65,10 +65,17 @@ glaux:
 	cp src/boot/ksdk1.1.0/config.h					build/ksdk1.1/work/boards/Glaux
 	cp src/boot/ksdk1.1.0/glaux.h					build/ksdk1.1/work/boards/Glaux
 	cp src/boot/ksdk1.1.0/CMakeLists-Glaux.txt			build/ksdk1.1/work/demos/Glaux/armgcc/Glaux/CMakeLists.txt
-	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devADXL362.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devAMG8834.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devMMA8451Q.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devMAG3110.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devL3GD20H.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devBMX055.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devCCS811.h				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devHDC1000.h				build/ksdk1.1/work/demos/Glaux/src/
 	cd build/ksdk1.1/work/lib/ksdk_platform_lib/armgcc/KL03Z4 && ./clean.sh; ./build_release.sh
 	cd build/ksdk1.1/work/demos/Glaux/armgcc/Glaux && ./clean.sh; ./build_release.sh
 	@echo "\n\nNow, run\n\n\tmake load-glaux\n\n"
@@ -103,6 +110,9 @@ load-glaux:
 	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/glaux.jlink.commands
 
 connect-warp:
+	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/connect.jlink.commands
+
+connect-glaux:
 	$(JLINKPATH) -device MKL03Z32XXX4 -if SWD -speed 10000 -CommanderScript tools/scripts/connect.jlink.commands
 
 clean:

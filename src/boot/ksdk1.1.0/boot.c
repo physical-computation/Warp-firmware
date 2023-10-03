@@ -67,9 +67,28 @@
 #define							kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
+#if (WARP_BUILD_ENABLE_DEVAT45DB || WARP_BUILD_ENABLE_DEVIS25xP)
+	#define WARP_BUILD_ENABLE_FLASH 1
+#else
+	#define WARP_BUILD_ENABLE_FLASH 0
+#endif
+
+/*
+* Include all sensors because they will be needed to decode flash.
+*/
+#include "devADXL362.h"
+#include "devAMG8834.h"
+#include "devMMA8451Q.h"
+#include "devMAG3110.h"
+#include "devL3GD20H.h"
+#include "devBME680.h"
+#include "devBMX055.h"
+#include "devCCS811.h"
+#include "devHDC1000.h"
+#include "devRV8803C7.h"
+
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
-	#include "devADXL362.h"
 	volatile WarpSPIDeviceState			deviceADXL362State;
 #endif
 
@@ -94,14 +113,12 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
-	#include "devBMX055.h"
 	volatile WarpI2CDeviceState			deviceBMX055accelState;
 	volatile WarpI2CDeviceState			deviceBMX055gyroState;
 	volatile WarpI2CDeviceState			deviceBMX055magState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
@@ -111,12 +128,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
-	#include "devHDC1000.h"
 	volatile WarpI2CDeviceState			deviceHDC1000State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
-	#include "devMAG3110.h"
 	volatile WarpI2CDeviceState			deviceMAG3110State;
 #endif
 
@@ -126,12 +141,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
-	#include "devBME680.h"
 	volatile WarpI2CDeviceState			deviceBME680State;
 	volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
 #endif
@@ -147,12 +160,10 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
-	#include "devCCS811.h"
 	volatile WarpI2CDeviceState			deviceCCS811State;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
-	#include "devAMG8834.h"
 	volatile WarpI2CDeviceState			deviceAMG8834State;
 #endif
 
@@ -167,7 +178,6 @@
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
-	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
 #endif
 
@@ -175,6 +185,24 @@
 	#include "devBGX.h"
 	volatile WarpUARTDeviceState			deviceBGXState;
 #endif
+
+typedef enum
+{
+	kWarpFlashReadingCountBitField 	= 0b1,
+	kWarpFlashRTCTSRBitField 		= 0b10,
+	kWarpFlashRTCTPRBitField 		= 0b100,
+	kWarpFlashADXL362BitField 		= 0b1000,
+	kWarpFlashAMG8834BitField 		= 0b10000,
+	kWarpFlashMMA8541QBitField		= 0b100000,
+	kWarpFlashMAG3110BitField		= 0b1000000,
+	kWarpFlashL3GD20HBitField		= 0b10000000,
+	kWarpFlashBME680BitField		= 0b100000000,
+	kWarpFlashBMX055BitField		= 0b1000000000,
+	kWarpFlashCCS811BitField		= 0b10000000000,
+	kWarpFlashHDC1000BitField		= 0b100000000000,
+	kWarpFlashRV8803C7BitField		= 0b100000000000000,
+	kWarpFlashNumConfigErrors		= 0b1000000000000000,
+} WarpFlashSensorBitFieldEncoding;
 
 volatile i2c_master_state_t		  i2cMasterState;
 volatile spi_master_state_t		  spiMasterState;
@@ -196,7 +224,12 @@ volatile uint32_t	  gWarpSupplySettlingDelayMilliseconds = kWarpDefaultSupplySet
 volatile uint16_t	  gWarpCurrentSupplyVoltage			   = kWarpDefaultSupplyVoltageMillivolts;
 
 char		  gWarpPrintBuffer[kWarpDefaultPrintBufferSizeBytes];
-volatile bool gWarpWriteToFlash = false;
+
+#if WARP_BUILD_EXTRA_QUIET_MODE
+	volatile bool gWarpExtraQuietMode = true;
+#else
+	volatile bool gWarpExtraQuietMode = false;
+#endif
 
 /*
  *	Since only one SPI transaction is ongoing at a time in our implementaion
@@ -223,6 +256,7 @@ static void						activateAllLowPowerSensorModes(bool verbose);
 static void						powerupAllSensors(void);
 static uint8_t						readHexByte(void);
 static int						read4digits(void);
+static void 					writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever);
 static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
 
 /*
@@ -234,7 +268,18 @@ WarpStatus						writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength);
 
 void							warpLowPowerSecondsSleep(uint32_t sleepSeconds, bool forceAllPinsIntoLowPowerState);
 
-
+/*
+* Flash related functions
+*/
+	WarpStatus					flashReadAllMemory();
+#if (WARP_BUILD_ENABLE_FLASH)
+	WarpStatus 					flashHandleEndOfWriteAllSensors();
+	WarpStatus					flashWriteFromEnd(size_t nbyte, uint8_t* buf);
+	WarpStatus					flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf);
+	void 						flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading);
+	uint8_t						flashGetNSensorsFromSensorBitField(uint16_t sensorBitField);
+	void						flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings);
+#endif
 
 /*
  *	Derived from KSDK power_manager_demo.c BEGIN>>>
@@ -608,6 +653,12 @@ debugPrintSPIsinkBuffer(void)
 void
 warpEnableI2Cpins(void)
 {
+	/*
+	* Returning here if Glaux variant doesn't work. The program hangs. It seems to be okay if it is done only in the disable function.
+	*/
+// #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+		// return;
+// #else
 	CLOCK_SYS_EnableI2cClock(0);
 
 	/*
@@ -620,6 +671,7 @@ warpEnableI2Cpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
 
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
+// #endif
 }
 
 
@@ -627,6 +679,9 @@ warpEnableI2Cpins(void)
 void
 warpDisableI2Cpins(void)
 {
+#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
+		return;
+#else
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 
 	/*
@@ -639,6 +694,7 @@ warpDisableI2Cpins(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 
 	CLOCK_SYS_DisableI2cClock(0);
+#endif
 }
 
 
@@ -1191,6 +1247,11 @@ blinkLED(int pin)
 void
 warpPrint(const char *fmt, ...)
 {
+	if (gWarpExtraQuietMode)
+	{
+		return;
+	}
+
 	int	fmtlen;
 	va_list	arg;
 
@@ -1267,18 +1328,6 @@ warpPrint(const char *fmt, ...)
 		 *	any remote terminal connected to it.
 		 */
 				//deinitBGX();
-	}
-	#endif
-
-	#if (WARP_BUILD_ENABLE_DEVIS25xP)
-	if (gWarpBooted && gWarpWriteToFlash)
-	{
-		/* Write to flash*/
-		WarpStatus status = saveToIS25xPFromEnd(strlen(gWarpPrintBuffer), gWarpPrintBuffer);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("Error writing to flash: %d\n", status);
-		}
 	}
 	#endif
 
@@ -1611,8 +1660,8 @@ main(void)
  */
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 	blinkLED(kGlauxPinLED);
-	blinkLED(kGlauxPinLED);
-	blinkLED(kGlauxPinLED);
+	// blinkLED(kGlauxPinLED);
+	// blinkLED(kGlauxPinLED);
 #endif
 
 /*
@@ -1861,12 +1910,16 @@ main(void)
 	gWarpBooted = true;
 	warpPrint("Boot done.\n");
 
-#if (WARP_BUILD_BOOT_TO_CSVSTREAM)
+#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
 	int timer  = 0;
 	int rttKey = -1;
 
+	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
+	gWarpExtraQuietMode = false;
 	warpPrint("Press any key to show menu...\n");
-	while (rttKey < 0 && timer < 3000)
+	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
+
+	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
 		rttKey = SEGGER_RTT_GetKey();
 		OSA_TimeDelay(1);
@@ -1892,13 +1945,10 @@ main(void)
 			}
 		}
 
-		// warpScaleSupplyVoltage(3300);
 
 #if (WARP_CSVSTREAM_TO_FLASH)
 		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
-		gWarpWriteToFlash = true;
-		printAllSensors(false, false, 1, true);
-		gWarpWriteToFlash = false;
+		writeAllSensorsToFlash(0, true);
 
 #else
 		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
@@ -1912,127 +1962,61 @@ main(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
+	warpScaleSupplyVoltage(3300);
+	int timer  = 0;
+	int rttKey = -1;
+
+	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
+	gWarpExtraQuietMode = false;
+	warpPrint("Press any key to show menu...\n");
+	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
+
+	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
+	{
+		rttKey = SEGGER_RTT_GetKey();
+		OSA_TimeDelay(1);
+		timer++;
+	}
+
+	if (rttKey < 0)
+	{
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
-	#if (WARP_BUILD_ENABLE_DEVIS25xP)
-	warpPrint("About to read IS25xP JEDEC ID...\n");
-			//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
-
-	warpPrint("About to read IS25xP Manufacturer ID...\n");
-			//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
-
-			warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
-			//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-	warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-	#endif
-
-	warpPrint("About to activate low-power modes (including IS25xP Flash)...\n");
-	activateAllLowPowerSensorModes(true /* verbose */);
-
-		uint8_t	tmpRV8803RegisterByte;
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegSec = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegMin = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegHour = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegExt = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegFlag = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	status = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte);
-	if (status != kWarpStatusOK)
-	{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte) failed\n");
-	}
-	else
-	{
-		warpPrint("kWarpRV8803RegCtrl = [0x%X]\n", tmpRV8803RegisterByte);
-	}
-
-	warpPrint("About to configureSensorBME680() for measurement...\n");
-		status = configureSensorBME680(	0b00000001,	/*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x				*/
-						0b00100100,	/*	payloadCtrl_Meas: Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-						0b00001000	/*	payloadGas_0: Turn off heater							*/
-	);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("configureSensorBME680() failed...\n");
-	}
-
-	warpDisableI2Cpins();
-
-	warpPrint("About to loop with printSensorDataBME680()...\n");
-	while (1)
-	{
-		blinkLED(kGlauxPinLED);
-		for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
+		warpPrint("About to loop with printSensorDataBME680()...\n");
+		while (1)
 		{
-				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
-		}
+			blinkLED(kGlauxPinLED);
+			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
+			{
+#if (WARP_CSVSTREAM_TO_FLASH)
+				writeAllSensorsToFlash(1, false);
+#else
+				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, false /* loopForever */);
+#endif
+			}
 
-		warpPrint("About to configureSensorBME680() for sleep...\n");
-			status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
-							0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
-							0b00001000	/*	payloadGas_0: Turn off heater						*/
-		);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("configureSensorBME680() failed...\n");
-		}
-		warpDisableI2Cpins();
-		blinkLED(kGlauxPinLED);
+			warpPrint("About to configureSensorBME680() for sleep...\n");
+				status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
+								0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
+								0b00001000	/*	payloadGas_0: Turn off heater						*/
+			);
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("configureSensorBME680() failed...\n");
+			}
 
-			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
-			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+			warpDisableI2Cpins();
+			blinkLED(kGlauxPinLED);
 
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
+				warpPrint("About to go into VLLS0...\n");
+				status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
+			}
+			warpPrint("Should not get here...");
 		}
-		warpPrint("Should not get here...");
 	}
 #endif
 
@@ -2043,6 +2027,7 @@ main(void)
 		 *	want to use menu to progressiveley change the machine state with various
 		 *	commands.
 		 */
+		gWarpExtraQuietMode = false;
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
 
 		warpPrint("\rSelect:\n");
@@ -2720,23 +2705,24 @@ main(void)
 			 */
 			case 'z':
 			{
-				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
+				warpPrint("\r\n\tSet the time delay between each reading in milliseconds (e.g., '1234')> ");
 				uint16_t menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.",
 						  menuDelayBetweenEachRun);
 
+#if (WARP_BUILD_ENABLE_FLASH)
 				warpPrint("\r\n\tWrite sensor data to Flash? (1 or 0)>  ");
 				key = warpWaitKey();
 				warpPrint("\n");
-				gWarpWriteToFlash = (key == '1' ? true : false);
+				bool gWarpWriteToFlash = (key == '1' ? true : false);
 
 				if (gWarpWriteToFlash)
 				{
 					warpPrint("\r\n\tWriting to flash. Press 'q' to exit back to menu\n");
-					printAllSensors(false /* printHeadersAndCalibration */, false,
-								menuDelayBetweenEachRun, true /* loopForever */);
-					gWarpWriteToFlash = false;
-				} else
+					writeAllSensorsToFlash(menuDelayBetweenEachRun, true /* loopForever */);
+				}
+				else
+#endif
 				{
 					bool		hexModeFlag;
 
@@ -2749,7 +2735,6 @@ main(void)
 				}
 
 				warpDisableI2Cpins();
-
 				break;
 			}
 
@@ -2758,35 +2743,20 @@ main(void)
 			 */
 			case 'R':
 			{
-#if (WARP_BUILD_ENABLE_DEVAT45DB)
 				/* read from the page */
-				gWarpWriteToFlash = false;
 				WarpStatus status;
 
-				status = readAllMemoryAT45DB();
+				status = flashReadAllMemory();
 				if (status != kWarpStatusOK)
 				{
-					warpPrint("\r\n\treadAllMemoryAT45DB failed: %d", status);
+					warpPrint("\r\n\tflashReadAllMemory failed: %d", status);
 				}
-
-#endif
-#if (WARP_BUILD_ENABLE_DEVIS25xP)
-				/* read from the page */
-				gWarpWriteToFlash = false;
-				status			  = readAllMemoryIS25xP();
-				if (status != kWarpStatusOK)
-				{
-					warpPrint("\r\n\treadAllMemoryIS25xP failed: %d", status);
-				}
-#endif
-
 				break;
 			}
 
 			case 'Z':
 			{
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
-				gWarpWriteToFlash = false;
 				warpPrint("\r\n\tResetting Flash\n");
 
 				WarpStatus status;
@@ -2800,6 +2770,7 @@ main(void)
 				}
 
 				warpPrint("\r\n\tFlash reset\n");
+
 				break;
 
 #else
@@ -2807,7 +2778,6 @@ main(void)
 				// break;
 #endif
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
-				gWarpWriteToFlash = false;
 				warpPrint("\r\n\tResetting Flash\n");
 				WarpStatus status;
 				status = resetIS25xP();
@@ -2816,17 +2786,6 @@ main(void)
 					warpPrint("\r\n\tresetIS25xP failed: %d", status);
 					break;
 				}
-				uint8_t pageOffsetBuf[3];
-				status = readMemoryIS25xP(0, 0, 3, pageOffsetBuf);
-				if (status != kWarpStatusOK)
-				{
-					warpPrint("\r\n\treadMemoryIS25xP failed: %d", status);
-					return status;
-				}
-				uint8_t	 pageOffset = pageOffsetBuf[2];
-				uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-				warpPrint("pageOffset, : %d, pageNumber, %d", pageOffset, pageNumber);
-
 				warpPrint("\r\n\tFlash reset\n");
 				break;
 #else
@@ -3122,7 +3081,7 @@ main(void)
 							{
 								buf[i] = i * j;
 							}
-							status = saveToIS25xPFromEnd(32, buf);
+							status = writeToIS25xPFromEnd(32, buf);
 							if (status != kWarpStatusOK)
 							{
 								warpPrint("\r\n\tProgramIS25xP failed: %d", status);
@@ -3196,9 +3155,9 @@ main(void)
 }
 
 void
-printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
-				int menuDelayBetweenEachRun, bool loopForever)
+writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 {
+#if (WARP_BUILD_ENABLE_FLASH)
 	uint32_t timeAtStart = OSA_TimeGetMsec();
 	/*
 	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling
@@ -3210,14 +3169,22 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 	/*
 	 *	The first 3 bit fields are reserved for the measurement number, and the 2 time stamps.
 	 */
-	uint16_t sensorBitField		= 0b0000000000111;
+	uint16_t sensorBitField = 0;
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+	sensorBitField = sensorBitField | kWarpFlashReadingCountBitField;
+	sensorBitField = sensorBitField | kWarpFlashRTCTSRBitField;
+	sensorBitField = sensorBitField | kWarpFlashRTCTPRBitField;
+#endif
+
 	uint8_t	 flashWriteBuf[128] = {0};
 
 	int rttKey = -1;
+	WarpStatus status;
 
 #if (WARP_BUILD_DEVADXL362)
 
-	sensorBitField = sensorBitField | 0b1000;
+	sensorBitField = sensorBitField | kWarpFlashADXL362BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
@@ -3225,7 +3192,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 												   0x01	 /* Frame rate 1 FPS */
 	);
 
-	sensorBitField = sensorBitField | 0b10000;
+	sensorBitField = sensorBitField | kWarpFlashAMG8834BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
@@ -3233,7 +3200,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		0x00, /* Payload: Disable FIFO */
 		0x01  /* Normal read 8bit, 800Hz, normal, active mode */
 	);
-	sensorBitField = sensorBitField | 0b100000;
+	sensorBitField = sensorBitField | kWarpFlashMMA8451QBitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
@@ -3243,7 +3210,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		0xA0, /*	Payload: AUTO_MRST_EN enable, RAW value without offset */
 		0x10);
 
-	sensorBitField = sensorBitField | 0b1000000;
+	sensorBitField = sensorBitField | kWarpFlashMAG3110BitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
@@ -3254,7 +3221,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		0b00000000 /* normal mode, disable FIFO, disable high pass filter */
 	);
 
-	sensorBitField = sensorBitField | 0b10000000;
+	sensorBitField = sensorBitField | kWarpFlashL3GD20HBitField;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
@@ -3267,7 +3234,254 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 					 */
 	);
 
-	sensorBitField = sensorBitField | 0b100000000;
+	sensorBitField = sensorBitField | kWarpFlashBME680BitField;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBMX055)
+	numberOfConfigErrors += configureSensorBMX055accel(
+		0b00000011, /* Payload:+-2g range */
+		0b10000000	/* Payload:unfiltered data, shadowing enabled */
+	);
+	numberOfConfigErrors += configureSensorBMX055mag(
+		0b00000001, /* Payload:from suspend mode to sleep mode*/
+		0b00000001	/* Default 10Hz data rate, forced mode*/
+	);
+	numberOfConfigErrors += configureSensorBMX055gyro(
+		0b00000100, /* +- 125degrees/s */
+		0b00000000, /* ODR 2000 Hz, unfiltered */
+		0b00000000, /* normal mode */
+		0b10000000	/* unfiltered data, shadowing enabled */
+	);
+
+	sensorBitField = sensorBitField | kWarpFlashBMX055BitField;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVCCS811)
+	uint8_t payloadCCS811[1];
+	payloadCCS811[0] = 0b01000000; /* Constant power, measurement every 250ms */
+	numberOfConfigErrors += configureSensorCCS811(payloadCCS811);
+
+	sensorBitField = sensorBitField | kWarpFlashCCS811BitField;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVHDC1000)
+	numberOfConfigErrors += writeSensorRegisterHDC1000(
+		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration register	*/
+		(0b1010000 << 8));
+
+	sensorBitField = sensorBitField | kWarpFlashHDC1000BitField;
+#endif
+
+	/*
+	 * Add RV8803C7 to sensorBitField
+	*/
+#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+	sensorBitField = sensorBitField | kWarpFlashRV8803C7BitField;
+#endif
+
+	// Add readingCount, 1 x timing, numberofConfigErrors
+	uint8_t sensorBitFieldSize = 2;
+	uint8_t bytesWrittenIndex  = 0;
+
+	/*
+	 * Write sensorBitField to flash first, outside of the loop.
+	*/
+	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField >> 8);
+	bytesWrittenIndex++;
+	flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField);
+	bytesWrittenIndex++;
+
+	do
+	{
+		bytesWrittenIndex = sensorBitFieldSize;
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount);
+		bytesWrittenIndex++;
+
+		uint32_t currentRTC_TSR = RTC->TSR;
+		uint32_t currentRTC_TPR = RTC->TPR;
+
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR);
+		bytesWrittenIndex++;
+
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 24);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 16);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 8);
+		bytesWrittenIndex++;
+		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR);
+		bytesWrittenIndex++;
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVADXL362)
+		bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVAMG8834)
+		bytesWrittenIndex += appendSensorDataAMG8834(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+		bytesWrittenIndex += appendSensorDataMMA8451Q(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMAG3110)
+		bytesWrittenIndex += appendSensorDataMAG3110(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVL3GD20H)
+		bytesWrittenIndex += appendSensorDataL3GD20H(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBME680)
+		bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBMX055)
+		bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
+		bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
+		// bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
+
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVCCS811)
+		bytesWrittenIndex += appendSensorDataCCS811(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVHDC1000)
+		bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVRV8803C7)
+		bytesWrittenIndex += appendSensorDataRV8803C7(flashWriteBuf + bytesWrittenIndex);
+#endif
+
+		/*
+		*	Number of config errors.
+		*	Uncomment to write to flash. Don't forget to update the initial bitfield at the start of this function.
+		*/
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 16);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
+		// bytesWrittenIndex++;
+		// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
+		// bytesWrittenIndex++;
+
+		/*
+		*	Dump to flash
+		*/
+		status = flashWriteFromEnd(bytesWrittenIndex, flashWriteBuf);
+		if (status != kWarpStatusOK)
+		{
+			warpPrint("\r\n\tflashWriteFromEnd failed: %d", status);
+			return;
+		}
+
+		if (menuDelayBetweenEachRun > 0)
+		{
+			// while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
+			// {
+			// }
+
+			// timeAtStart = OSA_TimeGetMsec();
+			status = warpSetLowPowerMode(kWarpPowerModeVLPS, menuDelayBetweenEachRun);
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("Failed to put into sleep: %d", status);
+			}
+		}
+
+		readingCount++;
+
+		rttKey = SEGGER_RTT_GetKey();
+
+		if (rttKey == 'q')
+		{
+			status = flashHandleEndOfWriteAllSensors();
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("\r\n\tflashHandleEndOfWriteAllSensors failed: %d", status);
+			}
+			break;
+		}
+	}
+	while (loopForever);
+#endif
+}
+
+void
+printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
+				int menuDelayBetweenEachRun, bool loopForever)
+{
+	WarpStatus status;
+	uint32_t timeAtStart = OSA_TimeGetMsec();
+
+	/*
+	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling
+	 *at 60fps
+	 */
+	uint32_t readingCount		  = 0;
+	uint32_t numberOfConfigErrors = 0;
+
+
+	int rttKey = -1;
+
+
+#if (WARP_BUILD_ENABLE_DEVAMG8834)
+	numberOfConfigErrors += configureSensorAMG8834(0x3F, /* Initial reset */
+												   0x01	 /* Frame rate 1 FPS */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+	numberOfConfigErrors += configureSensorMMA8451Q(
+		0x00, /* Payload: Disable FIFO */
+		0x01  /* Normal read 8bit, 800Hz, normal, active mode */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVMAG3110)
+	numberOfConfigErrors += configureSensorMAG3110(
+		0x00, /*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode
+							 to set up register*/
+		0xA0, /*	Payload: AUTO_MRST_EN enable, RAW value without offset */
+		0x10);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVL3GD20H)
+	numberOfConfigErrors += configureSensorL3GD20H(
+		0b11111111, /* ODR 800Hz, Cut-off 100Hz, see table 21, normal mode, x,y,z
+										 enable */
+		0b00100000,
+		0b00000000 /* normal mode, disable FIFO, disable high pass filter */
+	);
+#endif
+
+#if (WARP_BUILD_ENABLE_DEVBME680)
+	numberOfConfigErrors += configureSensorBME680(
+		0b00000001, /*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x
+					 */
+		0b00100100, /*	payloadCtrl_Meas: Temperature oversample 1x, pressure
+										 overdsample 1x, mode 00	*/
+		0b00001000	/*	payloadGas_0: Turn off heater
+					 */
+	);
 
 	if (printHeadersAndCalibration)
 	{
@@ -3302,30 +3516,26 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		0b00000000, /* normal mode */
 		0b10000000	/* unfiltered data, shadowing enabled */
 	);
-
-	sensorBitField = sensorBitField | 0b1000000000;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
 	uint8_t payloadCCS811[1];
 	payloadCCS811[0] = 0b01000000; /* Constant power, measurement every 250ms */
 	numberOfConfigErrors += configureSensorCCS811(payloadCCS811);
-
-	sensorBitField = sensorBitField | 0b10000000000;
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
 	numberOfConfigErrors += writeSensorRegisterHDC1000(
-		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration
-																															 register	*/
+		kWarpSensorConfigurationRegisterHDC1000Configuration, /* Configuration register	*/
 		(0b1010000 << 8));
-
-	sensorBitField = sensorBitField | 0b100000000000;
 #endif
 
 	if (printHeadersAndCalibration)
 	{
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
 		warpPrint("Measurement number, RTC->TSR, RTC->TPR,\t\t");
+#endif
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 		warpPrint(" ADXL362 x, ADXL362 y, ADXL362 z,");
@@ -3369,173 +3579,75 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		warpPrint(" HDC1000 Temp, HDC1000 Hum,");
 #endif
 
-		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		warpPrint(" RTC->TSR, RTC->TPR,");
+#endif
+		warpPrint(" numberOfConfigErrors");
 		warpPrint("\n\n");
 	}
 
-	// Add readingCount, 1 x timing, numberofConfigErrors
-	uint8_t sensorBitFieldSize = 2;
-	uint8_t bytesWrittenIndex  = 0;
-
-	if (gWarpWriteToFlash)
-	{
-		/*
-		 * Write sensorBitField to flash first, outside of the loop.
-		 */
-		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField >> 8);
-		bytesWrittenIndex++;
-		flashWriteBuf[bytesWrittenIndex] = (uint8_t)(sensorBitField);
-		bytesWrittenIndex++;
-	}
 	do
 	{
-		if (!gWarpWriteToFlash)
-		{
-			warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
+
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
+#endif
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
-			printSensorDataADXL362(hexModeFlag);
+		printSensorDataADXL362(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
-			printSensorDataAMG8834(hexModeFlag);
+		printSensorDataAMG8834(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			printSensorDataMMA8451Q(hexModeFlag);
+		printSensorDataMMA8451Q(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
-			printSensorDataMAG3110(hexModeFlag);
+		printSensorDataMAG3110(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-			printSensorDataL3GD20H(hexModeFlag);
+		printSensorDataL3GD20H(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBME680)
-			printSensorDataBME680(hexModeFlag);
+		printSensorDataBME680(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVBMX055)
-			printSensorDataBMX055accel(hexModeFlag);
-			printSensorDataBMX055mag(hexModeFlag);
-			printSensorDataBMX055gyro(hexModeFlag);
+		printSensorDataBMX055accel(hexModeFlag);
+		printSensorDataBMX055mag(hexModeFlag);
+		printSensorDataBMX055gyro(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
-			printSensorDataCCS811(hexModeFlag);
+		printSensorDataCCS811(hexModeFlag);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVHDC1000)
-			printSensorDataHDC1000(hexModeFlag);
+		printSensorDataHDC1000(hexModeFlag);
 #endif
 
-			warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
-		}
-		else
-		{
-			bytesWrittenIndex = sensorBitFieldSize;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(readingCount);
-			bytesWrittenIndex++;
-
-			uint32_t currentRTC_TSR = RTC->TSR;
-			uint32_t currentRTC_TPR = RTC->TPR;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TSR);
-			bytesWrittenIndex++;
-
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 24);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 16);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR >> 8);
-			bytesWrittenIndex++;
-			flashWriteBuf[bytesWrittenIndex] = (uint8_t)(currentRTC_TPR);
-			bytesWrittenIndex++;
-
-#if (WARP_BUILD_ENABLE_DEVADXL362)
-			bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
+#if (WARP_CSVSTREAM_FLASH_PRINT_METADATA)
+		warpPrint(" %12d, %6d,", RTC->TSR, RTC->TPR);
 #endif
-
-#if (WARP_BUILD_ENABLE_DEVAMG8834)
-			bytesWrittenIndex += appendSensorDataAMG8834(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			bytesWrittenIndex += appendSensorDataMMA8451Q(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVMAG3110)
-			bytesWrittenIndex += appendSensorDataMAG3110(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-			bytesWrittenIndex += appendSensorDataL3GD20H(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVBME680)
-			bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVBMX055)
-			bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
-			bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
-			// bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
-
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVCCS811)
-			bytesWrittenIndex += appendSensorDataCCS811(flashWriteBuf + bytesWrittenIndex);
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVHDC1000)
-			bytesWrittenIndex += appendSensorDataHDC1000(flashWriteBuf + bytesWrittenIndex);
-#endif
-			/*
-			 *	Removed flashing of number of config errors.
-			 */
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 24);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 16);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors >> 8);
-			// bytesWrittenIndex++;
-			// flashWriteBuf[bytesWrittenIndex] = (uint8_t)(numberOfConfigErrors);
-			// bytesWrittenIndex++;
-
-			/*
-			 *	Dump to flash
-			 */
-			// warpPrint("Writing %d bytes to flash\n", bytesWrittenIndex);
-			// for (int i = 0; i < bytesWrittenIndex; i++)
-			// {
-			// 	warpPrint("%d ", flashWriteBuf[i]);
-			// }
-			// warpPrint("\n");
-			saveToAT45DBFromEndBuffered(bytesWrittenIndex, flashWriteBuf);
-		}
+		warpPrint(" %u\n", numberOfConfigErrors);
 
 		if (menuDelayBetweenEachRun > 0)
 		{
-			while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
-			{
-			}
+			// while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
+			// {
+			// }
 
-			timeAtStart = OSA_TimeGetMsec();
+			// timeAtStart = OSA_TimeGetMsec();
+			status = warpSetLowPowerMode(kWarpPowerModeVLPS, menuDelayBetweenEachRun);
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("Failed to put into sleep: %d", status);
+			}
 		}
 
 		readingCount++;
@@ -3544,8 +3656,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 
 		if (rttKey == 'q')
 		{
-			gWarpWriteToFlash = 0;
-			savePartialBufferToMainMemoryAndSavePagePosition();
 			break;
 		}
 	}
@@ -4327,6 +4437,7 @@ powerupAllSensors(void)
 void
 activateAllLowPowerSensorModes(bool verbose)
 {
+	WarpStatus	status;
 /*
  *	ADXL362:	See Power Control Register (Address: 0x2D, Reset: 0x00).
  *
@@ -4350,7 +4461,7 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
  */
 #if WARP_BUILD_ENABLE_DEVBMX055
-		WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
+		status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
 							true					/*	sendCommandByte		*/,
 							0x11					/*	commandByte		*/,
 							true					/*	sendPayloadByte		*/,
@@ -4434,7 +4545,7 @@ activateAllLowPowerSensorModes(bool verbose)
  *	POR state seems to be powered down.
  */
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
-		WarpStatus status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
+		status = writeByteToI2cDeviceRegister(	deviceL3GD20HState.i2cAddress	/*	i2cAddress		*/,
 							true				/*	sendCommandByte		*/,
 							0x20				/*	commandByte		*/,
 							true				/*	sendPayloadByte		*/,
@@ -4483,3 +4594,445 @@ activateAllLowPowerSensorModes(bool verbose)
 	GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
 #endif
 }
+
+#if (WARP_BUILD_ENABLE_FLASH)
+WarpStatus
+flashWriteFromEnd(size_t nbyte, uint8_t* buf)
+{
+	#if (WARP_BUILD_ENABLE_DEVAT45DB)
+		return writeToAT45DBFromEndBuffered(nbyte, buf);
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		return writeToIS25xPFromEnd(nbyte, buf);
+	#endif
+}
+#endif
+
+#if (WARP_BUILD_ENABLE_FLASH)
+WarpStatus
+flashHandleEndOfWriteAllSensors()
+{
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
+	/*
+	 *	Write the remainder of buffer to main memory
+	 */
+	writeBufferAndSavePagePositionAT45DB();
+#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+	/*
+	 *	Do nothing
+	 */
+	return kWarpStatusOK;
+#endif
+}
+#endif
+
+#if (WARP_BUILD_ENABLE_FLASH)
+WarpStatus
+flashReadMemory(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf)
+{
+	#if (WARP_BUILD_ENABLE_DEVAT45DB)
+		return readMemoryAT45DB(startPageNumber, nbyte, buf);
+	#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+		return readMemoryIS25xP(startPageNumber, startPageOffset, nbyte, buf);
+	#endif
+}
+#endif
+
+#if (WARP_BUILD_ENABLE_FLASH)
+void
+flashHandleReadByte(uint8_t readByte, uint8_t *  bytesIndex, uint8_t *  readingIndex, uint8_t *  sensorIndex, uint8_t *  measurementIndex, uint8_t *  currentSensorNumberOfReadings, uint8_t *  currentSensorSizePerReading, uint16_t *  sensorBitField, uint8_t *  currentNumberOfSensors, int32_t *  currentReading)
+{
+	if (*measurementIndex == 0)
+	{
+		// reading sensorBitField
+		// warpPrint("\n%d ", readByte);
+		*sensorBitField = readByte << 8;
+		*measurementIndex = *measurementIndex + 1;
+
+		return;
+	}
+	else if (*measurementIndex == 1)
+	{
+		// warpPrint("%d\n", readByte);
+		*sensorBitField |= readByte;
+		*measurementIndex = *measurementIndex + 1;
+
+		*currentNumberOfSensors = flashGetNSensorsFromSensorBitField(*sensorBitField);
+
+		*sensorIndex	= 0;
+		*readingIndex	= 0;
+		*bytesIndex		= 0;
+
+		return;
+	}
+
+	if (*readingIndex == 0 && *bytesIndex == 0)
+	{
+		flashDecodeSensorBitField(*sensorBitField, *sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+		// warpPrint("\r\n\tsensorBit: %d, number of Sensors: %d, sensor index: %d, size: %d, readings: %d", sensorBitField, currentNumberOfSensors, sensorIndex, currentSensorSizePerReading, currentSensorNumberOfReadings);
+	}
+
+	if (*readingIndex < *currentSensorNumberOfReadings)
+	{
+		if (*bytesIndex < *currentSensorSizePerReading)
+		{
+			*currentReading |= readByte << (8 * (*currentSensorSizePerReading - *bytesIndex - 1));
+			*bytesIndex = *bytesIndex + 1;
+			*measurementIndex = *measurementIndex + 1;
+
+			if (*bytesIndex == *currentSensorSizePerReading)
+			{
+				if (*currentSensorSizePerReading == 4)
+				{
+					warpPrint("%d, ", (int32_t)(*currentReading));
+				}
+				else if (*currentSensorSizePerReading == 2)
+				{
+					warpPrint("%d, ", (int16_t)(*currentReading));
+				}
+				else if (*currentSensorSizePerReading == 1)
+				{
+					warpPrint("%d, ", (int8_t)(*currentReading));
+				}
+
+				*currentReading	= 0;
+				*bytesIndex		= 0;
+
+				*readingIndex = *readingIndex + 1;
+				*measurementIndex = *measurementIndex + 1;
+
+				if (*readingIndex == *currentSensorNumberOfReadings)
+				{
+					*readingIndex = 0;
+					*sensorIndex = *sensorIndex + 1;
+
+					if (*sensorIndex == *currentNumberOfSensors)
+					{
+						*measurementIndex = 0;
+						warpPrint("\b\b \n");
+					}
+				}
+			}
+		}
+	}
+}
+#endif
+
+WarpStatus
+flashReadAllMemory()
+{
+	WarpStatus status;
+
+#if (WARP_BUILD_ENABLE_FLASH)
+	int pageSizeBytes;
+	uint16_t pageOffsetStoragePage;
+	size_t pageOffsetStorageSize;
+	int initialPageNumber;
+	int initialPageOffset;
+
+#if (WARP_BUILD_ENABLE_DEVAT45DB)
+	pageSizeBytes				= kWarpSizeAT45DBPageSizeBytes;
+	pageOffsetStoragePage		= kWarpAT45DBPageOffsetStoragePage;
+	pageOffsetStorageSize		= kWarpAT45DBPageOffsetStorageSize;
+	initialPageNumber			= kWarpInitialPageNumberAT45DB;
+	initialPageOffset			= kWarpInitialPageOffsetAT45DB;
+#elif (WARP_BUILD_ENABLE_DEVIS25xP)
+	pageSizeBytes				= kWarpSizeIS25xPPageSizeBytes;
+	pageOffsetStoragePage		= kWarpIS25xPPageOffsetStoragePage;
+	pageOffsetStorageSize		= kWarpIS25xPPageOffsetStorageSize;
+	initialPageNumber			= kWarpInitialPageNumberIS25xP;
+	initialPageOffset			= kWarpInitialPageOffsetIS25xP;
+#endif
+
+	uint8_t dataBuffer[pageSizeBytes];
+
+	uint8_t pagePositionBuf[3];
+
+	status = flashReadMemory(pageOffsetStoragePage, 0, pageOffsetStorageSize, pagePositionBuf);
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	uint8_t pageOffset			= pagePositionBuf[2];
+	uint16_t pageNumberTotal 	= pagePositionBuf[1] | pagePositionBuf[0] << 8;
+
+	warpPrint("\r\n\tPage number: %d", pageNumberTotal);
+	warpPrint("\r\n\tPage offset: %d\n", pageOffset);
+	warpPrint("\r\n\tReading memory. Press 'q' to stop.\n\n");
+
+	uint8_t bytesIndex			= 0;
+	uint8_t readingIndex		= 0;
+	uint8_t sensorIndex			= 0;
+	uint8_t measurementIndex	= 0;
+
+	uint8_t currentSensorNumberOfReadings	= 0;
+	uint8_t currentSensorSizePerReading		= 0;
+
+	uint16_t sensorBitField			= 0;
+	uint8_t currentNumberOfSensors	= 0;
+
+	int32_t currentReading = 0;
+
+	int rttKey = -1;
+
+	for (uint32_t pageNumber = initialPageNumber; pageNumber < pageNumberTotal;
+			 pageNumber++)
+	{
+		rttKey = SEGGER_RTT_GetKey();
+		if (rttKey == 'q')
+		{
+			return kWarpStatusOK;
+		}
+
+		status = flashReadMemory(pageNumber, 0, pageSizeBytes, dataBuffer);
+		if (status != kWarpStatusOK)
+		{
+			return status;
+		}
+
+		for (size_t i = 0; i < kWarpSizeAT45DBPageSizeBytes; i++)
+		{
+			flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
+		}
+	}
+
+	if (pageOffset <= 0)
+	{
+		return status;
+	}
+
+	status = flashReadMemory(pageNumberTotal, 0, pageOffset, dataBuffer);
+
+	if (status != kWarpStatusOK)
+	{
+		return status;
+	}
+
+	for (size_t i = 0; i < pageOffset; i++)
+	{
+		flashHandleReadByte(dataBuffer[i], &bytesIndex, &readingIndex, &sensorIndex, &measurementIndex, &currentSensorNumberOfReadings, &currentSensorSizePerReading, &sensorBitField, &currentNumberOfSensors, &currentReading);
+	}
+#endif
+
+	return status;
+}
+
+#if (WARP_BUILD_ENABLE_FLASH)
+uint8_t
+flashGetNSensorsFromSensorBitField(uint16_t sensorBitField)
+{
+	uint8_t numberOfSensors = 0;
+
+	while (sensorBitField != 0)
+	{
+		sensorBitField = sensorBitField & (sensorBitField - 1);
+		numberOfSensors++;
+	}
+
+	return numberOfSensors;
+}
+#endif
+
+#if (WARP_BUILD_ENABLE_FLASH)
+void
+flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t* sizePerReading, uint8_t* numberOfReadings)
+{
+	uint8_t numberOfSensorsFound = 0;
+
+	/*
+	 * readingCount
+	*/
+	if (sensorBitField & kWarpFlashReadingCountBitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	/*
+	 * RTC->TSR
+	*/
+	if (sensorBitField & kWarpFlashRTCTSRBitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	/*
+	 * RTC->TPR
+	*/
+	if (sensorBitField & kWarpFlashRTCTPRBitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+
+	/*
+	 * ADXL362
+	*/
+	if (sensorBitField & kWarpFlashADXL362BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingADXL362;
+			*numberOfReadings = numberOfReadingsPerMeasurementADXL362;
+			return;
+		}
+	}
+
+	/*
+	 * AMG8834
+	*/
+	if (sensorBitField & kWarpFlashAMG8834BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingAMG8834;
+			*numberOfReadings = numberOfReadingsPerMeasurementAMG8834;
+			return;
+		}
+	}
+
+	/*
+	 * MMA8451Q
+	*/
+	if (sensorBitField & kWarpFlashMMA8541QBitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingMMA8451Q;
+			*numberOfReadings = numberOfReadingsPerMeasurementMMA8451Q;
+			return;
+		}
+	}
+
+	/*
+	 * MAG3110
+	*/
+	if (sensorBitField & kWarpFlashMAG3110BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingMAG3110;
+			*numberOfReadings = numberOfReadingsPerMeasurementMAG3110;
+			return;
+		}
+	}
+
+	/*
+	 * L3GD0H
+	*/
+	if (sensorBitField & kWarpFlashL3GD20HBitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingL3GD20H;
+			*numberOfReadings = numberOfReadingsPerMeasurementL3GD20H;
+			return;
+		}
+	}
+
+	/*
+	 * BME680
+	*/
+	if (sensorBitField & kWarpFlashBME680BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingBME680;
+			*numberOfReadings = numberOfReadingsPerMeasurementBME680;
+			return;
+		}
+	}
+
+	/*
+	 * BMX055
+	*/
+	if (sensorBitField & kWarpFlashBMX055BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingBMX055;
+			*numberOfReadings = numberOfReadingsPerMeasurementBMX055;
+			return;
+		}
+	}
+
+	/*
+	 * CCS811
+	*/
+	if (sensorBitField & kWarpFlashCCS811BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingCCS811;
+			*numberOfReadings = numberOfReadingsPerMeasurementCCS811;
+			return;
+		}
+	}
+
+	/*
+	 * HDC1000
+	*/
+	if (sensorBitField & kWarpFlashHDC1000BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingHDC1000;
+			*numberOfReadings = numberOfReadingsPerMeasurementHDC1000;
+			return;
+		}
+	}
+
+	/*
+	 * RV8803C7
+	*/
+	if (sensorBitField & kWarpFlashRV8803C7BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingRV8803C7;
+			*numberOfReadings 	= numberOfReadingsPerMeasurementRV8803C7;
+			return;
+		}
+	}
+
+	/*
+	 * Number of config errors
+	*/
+	if (sensorBitField & kWarpFlashNumConfigErrors)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= 4;
+			*numberOfReadings = 1;
+			return;
+		}
+	}
+}
+#endif

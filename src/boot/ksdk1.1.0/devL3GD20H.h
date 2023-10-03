@@ -44,5 +44,5 @@ void		printSensorDataL3GD20H(bool hexModeFlag);
 uint8_t 	appendSensorDataL3GD20H(uint8_t* buf);
 
 const uint8_t bytesPerMeasurementL3GD20H            = 8;
-const uint8_t bytesPerReadingAL3GD20H               = 2;
+const uint8_t bytesPerReadingL3GD20H               = 2;
 const uint8_t numberOfReadingsPerMeasurementL3GD20H = 4;

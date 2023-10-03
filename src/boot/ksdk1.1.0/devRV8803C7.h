@@ -114,6 +114,11 @@ WarpStatus	writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs,
 WarpStatus	setRTCTimeRV8803C7(rtc_datetime_t *  tm);
 WarpStatus	setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool interupt_enable);
 
+uint8_t appendSensorDataRV8803C7(uint8_t* buf);
+
+const uint8_t bytesPerMeasurementRV8803C7				= 3;
+const uint8_t bytesPerReadingRV8803C7					= 1;
+const uint8_t numberOfReadingsPerMeasurementRV8803C7 	= 3;
 /*
  *	TODO: Implement other functions:
  *

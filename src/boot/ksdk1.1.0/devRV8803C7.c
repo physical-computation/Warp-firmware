@@ -80,7 +80,7 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
-	
+
 	cmdBuff[0] = deviceRegister;
 
 	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
@@ -111,17 +111,17 @@ readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  
 	 */
 	uint8_t		cmdBuff[1];
 	i2c_status_t	status;
-	
+
 	if (deviceStartRegister > 0x2F)
 	{
 		return kWarpStatusBadDeviceCommand;
 	}
-	
+
 	i2c_device_t slave = {
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
-	
+
 	cmdBuff[0] = deviceStartRegister;
 
 	warpScaleSupplyVoltage(deviceRV8803C7State.operatingVoltageMillivolts);
@@ -163,7 +163,7 @@ writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
-	
+
 	cmdBuff[0] = deviceRegister;
 	txBuff[0] = payload;
 
@@ -406,7 +406,7 @@ setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool inter
 	{
 		ctrl |= kWarpRV8803CtrlTIE;
 	}
-	else 
+	else
 	{
 		ctrl &= ~kWarpRV8803CtrlTIE;
 	}
@@ -425,4 +425,55 @@ setRTCCountdownRV8803C7(uint16_t countdown, WarpRV8803ExtTD clk_freq, bool inter
 
 
 	return ret;
+}
+
+
+uint8_t
+appendSensorDataRV8803C7(uint8_t* buf)
+{
+	uint8_t	tmpRV8803RegisterByte;
+	WarpStatus status;
+	uint8_t index = 0;
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+	status = readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte);
+
+	if (status != kWarpStatusOK)
+	{
+		buf[index] = 0;
+		index += 1;
+	}
+	else
+	{
+		buf[index] = tmpRV8803RegisterByte;
+		index += 1;
+	}
+
+
+	return index;
 }

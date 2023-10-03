@@ -1,6 +1,6 @@
 /*
 	Authored 2016-2021. Phillip Stanley-Marbell.
-	
+
 	Additional contributions, 2018: Jan Heck, Chatura Samarakoon, Youchao Wang, Sam Willis.
 
 	All rights reserved.
@@ -39,6 +39,6 @@
 
 typedef enum
 {
-	kGlauxSleepSecondsBetweenSensorRepetitions	=	30,
-	kGlauxSensorRepetitionsPerSleepIteration	=	10,
+	kGlauxSleepSecondsBetweenSensorRepetitions	= 3600,
+	kGlauxSensorRepetitionsPerSleepIteration	= 1,
 } Glaux;
