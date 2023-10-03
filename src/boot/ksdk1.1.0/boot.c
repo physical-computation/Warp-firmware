@@ -3395,11 +3395,16 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 
 		if (menuDelayBetweenEachRun > 0)
 		{
-			while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
-			{
-			}
+			// while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
+			// {
+			// }
 
-			timeAtStart = OSA_TimeGetMsec();
+			// timeAtStart = OSA_TimeGetMsec();
+			status = warpSetLowPowerMode(kWarpPowerModeVLPS, menuDelayBetweenEachRun);
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("Failed to put into sleep: %d", status);
+			}
 		}
 
 		readingCount++;
@@ -3424,7 +3429,9 @@ void
 printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 				int menuDelayBetweenEachRun, bool loopForever)
 {
+	WarpStatus status;
 	uint32_t timeAtStart = OSA_TimeGetMsec();
+
 	/*
 	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling
 	 *at 60fps
@@ -3631,11 +3638,16 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 
 		if (menuDelayBetweenEachRun > 0)
 		{
-			while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
-			{
-			}
+			// while (OSA_TimeGetMsec() - timeAtStart < menuDelayBetweenEachRun)
+			// {
+			// }
 
-			timeAtStart = OSA_TimeGetMsec();
+			// timeAtStart = OSA_TimeGetMsec();
+			status = warpSetLowPowerMode(kWarpPowerModeVLPS, menuDelayBetweenEachRun);
+			if (status != kWarpStatusOK)
+			{
+				warpPrint("Failed to put into sleep: %d", status);
+			}
 		}
 
 		readingCount++;
