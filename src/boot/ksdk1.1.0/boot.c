@@ -1948,7 +1948,7 @@ main(void)
 
 #if (WARP_CSVSTREAM_TO_FLASH)
 		warpPrint("\r\n\tWriting directly to flash. Press 'q' to exit.\n");
-		writeAllSensorsToFlash(1, true);
+		writeAllSensorsToFlash(0, true);
 
 #else
 		printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */,
