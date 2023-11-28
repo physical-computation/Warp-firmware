@@ -85,6 +85,7 @@ typedef enum
 	kWarpSensorADXL362,
 	kWarpSensorMMA8451Q,
 	kWarpSensorBME680,
+	kWarpSensorBNO055,
 	kWarpSensorBMX055accel,
 	kWarpSensorBMX055gyro,
 	kWarpSensorBMX055mag,
@@ -102,6 +103,7 @@ typedef enum
 	kWarpSensorAS7262,
 	kWarpSensorAS7263,
 	kWarpSensorSCD30,
+	kWarpSensorRF430CL331H,
 } WarpSensorDevice;
 
 typedef enum
@@ -116,6 +118,30 @@ typedef enum
 
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
+
+	kWarpSensorConfigurationRegisterBNO055_OPR_MODE				= 0x3D,
+	kWarpSensorConfigurationRegisterBNO055_PWR_MODE				= 0x3E,
+	kWarpSensorConfigurationRegisterBNO055accelConf				= 0x08,
+	kWarpSensorConfigurationRegisterBNO055magConf				= 0x09,
+	kWarpSensorConfigurationRegisterBNO055gyroConf_Power_Mode	= 0x0A,
+	kWarpSensorConfigurationRegisterBNO055gyroConf_BW_Range		= 0x0B,
+	kWarpSensorConfigurationRegisterBNO055Page_ID				= 0x07,
+
+	kWarpSensorConfigureationRegisterRF430CL331H_Genral					=	0xFFFE,	
+	kWarpSensorConfigureationRegisterRF430CL331H_INT						=	0xFFFA,
+	kWarpSensorConfigureationRegisterRF430CL331H_INTFlag					=	0xFFF8,
+	kWarpSensorConfigureationRegisterRF430CL331H_CRC						=	0xFFF6,
+	kWarpSensorConfigureationRegisterRF430CL331H_CRC_LengthHigh			=	0xFFF5,
+	kWarpSensorConfigureationRegisterRF430CL331HL_CRC_LengthLow				=	0xFFF4,
+	kWarpSensorConfigureationRegisterRF430CL331H_CRC_StartAddressHigh		=	0xFFF3,
+	kWarpSensorConfigureationRegisterRF430CL331H_CRC_StartAddressLow		=	0xFFF2,
+	kWarpSensorConfigureationRegisterRF430CL331H_Watchdog					=	0xFFF0,
+	kWarpSensorConfigureationRegisterRF430CL331H_NDEF_File_Identifier		=	0xFFEC,
+	kWarpSensorConfigureationRegisterRF430CL331HL_HostResp					=	0xFFEA,
+	kWarpSensorConfigureationRegisterRF430CL331H_Buffer_Start_MSB			=	0xFFE5,
+	kWarpSensorConfigureationRegisterRF430CL331H_Buffer_Start_LSB			=	0xFFE4,
+	kWarpSensorConfigureationRegisterRF430CL331H_SWTX						=	0xFFDE,
+	
 
 	kWarpSensorConfigurationRegisterHDC1000Configuration	= 0x02,
 
@@ -189,6 +215,31 @@ typedef enum
 	kWarpSensorOutputRegisterHDC1000Temperature			= 0x00,
 	kWarpSensorOutputRegisterHDC1000Humidity			= 0x01,
 
+	kWarpSensourOutputRegisterBNO055EUL_HEADING_LSB		= 0x1A,
+	kWarpSensourOutputRegisterBNO055EUL_HEADING_MSB		= 0x1B,
+	kWarpSensourOutputRegisterBNO055EUL_ROLL_LSB		= 0x1C,
+	kWarpSensourOutputRegisterBNO055EUL_ROLL_MSB		= 0x1D,
+	kWarpSensourOutputRegisterBNO055EUL_PITCH_LSB		= 0x1E,
+	kWarpSensourOutputRegisterBNO055EUL_PITCH_MSB		= 0x1F,
+	kWarpSensourOutputRegisterBNO055Accel_Data_X_LSB	= 0x08,
+	kWarpSensourOutputRegisterBNO055Accel_Data_X_MSB	= 0x09,
+	kWarpSensourOutputRegisterBNO055Accel_Data_Y_LSB	= 0x0A,
+	kWarpSensourOutputRegisterBNO055Accel_Data_Y_MSB	= 0x0B,
+	kWarpSensourOutputRegisterBNO055Accel_Data_Z_LSB	= 0x0C,
+	kWarpSensourOutputRegisterBNO055Accel_Data_Z_MSB	= 0x0D,
+	kWarpSensourOutputRegisterBNO055Mag_Data_X_LSB		= 0x0E,
+	kWarpSensourOutputRegisterBNO055Mag_Data_X_MSB		= 0x0F,
+	kWarpSensourOutputRegisterBNO055Mag_Data_Y_LSB		= 0x10,
+	kWarpSensourOutputRegisterBNO055Mag_Data_Y_MSB		= 0x11,
+	kWarpSensourOutputRegisterBNO055Mag_Data_Z_LSB		= 0x12,
+	kWarpSensourOutputRegisterBNO055Mag_Data_Z_MSB		= 0x13,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_X_LSB		= 0x14,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_X_MSB		= 0x15,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_Y_LSB		= 0x16,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_Y_MSB		= 0x17,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_Z_LSB		= 0x18,
+	kWarpSensourOutputRegisterBNO055Gyro_Data_Z_MSB		= 0x19,
+
 	kWarpSensorOutputRegisterAMG8834TTHL				= 0x0E,
 	kWarpSensorOutputRegisterAMG8834TTHH				= 0x0F,
 	kWarpSensorOutputRegisterAMG8834T01L				= 0x80,
@@ -254,6 +305,14 @@ typedef enum
 	kWarpSensorOutputRegisterADXL362FILTER_CTL			= 0x2C,
 	kWarpSensorOutputRegisterADXL362POWER_CTL			= 0x2D,
 
+	kWarpSensorOutputRegisterRF430CL331H_Status						=	0xFFFC,
+	kWarpSensorOutputRegisterRF430CL331H_version					=	0xFFEE,
+	kWarpSensorOutputRegisterRF430CL331H_NDEF_Block_Length_MSB		=	0xFFE9,
+	kWarpSensorOutputRegisterRF430CL331H_NDEF_Block_Length_LSB		=	0xFFE8,
+	kWarpSensorOutputRegisterRF430CL331H_NDEF_File_Offset			=	0xFFE6,
+	kWarpSensorOutputRegisterRF430CL331H_Custom_Status_Word			=	0xFFDA,
+
+
 
 } WarpSensorOutputRegister;
 
@@ -263,6 +322,8 @@ typedef enum
 	kWarpSensorConfigConstADXL362registerReadRegister		= 0x0B,
 	kWarpSensorConfigConstADXL362registerFIFORead			= 0x0D,
 	kWarpSensorConfigConstADXL362resetCode					= 0x52,
+	kWarpSensorConfigConstBNO055registerAMGMode				= 0x01,
+	kWarpSensorConfigConstBNO055registerNDOFMode			= 0x0C,
 } WarpSensorConfigConst;
 
 typedef enum

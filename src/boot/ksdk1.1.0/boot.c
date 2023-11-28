@@ -82,10 +82,12 @@
 #include "devMAG3110.h"
 #include "devL3GD20H.h"
 #include "devBME680.h"
+#include "devBNO055.h"
 #include "devBMX055.h"
 #include "devCCS811.h"
 #include "devHDC1000.h"
 #include "devRV8803C7.h"
+// #include "devRF430CL331H.h"
 
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
@@ -121,7 +123,14 @@
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+	#include "devBNO055.h"
+	volatile WarpI2CDeviceState			deviceBNO055State;	
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+	#include "devRF430CL331H.h"
+	volatile WarpI2CDeviceState			deviceRF430CL331HState;	
+#endif
 #if (WARP_BUILD_ENABLE_DEVLPS25H)
 	#include "devLPS25H.h"
 	volatile WarpI2CDeviceState			deviceLPS25HState;
@@ -197,10 +206,13 @@ typedef enum
 	kWarpFlashMAG3110BitField		= 0b1000000,
 	kWarpFlashL3GD20HBitField		= 0b10000000,
 	kWarpFlashBME680BitField		= 0b100000000,
-	kWarpFlashBMX055BitField		= 0b1000000000,
-	kWarpFlashCCS811BitField		= 0b10000000000,
+	kWarpFlashBNO055BitField		= 0b1000000000,
+	kWarpFlashBMX055BitField		= 0b10000000000,
+	kWarpFlashCCS811BitField		= 0b100000000000,
 	kWarpFlashHDC1000BitField		= 0b100000000000,
+	kWarpFlashRF430CL331HBitField	= 0b100000000000,
 	kWarpFlashRV8803C7BitField		= 0b100000000000000,
+	
 	kWarpFlashNumConfigErrors		= 0b1000000000000000,
 } WarpFlashSensorBitFieldEncoding;
 
@@ -632,7 +644,7 @@ warpDeasserAllSPIchipSelects(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-	GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
+	GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);	
 #endif
 }
 
@@ -669,7 +681,7 @@ warpEnableI2Cpins(void)
 	 */
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortMuxAlt2);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortMuxAlt2);
-
+	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 	I2C_DRV_MasterInit(0 /* I2C instance */, (i2c_master_state_t *)&i2cMasterState);
 // #endif
 }
@@ -680,7 +692,12 @@ void
 warpDisableI2Cpins(void)
 {
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		return;
+
+	// GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA_UART_RX);
+	// GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL_UART_TX);
+	
+	return;
+
 #else
 	I2C_DRV_MasterDeinit(0 /* I2C instance */);
 
@@ -719,9 +736,12 @@ lowPowerPinStates(void)
 	 *
 	 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
 	 */
-	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	// PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA0);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
+	// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA1);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
+	// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA2);
 
 	/*
 		 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
@@ -733,6 +753,8 @@ lowPowerPinStates(void)
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
+	// GPIO_DRV_ClearPinOutput(kWarpPinEXTAL0);
+	// GPIO_DRV_ClearPinOutput(kWarpPinXTAL0);
 
 	/*
 	 *	Disable PTA5
@@ -742,6 +764,7 @@ lowPowerPinStates(void)
 	 *
 	 */
 	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortPinDisabled);
+	// GPIO_DRV_ClearPinOutput(kWarpPinRTC_CLKIN);
 
 	/*
 	 *	PTA6, PTA7, PTA8, and PTA9 on Glaux are SPI and sacrificial SPI.
@@ -787,6 +810,7 @@ lowPowerPinStates(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
+	
 
 	/*
 	 *	NOTE:
@@ -1700,7 +1724,13 @@ main(void)
 #if (WARP_BUILD_ENABLE_DEVBME680)
 		initBME680(	0x77	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsBME680	);
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+		initBNO055(0x28 /* i2cAddress */, kWarpDefaultSupplyVoltageMillivoltsBNO055);		
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+		// GPIO_DRV_SetPinOutput(kGlauxPinUnusedPTB1);
+		initRF430CL331H(0x1F /* i2cAddress */, kWarpDefaultSupplyVoltageMillivoltsRF430CL331H);		
+#endif
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
 		initTCS34725(	0x29	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 #endif
@@ -1913,7 +1943,9 @@ main(void)
 #if (!WARP_BUILD_ENABLE_GLAUX_VARIANT && WARP_BUILD_BOOT_TO_CSVSTREAM)
 	int timer  = 0;
 	int rttKey = -1;
-
+	#if (WARP_BUILD_ENABLE_DEVBNO055)
+				configureSensorRegisterBNO055(0x00, 0x02);				
+	#endif
 	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
 	gWarpExtraQuietMode = false;
 	warpPrint("Press any key to show menu...\n");
@@ -1989,7 +2021,9 @@ main(void)
 			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 			{
 #if (WARP_CSVSTREAM_TO_FLASH)
-				writeAllSensorsToFlash(1, false);
+				//releaseDeepPowerModeIS25xP();
+				// GPIO_DRV_ClearPinOutput(kGlauxPinUnusedPTB1);
+				writeAllSensorsToFlash(1, 0, false);
 #else
 				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, false /* loopForever */);
 #endif
@@ -2004,12 +2038,22 @@ main(void)
 			{
 				warpPrint("configureSensorBME680() failed...\n");
 			}
-
+			#if (WARP_BUILD_ENABLE_DEVBNO055)
+				configureSensorRegisterBNO055(0x00, 0x02);	
+				StateBNO055();			
+			#endif
+			#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+				StatusRF430CL331H();
+				// configureSensorRegisterRF430CL331H(0x0040);
+				// StatusRF430CL331H();
+			#endif
+			flashStatusIS25xP();
+			//deepPowerModeIS25xP();
 			warpDisableI2Cpins();
 			blinkLED(kGlauxPinLED);
-
-				warpPrint("About to go into VLLS0...\n");
-				status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
+			// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA0);
+			warpPrint("About to go into VLLS0...\n");
+			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
 
 			if (status != kWarpStatusOK)
 			{
@@ -2141,7 +2185,16 @@ main(void)
 #else
 					warpPrint("\r\t- 'b' BME680			(0xAA--0xF8): 1.6V -- 3.6V (compiled out) \n");
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+					warpPrint("\r\t- 'M' BNO055			(0x0D--0x75): 2.7V -- 3.6V\n");					
+#else
+					warpPrint("\r\t- 'M' BNO055			(0x0D--0x75): 2.7V -- 3.6V (compiled out) \n");					
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+					warpPrint("\r\t- 'M' RF430CL331H			(0x0D--0x75): 3V -- 3.6V\n");					
+#else
+					warpPrint("\r\t- 'M' RF430CL331H			(0x0D--0x75): 3V -- 3.6V (compiled out) \n");					
+#endif
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
 					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V\n");
 #else
@@ -2276,6 +2329,38 @@ main(void)
 					{
 						menuTargetSensor = kWarpSensorBME680;
 						menuI2cDevice = &deviceBME680State;
+						break;
+					}
+#endif
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+						case 'M':
+						{
+							readSensorRegisterBNO055(0x00 , 1);
+							warpPrint("BNO055 chip ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x01  , 1);
+							warpPrint("BNO055 acc ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x02  , 1);
+							warpPrint("BNO055 mag ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x03  , 1);
+							warpPrint("BNO055 gyr ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x04  , 1);
+							warpPrint("BNO055 SW Revision LSB ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x05  , 1);
+							warpPrint("BNO055 SW Revision MSB ID: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x3D  , 1);
+							warpPrint("BNO055 OPR_MODE: %x\n", deviceBNO055State.i2cBuffer[0]);
+							readSensorRegisterBNO055(0x3E  , 1);
+							warpPrint("BNO055 PWR_MODE: %x\n", deviceBNO055State.i2cBuffer[0]);
+							menuTargetSensor = kWarpSensorBNO055;
+							menuI2cDevice = &deviceBNO055State;
+							break;
+						}
+#endif
+#if (WARP_BUILD_ENABLE_DEVERF430CL331H)
+					case 'N':
+					{
+						menuTargetSensor 	= kWarpSensorERF430CL331H;
+						menuI2cDevice 		= &deviceERF430CL331HState;
 						break;
 					}
 #endif
@@ -3236,7 +3321,21 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 
 	sensorBitField = sensorBitField | kWarpFlashBME680BitField;
 #endif
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
 
+	sensorBitField = sensorBitField | 0b100000000000;	
+#endif
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
+
+	sensorBitField = sensorBitField | 0b100000000000;	
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+	numberOfConfigErrors += configureSensorRegisterRF430CL331H(0x0040);
+
+	sensorBitField = sensorBitField | 0b100000000000;	
+#endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 	numberOfConfigErrors += configureSensorBMX055accel(
 		0b00000011, /* Payload:+-2g range */
@@ -3350,7 +3449,12 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 #if (WARP_BUILD_ENABLE_DEVBME680)
 		bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+	numberOfConfigErrors += configureSensorRegisterRF430CL331H(0x0040);
+#endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 		bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
 		bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
@@ -3564,7 +3668,12 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 #if (WARP_BUILD_ENABLE_DEVBME680)
 		warpPrint(" BME680 Press, BME680 Temp, BME680 Hum,");
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+			warpPrint("Accel x,Accel y, Accel z, Mag x, Mag y, Mag z,Gyro x, Gyro y, Gyro z");
+#endif
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+			warpPrint("NFC/RFID");
+#endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 		warpPrint(" BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
 		warpPrint(" BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
@@ -3616,7 +3725,9 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 #if (WARP_BUILD_ENABLE_DEVBME680)
 		printSensorDataBME680(hexModeFlag);
 #endif
-
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+			printSensorDataBNO055(hexModeFlag);	
+#endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 		printSensorDataBMX055accel(hexModeFlag);
 		printSensorDataBMX055mag(hexModeFlag);
@@ -3892,7 +4003,62 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 
 			break;
 		}
+case kWarpSensorBNO055:
+			{
+			/*
+			 *	BNO055: VDD 1.95--3.6
+			 */
+#if (WARP_BUILD_ENABLE_DEVBNO055)
+				loopForSensor(	"\r\nBNO055:\n\r",		/*	tagString			*/
+						&readSensorRegisterBNO055,	/*	readSensorRegisterFunction	*/
+						&deviceBNO055State,		/*	i2cDeviceState			*/
+						NULL,				/*	spiDeviceState			*/
+						baseAddress,			/*	baseAddress			*/
+						0x00,				/*	minAddress			*/
+						0x7F,				/*	maxAddress			*/
+						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+						spinDelay,			/*	spinDelay			*/
+						autoIncrement,			/*	autoIncrement			*/
+						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+						referenceByte,			/*	referenceByte			*/
+						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+						chatty				/*	chatty				*/
+						);
+#else
+				warpPrint("\r\n\tBNO055 Read Aborted. Device Disabled :(");
+#endif
 
+			break;
+		}
+case kWarpSensorRF430CL331H:
+			{
+			/*
+			 *	BNO055: VDD 1.95--3.6
+			 */
+#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+				loopForSensor(	"\r\nBNO055:\n\r",		/*	tagString			*/
+						&readSensorRegisterRF430CL331H,	/*	readSensorRegisterFunction	*/
+						&deviceRF430CL331HState,		/*	i2cDeviceState			*/
+						NULL,				/*	spiDeviceState			*/
+						baseAddress,			/*	baseAddress			*/
+						0x0000,				/*	minAddress			*/
+						0xFFFF,				/*	maxAddress			*/
+						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+						spinDelay,			/*	spinDelay			*/
+						autoIncrement,			/*	autoIncrement			*/
+						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+						referenceByte,			/*	referenceByte			*/
+						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+						chatty				/*	chatty				*/
+						);
+#else
+				warpPrint("\r\n\tRF430CL331H Read Aborted. Device Disabled :(");
+#endif
+
+			break;
+		}
 		case kWarpSensorBMX055accel:
 		{
 /*

@@ -621,7 +621,7 @@ flashStatusIS25xP()
 	}
 	else
 	{
-		warpPrint("Status = [" BYTE_TO_BINARY_PATTERN "]\n",
+		warpPrint("Flash Status = [" BYTE_TO_BINARY_PATTERN "]\n",
 							BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
 	}
 	return kWarpStatusOK;
@@ -656,4 +656,42 @@ waitForWriteCompletion()
 		}
 	}
 	return kWarpStatusOK;
+}
+WarpStatus
+deepPowerModeIS25xP()
+{
+	enableIS25xPWrite();
+	uint8_t ops[1] = {0};
+
+	ops[0] = 0xB9; /* CER (SPI Mode) */
+
+	WarpStatus status;
+	status = spiTransactionIS25xP(ops, 1);
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("\r\n\tError: communication failed");
+		return status;
+	}
+	status = waitForWriteCompletion();
+
+	return status;
+}
+WarpStatus
+releaseDeepPowerModeIS25xP()
+{
+	enableIS25xPWrite();
+	uint8_t ops[1] = {0};
+
+	ops[0] = 0xAB; /* CER (SPI Mode) */
+
+	WarpStatus status;
+	status = spiTransactionIS25xP(ops, 1);
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("\r\n\tError: communication failed");
+		return status;
+	}
+	status = waitForWriteCompletion();
+
+	return status;
 }
