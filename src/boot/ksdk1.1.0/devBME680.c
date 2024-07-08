@@ -438,3 +438,13 @@ appendSensorDataBME680(uint8_t* buf)
 	 */
 	return index;
 }
+WarpStatus
+StateBME680()
+{
+
+	WarpStatus i2cReadStatusLSB;
+	i2cReadStatusLSB            = readSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas, 1);
+	warpPrint("BME680 Status = [" BYTE_TO_BINARY_PATTERN "]\n",
+							BYTE_TO_BINARY(deviceBME680State.i2cBuffer[0]));
+	return kWarpStatusOK;
+}

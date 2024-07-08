@@ -38,9 +38,9 @@
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF			1
 #define WARP_BUILD_BOOT_TO_CSVSTREAM				1
 #define WARP_CSVSTREAM_TO_FLASH						1
-#define WARP_CSVSTREAM_FLASH_PRINT_METADATA			0
+#define WARP_CSVSTREAM_FLASH_PRINT_METADATA			1
 #define WARP_BUILD_EXTRA_QUIET_MODE					0
-#define WARP_BUILD_BOOT_TO_VLPR						1
+#define WARP_BUILD_BOOT_TO_VLPR						0
 #define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
 
 /*
@@ -82,7 +82,7 @@
 #define WARP_BUILD_ENABLE_DEVLPS25H   0
 #define WARP_BUILD_ENABLE_DEVMAG3110  0
 #define WARP_BUILD_ENABLE_DEVMMA8451Q 0
-#define WARP_BUILD_ENABLE_DEVRV8803C7 0
+#define WARP_BUILD_ENABLE_DEVRV8803C7 1
 #define WARP_BUILD_ENABLE_DEVSI4705   0
 #define WARP_BUILD_ENABLE_DEVSI7021   0
 #define WARP_BUILD_ENABLE_DEVTCS34725 0
@@ -136,7 +136,7 @@
 #define WARP_BUILD_ENABLE_DEVSI4705   0
 #define WARP_BUILD_ENABLE_DEVSI7021   0
 #define WARP_BUILD_ENABLE_DEVTCS34725 0
-#define WARP_BUILD_ENABLE_DEVBNO055   1
+#define WARP_BUILD_ENABLE_DEVBNO055   0
 #endif
 
 typedef enum
@@ -188,7 +188,7 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110     = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI7021      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H     = 2200,
-	kWarpDefaultSupplyVoltageMillivoltsBME680      = 2400,
+	kWarpDefaultSupplyVoltageMillivoltsBME680      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725    = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811      = 1800,
@@ -201,6 +201,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsISL23415    = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsICE40       = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBNO055      = 3300,
-	kWarpDefaultSupplyVoltageMillivoltsRF430CL331H      = 3300,
+	kWarpDefaultSupplyVoltageMillivoltsBNO055      = 2500,
+	kWarpDefaultSupplyVoltageMillivoltsRF430CL331H      = 2500,
 } WarpDefaults;

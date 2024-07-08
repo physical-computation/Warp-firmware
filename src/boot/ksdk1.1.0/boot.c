@@ -87,7 +87,7 @@
 #include "devCCS811.h"
 #include "devHDC1000.h"
 #include "devRV8803C7.h"
-// #include "devRF430CL331H.h"
+#include "devRF430CL331H.h"
 
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
@@ -209,8 +209,8 @@ typedef enum
 	kWarpFlashBNO055BitField		= 0b1000000000,
 	kWarpFlashBMX055BitField		= 0b10000000000,
 	kWarpFlashCCS811BitField		= 0b100000000000,
-	kWarpFlashHDC1000BitField		= 0b100000000000,
-	kWarpFlashRF430CL331HBitField	= 0b100000000000,
+	kWarpFlashHDC1000BitField		= 0b1000000000000,
+	kWarpFlashRF430CL331HBitField	= 0b10000000000000,
 	kWarpFlashRV8803C7BitField		= 0b100000000000000,
 	
 	kWarpFlashNumConfigErrors		= 0b1000000000000000,
@@ -692,9 +692,6 @@ void
 warpDisableI2Cpins(void)
 {
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-
-	// GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SDA_UART_RX);
-	// GPIO_DRV_ClearPinOutput(kWarpPinI2C0_SCL_UART_TX);
 	
 	return;
 
@@ -736,12 +733,9 @@ lowPowerPinStates(void)
 	 *
 	 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
 	 */
-	// PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
-	GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA0);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
-	// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA1);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
-	// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA2);
 
 	/*
 		 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
@@ -751,10 +745,12 @@ lowPowerPinStates(void)
 	 *
 	 *	NOTE:	kPortPinDisabled is the equivalent of `Alt0`
 	 */
+	// PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortMuxAsGpio);
+	// PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortMuxAsGpio);
+
 	PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
-	// GPIO_DRV_ClearPinOutput(kWarpPinEXTAL0);
-	// GPIO_DRV_ClearPinOutput(kWarpPinXTAL0);
+
 
 	/*
 	 *	Disable PTA5
@@ -826,6 +822,10 @@ lowPowerPinStates(void)
 
 	GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
 	GPIO_DRV_ClearPinOutput(kGlauxPinLED);
+
+	// GPIO_DRV_ClearPinOutput(kWarpPinEXTAL0);
+	// GPIO_DRV_ClearPinOutput(kWarpPinXTAL0);
+
 
 	return;
 }
@@ -1728,7 +1728,6 @@ main(void)
 		initBNO055(0x28 /* i2cAddress */, kWarpDefaultSupplyVoltageMillivoltsBNO055);		
 #endif
 #if (WARP_BUILD_ENABLE_DEVRF430CL331H)
-		// GPIO_DRV_SetPinOutput(kGlauxPinUnusedPTB1);
 		initRF430CL331H(0x1F /* i2cAddress */, kWarpDefaultSupplyVoltageMillivoltsRF430CL331H);		
 #endif
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
@@ -2000,6 +1999,11 @@ main(void)
 
 	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
 	gWarpExtraQuietMode = false;
+	releaseDeepPowerModeIS25xP();
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("\r\n\tError: communication failed");
+	}
 	warpPrint("Press any key to show menu...\n");
 	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
 
@@ -2021,45 +2025,71 @@ main(void)
 			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
 			{
 #if (WARP_CSVSTREAM_TO_FLASH)
-				//releaseDeepPowerModeIS25xP();
-				// GPIO_DRV_ClearPinOutput(kGlauxPinUnusedPTB1);
-				writeAllSensorsToFlash(1, 0, false);
+				
+				#if (WARP_BUILD_ENABLE_DEVIS25xP)
+					/*
+					*	Release the Flash from deep power-down
+					*/
+					releaseDeepPowerModeIS25xP();
+					// if (status != kWarpStatusOK)
+					// {
+					// 	warpPrint("\r\n\tError: communication failed");
+					// }
+					warpPrint("\r\n\tFlash status after releasing from deep power mode and before reading data from it\n");
+					flashStatusIS25xP();
+				#endif
+				writeAllSensorsToFlash(0, 1, false);
 #else
 				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, false /* loopForever */);
 #endif
 			}
-
+			#if (WARP_BUILD_ENABLE_DEVBME680)
 			warpPrint("About to configureSensorBME680() for sleep...\n");
 				status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
 								0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
 								0b00001000	/*	payloadGas_0: Turn off heater						*/
-			);
+			);			
 			if (status != kWarpStatusOK)
 			{
 				warpPrint("configureSensorBME680() failed...\n");
 			}
+			StateBME680();
+			#endif
 			#if (WARP_BUILD_ENABLE_DEVBNO055)
 				configureSensorRegisterBNO055(0x00, 0x02);	
 				StateBNO055();			
 			#endif
 			#if (WARP_BUILD_ENABLE_DEVRF430CL331H)
+				warpPrint("\r\n\tRF430CL control register status before going to standby mode\n");
 				StatusRF430CL331H();
-				// configureSensorRegisterRF430CL331H(0x0040);
-				// StatusRF430CL331H();
+				configureSensorRegisterRF430CL331H(0x0040);
+				warpPrint("\r\n\tRF430CL control register status after going to standby mode\n");
+				StatusRF430CL331H();
 			#endif
-			flashStatusIS25xP();
-			//deepPowerModeIS25xP();
+			#if (WARP_BUILD_ENABLE_DEVIS25xP)
+			/*
+			*	Put the Flash in deep power-down
+			*/
+				deepPowerModeIS25xP();
+				// if (status != kWarpStatusOK)
+				// {
+				// 	warpPrint("\r\n\tError: communication failed");
+				// }
+				// warpPrint("\r\n\tFlash status after going into low power mode\n");
+				flashStatusIS25xP();
+			#endif
+			
+			
 			warpDisableI2Cpins();
 			blinkLED(kGlauxPinLED);
-			// GPIO_DRV_SetPinOutput(kWarpPinUnusedPTA0);
 			warpPrint("About to go into VLLS0...\n");
 			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
 
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
-			}
-			warpPrint("Should not get here...");
+			// if (status != kWarpStatusOK)
+			// {
+			// 	warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
+			// }
+			// warpPrint("Should not get here...");
 		}
 	}
 #endif
@@ -2576,6 +2606,15 @@ main(void)
 			{
 				warpPrint("\r\n\tNOTE: First power sensors and enable I2C\n\n");
 				activateAllLowPowerSensorModes(true /* verbose */);
+				#if (WARP_BUILD_ENABLE_DEVBME680)
+					StateBME680();
+				#endif
+				#if (WARP_BUILD_ENABLE_DEVIS25xP)
+					flashStatusIS25xP();
+				#endif
+				#if (WARP_BUILD_ENABLE_DEVBNO055)
+					StateBNO055();	
+				#endif
 
 				break;
 			}
@@ -2761,14 +2800,14 @@ main(void)
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 			case 'v':
 			{
-				warpPrint("\r\n\tSleeping for 3 seconds, then resetting\n");
-				warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */);
-				if (status != kWarpStatusOK)
-				{
-					warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds : irrelevant here */)() failed...\n");
-				}
+				// warpPrint("\r\n\tSleeping for 3 seconds, then resetting\n");
+				// warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds */);
+				// if (status != kWarpStatusOK)
+				// {
+				// 	warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds : irrelevant here */)() failed...\n");
+				// }
 
-				warpPrint("\r\n\tThis should never happen...\n");
+				// warpPrint("\r\n\tThis should never happen...\n");
 
 				break;
 			}
@@ -3324,17 +3363,12 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 #if (WARP_BUILD_ENABLE_DEVBNO055)
 	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
 
-	sensorBitField = sensorBitField | 0b100000000000;	
-#endif
-#if (WARP_BUILD_ENABLE_DEVBNO055)
-	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
-
-	sensorBitField = sensorBitField | 0b100000000000;	
+	sensorBitField = sensorBitField | kWarpFlashBNO055BitField;	
 #endif
 #if (WARP_BUILD_ENABLE_DEVRF430CL331H)
-	numberOfConfigErrors += configureSensorRegisterRF430CL331H(0x0040);
+	// numberOfConfigErrors += configureSensorRegisterRF430CL331H(0x0040);
 
-	sensorBitField = sensorBitField | 0b100000000000;	
+	// sensorBitField = sensorBitField | kWarpFlashRF430CL331HBitField;	
 #endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 	numberOfConfigErrors += configureSensorBMX055accel(
@@ -3450,16 +3484,15 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		bytesWrittenIndex += appendSensorDataBME680(flashWriteBuf + bytesWrittenIndex);
 #endif
 #if (WARP_BUILD_ENABLE_DEVBNO055)
-	numberOfConfigErrors += configureSensorRegisterBNO055(0x00, 0x02);
+	//bytesWrittenIndex += appendSensorDataBNO055(flashWriteBuf + bytesWrittenIndex);
 #endif
 #if (WARP_BUILD_ENABLE_DEVRF430CL331H)
-	numberOfConfigErrors += configureSensorRegisterRF430CL331H(0x0040);
+	// bytesWrittenIndex += appendSensorDataRF430CL331H(flashWriteBuf + bytesWrittenIndex);
 #endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 		bytesWrittenIndex += appendSensorDataBMX055accel(flashWriteBuf + bytesWrittenIndex);
 		bytesWrittenIndex += appendSensorDataBMX055mag(flashWriteBuf + bytesWrittenIndex);
-		// bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
-
+		bytesWrittenIndex += appendSensorDataBMX055gyro(flashWriteBuf + bytesWrittenIndex);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVCCS811)
@@ -3471,7 +3504,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
-		bytesWrittenIndex += appendSensorDataRV8803C7(flashWriteBuf + bytesWrittenIndex);
+		// bytesWrittenIndex += appendSensorDataRV8803C7(flashWriteBuf + bytesWrittenIndex);
 #endif
 
 		/*
@@ -3592,7 +3625,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		warpPrint("\r\n\nBME680 Calibration Data: ");
 		for (uint8_t i = 0; i < kWarpSizesBME680CalibrationValuesCount; i++)
 		{
-			warpPrint("0x%02x", deviceBME680CalibrationValues[i]);
+			warpPrint("%u", deviceBME680CalibrationValues[i]);
 			if (i < kWarpSizesBME680CalibrationValuesCount - 1)
 			{
 				warpPrint(", ");
@@ -3726,7 +3759,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		printSensorDataBME680(hexModeFlag);
 #endif
 #if (WARP_BUILD_ENABLE_DEVBNO055)
-			printSensorDataBNO055(hexModeFlag);	
+			// printSensorDataBNO055(hexModeFlag);	
 #endif
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 		printSensorDataBMX055accel(hexModeFlag);
@@ -4618,7 +4651,7 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	Put the Flash in deep power-down
 	 */
 		//TODO: move 0xB9 into a named constant
-		//spiTransactionIS25xP({0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 1 /* opCount */);
+		// spiTransactionIS25xP({0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 1 /* opCount */);
 #endif
 
 /*
