@@ -196,20 +196,15 @@ programSingleIS25xPWithoutOffsetUpdate(uint16_t* pageNumber_p, uint8_t* pageOffs
 		status = programPageIS25xP(*pageNumber_p, *pageOffset_p, gFlashWriteLimit, buf + (i * gFlashWriteLimit));
 		*pageOffset_p += gFlashWriteLimit;
 
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\n\tError: programPageIS25xP failed");
-			return status;
-		}
+		// if (status != kWarpStatusOK)
+		// {
+		// 	warpPrint("\r\n\tError: programPageIS25xP failed");
+		// 	return status;
+		// }
 	}
 
 	if (excess > 0) {
 		status = programPageIS25xP(*pageNumber_p, *pageOffset_p, excess, buf + (nIterations * gFlashWriteLimit));
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\n\tError: programPageIS25xP failed");
-			return status;
-		}
 		*pageOffset_p += excess;
 	}
 
@@ -225,11 +220,11 @@ programMultipleIS25xPWithoutOffsetUpdate(uint16_t* pageNumber_p, uint8_t* pageOf
 	{
 		size_t nByteToWrite = kWarpSizeIS25xPPageSizeBytes - *pageOffset_p;
 		status = programSingleIS25xPWithoutOffsetUpdate(pageNumber_p, pageOffset_p, nByteToWrite, buf);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\n\tError: programSingleIS25xPWithoutOffsetUpdate failed");
-			return status;
-		}
+		// if (status != kWarpStatusOK)
+		// {
+		// 	warpPrint("\r\n\tError: programSingleIS25xPWithoutOffsetUpdate failed");
+		// 	return status;
+		// }
 		*pageNumber_p += 1;
 		*pageOffset_p = 0;
 
@@ -237,11 +232,11 @@ programMultipleIS25xPWithoutOffsetUpdate(uint16_t* pageNumber_p, uint8_t* pageOf
 	} else
 	{
 		status = programSingleIS25xPWithoutOffsetUpdate(pageNumber_p, pageOffset_p, nbyte, buf);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\n\tError: programSingleIS25xPWithoutOffsetUpdate failed");
-			return status;
-		}
+		// if (status != kWarpStatusOK)
+		// {
+		// 	warpPrint("\r\n\tError: programSingleIS25xPWithoutOffsetUpdate failed");
+		// 	return status;
+		// }
 	}
 
 	return kWarpStatusOK;
@@ -254,28 +249,28 @@ writeToIS25xPFromEnd(size_t nbyte, uint8_t *buf)
 	WarpStatus status;
 	uint8_t pageOffsetBuf[3];
 	status = readMemoryIS25xP(kWarpIS25xPPageOffsetStoragePage, kWarpIS25xPPageOffsetStorageOffset, kWarpIS25xPPageOffsetStorageSize, pageOffsetBuf);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: readMemoryIS25xP failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: readMemoryIS25xP failed");
+	// 	return status;
+	// }
 
 	uint8_t pageOffset = pageOffsetBuf[2];
 	uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
 
 	status = programMultipleIS25xPWithoutOffsetUpdate(&pageNumber, &pageOffset, nbyte, buf);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: programMultipleIS25xPWithoutOffsetUpdate failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: programMultipleIS25xPWithoutOffsetUpdate failed");
+	// 	return status;
+	// }
 
 	status = programPageNumberAndOffset(pageNumber, pageOffset);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: programPageNumberAndOffset failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: programPageNumberAndOffset failed");
+	// 	return status;
+	// }
 
 	return kWarpStatusOK;
 }
@@ -293,11 +288,11 @@ programPageNumberAndOffset(uint16_t pageNumber, uint8_t pageOffset)
 {
 	WarpStatus status;
 	status = eraseSectorIS25xP(0);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError:raseSectorIS25xP failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError:raseSectorIS25xP failed");
+	// 	return status;
+	// }
 
 	uint8_t address[3];
 	address[1] = (uint8_t)(pageNumber);
@@ -306,11 +301,11 @@ programPageNumberAndOffset(uint16_t pageNumber, uint8_t pageOffset)
 
 
 	status = programPageIS25xP(0, 0, 3, address);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: programPageIS25xP failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: programPageIS25xP failed");
+	// 	return status;
+	// }
 	return kWarpStatusOK;
 }
 
@@ -326,11 +321,11 @@ resetIS25xP()
 	}
 
 	status = programPageNumberAndOffset(kWarpInitialPageNumberIS25xP, kWarpInitialPageOffsetIS25xP);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: programPageNumberAndOffset failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: programPageNumberAndOffset failed");
+	// 	return status;
+	// }
 
 	return kWarpStatusOK;
 }
@@ -389,11 +384,11 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 	deviceOpsBuffer[3] = startPageOffset;
 
 	status = spiTransactionIS25xP(deviceOpsBuffer, nBytesBeingRead + 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: communication failed");
+	// 	return status;
+	// }
 
 	for (size_t i = 0; i < nBytesBeingRead; i++)
 	{
@@ -431,18 +426,18 @@ programPageIS25xP(uint16_t startPageAddress, uint8_t startPageOffset, size_t nby
 
 	enableIS25xPWrite();
 	status = spiTransactionIS25xP(ops, nbyte + 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: communication failed");
+	// 	return status;
+	// }
 
 	status = waitForWriteCompletion();
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: waitForWriteCompletion failed");
-		return status;
-	}
+	// if (status != kWarpStatusOK)
+	// {
+	// 	warpPrint("\r\n\tError: waitForWriteCompletion failed");
+	// 	return status;
+	// }
 
 	disableIS25xPWrite();
 
@@ -474,46 +469,6 @@ eraseSectorIS25xP(uint32_t address)
 	if (status != kWarpStatusOK)
 	{
 		warpPrint("\r\n\tError: waitForWriteCompletion failed");
-		return status;
-	}
-	return kWarpStatusOK;
-}
-
-WarpStatus
-erase32kBlockIS25xP(uint32_t address)
-{
-	WarpStatus status;
-
-	uint8_t ops[4] = {0};
-	ops[0] = 0x52; /* BER32K (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
-
-	status = spiTransactionIS25xP(ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
-		return status;
-	}
-	return kWarpStatusOK;
-}
-
-WarpStatus
-erase64kBlockIS25xP(uint32_t address)
-{
-	WarpStatus status;
-
-	uint8_t ops[4] = {0};
-	ops[0] = 0xD8; /* BER64K (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
-
-	status = spiTransactionIS25xP(ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
 		return status;
 	}
 	return kWarpStatusOK;

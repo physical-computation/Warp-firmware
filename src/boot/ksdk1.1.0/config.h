@@ -38,7 +38,7 @@
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF			1
 #define WARP_BUILD_BOOT_TO_CSVSTREAM				1
 #define WARP_CSVSTREAM_TO_FLASH						1
-#define WARP_CSVSTREAM_FLASH_PRINT_METADATA			1
+#define WARP_CSVSTREAM_FLASH_PRINT_METADATA			0
 #define WARP_BUILD_EXTRA_QUIET_MODE					0
 #define WARP_BUILD_BOOT_TO_VLPR						0
 #define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
@@ -188,7 +188,7 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110     = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI7021      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H     = 2200,
-	kWarpDefaultSupplyVoltageMillivoltsBME680      = 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBME680      = 2400,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725    = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705      = 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811      = 1800,
