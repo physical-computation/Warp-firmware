@@ -57,15 +57,15 @@
 #include "warp.h"
 
 extern volatile WarpI2CDeviceState	deviceHDC1000State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initHDC1000(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceHDC1000State.i2cAddress			= i2cAddress;
+	deviceHDC1000State.i2cAddress					= i2cAddress;
 	deviceHDC1000State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -93,8 +93,9 @@ writeSensorRegisterHDC1000(uint8_t deviceRegister, uint16_t payload)
 
 	i2c_device_t slave =
 		{
-			.address       = deviceHDC1000State.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps};
+		.address       = deviceHDC1000State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
 
 	warpScaleSupplyVoltage(deviceHDC1000State.operatingVoltageMillivolts);
 

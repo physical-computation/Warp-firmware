@@ -57,16 +57,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceSI4705State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
 void
 initSI4705(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceSI4705State.i2cAddress			= i2cAddress;
+	deviceSI4705State.i2cAddress					= i2cAddress;
 	deviceSI4705State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -81,7 +81,7 @@ readSensorRegisterSI4705(uint8_t deviceRegister, int numberOfBytes)
 
 	USED(numberOfBytes);
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceSI4705State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};

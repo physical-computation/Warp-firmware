@@ -24,22 +24,23 @@ extern volatile WarpI2CDeviceState	deviceBNO055State;
 extern volatile WarpI2CDeviceState	deviceBNO055accelState;
 extern volatile WarpI2CDeviceState	deviceBNO055gyroState;
 extern volatile WarpI2CDeviceState	deviceBNO055magState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 void
 initBNO055(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceBNO055State.i2cAddress			= i2cAddress;
+	deviceBNO055State.i2cAddress					= i2cAddress;
 	deviceBNO055State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
 }
+
 WarpStatus
 writeSensorRegisterBNO055(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	status;
 
 	if (deviceRegister > 0x3F)
@@ -49,9 +50,9 @@ writeSensorRegisterBNO055(uint8_t deviceRegister, uint8_t payload)
 
 	i2c_device_t slave =
 		{
-		.address = deviceBNO055State.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-		};
+		.address 		= deviceBNO055State.i2cAddress,
+		.baudRate_kbps 	= gWarpI2cBaudRateKbps
+	};
 
 	commandByte[0] = deviceRegister;
 	payloadByte[0] = payload;
@@ -73,6 +74,7 @@ writeSensorRegisterBNO055(uint8_t deviceRegister, uint8_t payload)
 
 	return kWarpStatusOK;
 }
+
 WarpStatus
 configureSensorRegisterBNO055(uint8_t payloadOP_Mode, uint8_t payloadPWR_Mode)
 {
@@ -86,24 +88,22 @@ configureSensorRegisterBNO055(uint8_t payloadOP_Mode, uint8_t payloadPWR_Mode)
 											 payloadPWR_Mode /* payload */
 	);
 
-    // OSA_TimeDelay(7);
+    OSA_TimeDelay(7);
 
 	
 	return (status1 | status2);
 }
+
 WarpStatus
 readSensorRegisterBNO055(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
-
-	
-
 	i2c_device_t slave =
-	{
-		.address = deviceBNO055State.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
+		{
+		.address 		= deviceBNO055State.i2cAddress,
+		.baudRate_kbps 	= gWarpI2cBaudRateKbps
 	};
 	cmdBuf[0] = deviceRegister;
 	warpScaleSupplyVoltage(deviceBNO055State.operatingVoltageMillivolts);
@@ -124,10 +124,11 @@ readSensorRegisterBNO055(uint8_t deviceRegister, int numberOfBytes)
 	}
 	return kWarpStatusOK;
 }
+
 void
 printSensorDataBNO055(bool hexModeFlag) {
-    int16_t	readSensorRegisterValueLSB;
-	int16_t	readSensorRegisterValueMSB;
+    int16_t		readSensorRegisterValueLSB;
+	int16_t		readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 	int16_t accX, accY, accZ, magX, magY, magZ, gyrX, gyrY, gyrZ;
@@ -200,6 +201,7 @@ printSensorDataBNO055(bool hexModeFlag) {
 	}
 
 }
+
 WarpStatus
 StateBNO055()
 {
@@ -216,8 +218,8 @@ appendSensorDataBNO055(uint8_t* buf)
 {
 	uint8_t index = 0;
 
-	int16_t	readSensorRegisterValueLSB;
-	int16_t	readSensorRegisterValueMSB;
+	int16_t		readSensorRegisterValueLSB;
+	int16_t		readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
 
@@ -260,8 +262,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
-
 	}
 	else
 	{
@@ -285,7 +285,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{
@@ -309,7 +308,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{
@@ -332,7 +330,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{
@@ -355,7 +352,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{
@@ -378,7 +374,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{
@@ -424,7 +419,6 @@ appendSensorDataBNO055(uint8_t* buf)
 	{
 		buf[index] = 0;
 		index += 1;
-
 	}
 	else
 	{

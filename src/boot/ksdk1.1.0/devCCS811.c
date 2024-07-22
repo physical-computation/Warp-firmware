@@ -57,9 +57,9 @@
 #include "warp.h"
 
 extern volatile WarpI2CDeviceState	deviceCCS811State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
@@ -69,7 +69,7 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 void
 initCCS811(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceCCS811State.i2cAddress			= i2cAddress;
+	deviceCCS811State.i2cAddress					= i2cAddress;
 	deviceCCS811State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;

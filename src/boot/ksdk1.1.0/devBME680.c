@@ -58,16 +58,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceBME680State;
-extern volatile uint8_t			deviceBME680CalibrationValues[];
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint8_t				deviceBME680CalibrationValues[];
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initBME680(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceBME680State.i2cAddress			= i2cAddress;
+	deviceBME680State.i2cAddress					= i2cAddress;
 	deviceBME680State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -114,7 +114,7 @@ writeSensorRegisterBME680(uint8_t deviceRegister, uint8_t payload)
 WarpStatus
 readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
+	uint8_t			cmdBuf[1] = {0xFF};
 	i2c_status_t	status;
 
 
@@ -179,7 +179,7 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 	/*
 	 *	Read the calibration registers
 	 */
-	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion1Start;
+	for (reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion1Start;
 		 reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion1End;
 		 reg++)
 	{
@@ -187,7 +187,7 @@ configureSensorBME680(uint8_t payloadCtrl_Hum, uint8_t payloadCtrl_Meas, uint8_t
 		deviceBME680CalibrationValues[index++] = deviceBME680State.i2cBuffer[0];
 	}
 
-	for (	reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start;
+	for (reg = kWarpSensorConfigurationRegisterBME680CalibrationRegion2Start;
 		 reg < kWarpSensorConfigurationRegisterBME680CalibrationRegion2End;
 		 reg++)
 	{
@@ -441,7 +441,6 @@ appendSensorDataBME680(uint8_t* buf)
 WarpStatus
 StateBME680()
 {
-
 	WarpStatus i2cReadStatusLSB;
 	i2cReadStatusLSB            = readSensorRegisterBME680(kWarpSensorConfigurationRegisterBME680Ctrl_Meas, 1);
 	warpPrint("BME680 Status = [" BYTE_TO_BINARY_PATTERN "]\n",

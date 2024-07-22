@@ -65,52 +65,52 @@
  *	Force the required configuration if WARP_BUILD_ENABLE_GLAUX_VARIANT is set
  */
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-#define WARP_BUILD_ENABLE_DEVADXL362  0
-#define WARP_BUILD_ENABLE_DEVAMG8834  0
-#define WARP_BUILD_ENABLE_DEVAS7262   0
-#define WARP_BUILD_ENABLE_DEVAS7263   0
-#define WARP_BUILD_ENABLE_DEVBGX      0
-#define WARP_BUILD_ENABLE_DEVBME680   1
-#define WARP_BUILD_ENABLE_DEVBMX055   0
-#define WARP_BUILD_ENABLE_DEVCCS811   0
-#define WARP_BUILD_ENABLE_DEVHDC1000  0
-#define WARP_BUILD_ENABLE_DEVIS25xP   1
-#define WARP_BUILD_ENABLE_DEVISL23415 0
-#define WARP_BUILD_ENABLE_DEVAT45DB   0
-#define WARP_BUILD_ENABLE_DEVICE40    0
-#define WARP_BUILD_ENABLE_DEVL3GD20H  0
-#define WARP_BUILD_ENABLE_DEVLPS25H   0
-#define WARP_BUILD_ENABLE_DEVMAG3110  0
-#define WARP_BUILD_ENABLE_DEVMMA8451Q 0
-#define WARP_BUILD_ENABLE_DEVRV8803C7 1
-#define WARP_BUILD_ENABLE_DEVSI4705   0
-#define WARP_BUILD_ENABLE_DEVSI7021   0
-#define WARP_BUILD_ENABLE_DEVTCS34725 0
-#define WARP_BUILD_ENABLE_DEVBNO055   1
-#define WARP_BUILD_ENABLE_DEVRF430CL331H  0
+#define WARP_BUILD_ENABLE_DEVADXL362  		0
+#define WARP_BUILD_ENABLE_DEVAMG8834  		0
+#define WARP_BUILD_ENABLE_DEVAS7262   		0
+#define WARP_BUILD_ENABLE_DEVAS7263   		0
+#define WARP_BUILD_ENABLE_DEVBGX      		0
+#define WARP_BUILD_ENABLE_DEVBME680   		1
+#define WARP_BUILD_ENABLE_DEVBMX055   		0
+#define WARP_BUILD_ENABLE_DEVCCS811   		0
+#define WARP_BUILD_ENABLE_DEVHDC1000  		0
+#define WARP_BUILD_ENABLE_DEVIS25xP   		1
+#define WARP_BUILD_ENABLE_DEVISL23415 		0
+#define WARP_BUILD_ENABLE_DEVAT45DB   		0
+#define WARP_BUILD_ENABLE_DEVICE40    		0
+#define WARP_BUILD_ENABLE_DEVL3GD20H  		0
+#define WARP_BUILD_ENABLE_DEVLPS25H   		0
+#define WARP_BUILD_ENABLE_DEVMAG3110  		0
+#define WARP_BUILD_ENABLE_DEVMMA8451Q 		0
+#define WARP_BUILD_ENABLE_DEVRV8803C7 		0
+#define WARP_BUILD_ENABLE_DEVSI4705   		0
+#define WARP_BUILD_ENABLE_DEVSI7021   		0
+#define WARP_BUILD_ENABLE_DEVTCS34725 		0
+#define WARP_BUILD_ENABLE_DEVBNO055   		0
+#define WARP_BUILD_ENABLE_DEVRF430CL331H  	0
 #elif (WARP_BUILD_ENABLE_FRDMKL03)
-#define WARP_BUILD_ENABLE_DEVADXL362  0
-#define WARP_BUILD_ENABLE_DEVAMG8834  0
-#define WARP_BUILD_ENABLE_DEVAS7262   0
-#define WARP_BUILD_ENABLE_DEVAS7263   0
-#define WARP_BUILD_ENABLE_DEVBGX      0
-#define WARP_BUILD_ENABLE_DEVBME680   0
-#define WARP_BUILD_ENABLE_DEVBMX055   0
-#define WARP_BUILD_ENABLE_DEVCCS811   0
-#define WARP_BUILD_ENABLE_DEVHDC1000  0
-#define WARP_BUILD_ENABLE_DEVIS25xP   0
-#define WARP_BUILD_ENABLE_DEVISL23415 0
-#define WARP_BUILD_ENABLE_DEVAT45DB   0
-#define WARP_BUILD_ENABLE_DEVICE40    0
-#define WARP_BUILD_ENABLE_DEVL3GD20H  0
-#define WARP_BUILD_ENABLE_DEVLPS25H   0
-#define WARP_BUILD_ENABLE_DEVMAG3110  0
-#define WARP_BUILD_ENABLE_DEVMMA8451Q 1
-#define WARP_BUILD_ENABLE_DEVRV8803C7 0
-#define WARP_BUILD_ENABLE_DEVSI4705   0
-#define WARP_BUILD_ENABLE_DEVSI7021   0
-#define WARP_BUILD_ENABLE_DEVTCS34725 0
-#define WARP_BUILD_ENABLE_DEVBNO055 0
+#define WARP_BUILD_ENABLE_DEVADXL362  	0
+#define WARP_BUILD_ENABLE_DEVAMG8834  	0
+#define WARP_BUILD_ENABLE_DEVAS7262   	0
+#define WARP_BUILD_ENABLE_DEVAS7263   	0
+#define WARP_BUILD_ENABLE_DEVBGX      	0
+#define WARP_BUILD_ENABLE_DEVBME680   	0
+#define WARP_BUILD_ENABLE_DEVBMX055   	0
+#define WARP_BUILD_ENABLE_DEVCCS811   	0
+#define WARP_BUILD_ENABLE_DEVHDC1000  	0
+#define WARP_BUILD_ENABLE_DEVIS25xP   	0
+#define WARP_BUILD_ENABLE_DEVISL23415 	0
+#define WARP_BUILD_ENABLE_DEVAT45DB   	0
+#define WARP_BUILD_ENABLE_DEVICE40    	0
+#define WARP_BUILD_ENABLE_DEVL3GD20H  	0
+#define WARP_BUILD_ENABLE_DEVLPS25H   	0
+#define WARP_BUILD_ENABLE_DEVMAG3110  	0
+#define WARP_BUILD_ENABLE_DEVMMA8451Q 	1
+#define WARP_BUILD_ENABLE_DEVRV8803C7 	0
+#define WARP_BUILD_ENABLE_DEVSI4705   	0
+#define WARP_BUILD_ENABLE_DEVSI7021   	0
+#define WARP_BUILD_ENABLE_DEVTCS34725 	0
+#define WARP_BUILD_ENABLE_DEVBNO055 	0
 #else
 /*
  *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
@@ -177,30 +177,30 @@ typedef enum
 	/*
 	 *	Voltages
 	 */
-	kWarpDefaultSupplyVoltageMillivolts            = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBGX         = 2000,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055accel = 2600,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro  = 2600,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055mag   = 2600,
-	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q    = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsLPS25H      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsHDC1000     = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsMAG3110     = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsSI7021      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsL3GD20H     = 2200,
-	kWarpDefaultSupplyVoltageMillivoltsBME680      = 2400,
-	kWarpDefaultSupplyVoltageMillivoltsTCS34725    = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsSI4705      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsCCS811      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAMG8834     = 2600,
-	kWarpDefaultSupplyVoltageMillivoltsAS7262      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAS7263      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsRV8803C7    = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsADXL362     = 2400,
-	kWarpDefaultSupplyVoltageMillivoltsIS25xP      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsISL23415    = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAT45DB      = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsICE40       = 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBNO055      = 2500,
+	kWarpDefaultSupplyVoltageMillivolts            		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBGX         		= 2000,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055accel 		= 2600,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro  		= 2600,
+	kWarpDefaultSupplyVoltageMillivoltsBMX055mag   		= 2600,
+	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q    		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsLPS25H      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsHDC1000     		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsMAG3110     		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI7021      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsL3GD20H     		= 2200,
+	kWarpDefaultSupplyVoltageMillivoltsBME680      		= 2400,
+	kWarpDefaultSupplyVoltageMillivoltsTCS34725    		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSI4705      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsCCS811      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAMG8834     		= 2600,
+	kWarpDefaultSupplyVoltageMillivoltsAS7262      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAS7263      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsRV8803C7    		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsADXL362     		= 2400,
+	kWarpDefaultSupplyVoltageMillivoltsIS25xP      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsISL23415    		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsAT45DB      		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsICE40       		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsBNO055      		= 2500,
 	kWarpDefaultSupplyVoltageMillivoltsRF430CL331H      = 2500,
 } WarpDefaults;

@@ -43,7 +43,7 @@ WarpStatus	configureSensorBME680(	uint8_t payloadCtrl_Hum,
 WarpStatus	readSensorRegisterBME680(uint8_t deviceRegister, int numberOfBytes);
 void		printSensorDataBME680(bool hexModeFlag);
 uint8_t		appendSensorDataBME680(uint8_t* buf);
-WarpStatus StateBME680();
+WarpStatus 	StateBME680();
 
 const uint8_t	bytesPerMeasurementBME680				= 12;
 const uint8_t	bytesPerReadingBME680					= 4;

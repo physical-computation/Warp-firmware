@@ -58,16 +58,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceL3GD20HState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
 void
 initL3GD20H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceL3GD20HState.i2cAddress			= i2cAddress;
+	deviceL3GD20HState.i2cAddress					= i2cAddress;
 	deviceL3GD20HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;

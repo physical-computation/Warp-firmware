@@ -58,9 +58,9 @@
 #include "devADXL362.h"
 
 extern volatile WarpSPIDeviceState	deviceADXL362State;
-extern volatile uint32_t		gWarpSpiTimeoutMicroseconds;
-extern uint8_t				gWarpSpiCommonSourceBuffer[];
-extern uint8_t				gWarpSpiCommonSinkBuffer[];
+extern volatile uint32_t			gWarpSpiTimeoutMicroseconds;
+extern uint8_t						gWarpSpiCommonSourceBuffer[];
+extern uint8_t						gWarpSpiCommonSinkBuffer[];
 
 
 /*
@@ -85,10 +85,10 @@ initADXL362(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
 	WarpStatus	status;
 
-	deviceADXL362State.chipSelectIoPinID		= chipSelectIoPinID;
-	deviceADXL362State.spiSourceBuffer		= gWarpSpiCommonSourceBuffer;
-	deviceADXL362State.spiSinkBuffer		= gWarpSpiCommonSinkBuffer;
-	deviceADXL362State.spiBufferLength		= kWarpMemoryCommonSpiBufferBytes;
+	deviceADXL362State.chipSelectIoPinID			= chipSelectIoPinID;
+	deviceADXL362State.spiSourceBuffer				= gWarpSpiCommonSourceBuffer;
+	deviceADXL362State.spiSinkBuffer				= gWarpSpiCommonSinkBuffer;
+	deviceADXL362State.spiBufferLength				= kWarpMemoryCommonSpiBufferBytes;
 	deviceADXL362State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	/*

@@ -21,14 +21,14 @@
 
 
 extern volatile WarpI2CDeviceState	deviceRF430CL331HState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 void
 initRF430CL331H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceRF430CL331HState.i2cAddress			= i2cAddress;
+	deviceRF430CL331HState.i2cAddress					= i2cAddress;
 	deviceRF430CL331HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -37,14 +37,14 @@ initRF430CL331H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterRF430CL331H(uint16_t deviceRegister, uint16_t payload)
 {
-	uint8_t		payloadByte[2], commandByte[2];
+	uint8_t			payloadByte[2], commandByte[2];
 	i2c_status_t	status;
 
 	i2c_device_t slave =
 		{
-		.address = deviceRF430CL331HState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-		};
+		.address 		= deviceRF430CL331HState.i2cAddress,
+		.baudRate_kbps 	= gWarpI2cBaudRateKbps
+	};
 
 	commandByte[0] = (uint8_t)((deviceRegister >> 8) & 0xFF); /* MSB first */
 	commandByte[1] = (uint8_t)(deviceRegister & 0xFF);        /* LSB */
@@ -68,6 +68,7 @@ writeSensorRegisterRF430CL331H(uint16_t deviceRegister, uint16_t payload)
 
 	return kWarpStatusOK;
 }
+
 WarpStatus
 configureSensorRegisterRF430CL331H(uint16_t payloadOP_Mode)
 {
@@ -77,20 +78,20 @@ configureSensorRegisterRF430CL331H(uint16_t payloadOP_Mode)
 	status1 = writeSensorRegisterRF430CL331H(kWarpSensorConfigureationRegisterRF430CL331H_Genral /* register address PMU_RANGE */,
 											 payloadOP_Mode /* payload */
 	);
-
 	
 	return (status1);
 }
+
 WarpStatus
 readSensorRegisterRF430CL331H(uint16_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[2] = {0xFF};
+	uint8_t			cmdBuf[2] = {0xFF};
 	i2c_status_t	status;
 
 	i2c_device_t slave =
-	{
-		.address = deviceRF430CL331HState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
+		{
+		.address 		= deviceRF430CL331HState.i2cAddress,
+		.baudRate_kbps 	= gWarpI2cBaudRateKbps
 	};
 	cmdBuf[0] = (uint8_t)((deviceRegister >> 8) & 0xFF); /* MSB first */
 	cmdBuf[1] = (uint8_t)(deviceRegister & 0xFF);        /* LSB */
@@ -112,8 +113,10 @@ readSensorRegisterRF430CL331H(uint16_t deviceRegister, int numberOfBytes)
 	}
 	return kWarpStatusOK;
 }
+
 WarpStatus
-StatusRF430CL331H(){
+StatusRF430CL331H()
+{
 	WarpStatus status;
 	status = readSensorRegisterRF430CL331H(kWarpSensorConfigureationRegisterRF430CL331H_Genral  , 2);
 	warpPrint("RF430Status Status = [" BYTE_TO_BINARY_PATTERN "]\n",

@@ -78,5 +78,5 @@ void 		enableIS25xPWrite();
 void 		disableIS25xPWrite();
 WarpStatus 	flashStatusIS25xP();
 WarpStatus 	waitForWriteCompletion();
-WarpStatus deepPowerModeIS25xP();
-WarpStatus releaseDeepPowerModeIS25xP();
+WarpStatus 	deepPowerModeIS25xP();
+WarpStatus 	releaseDeepPowerModeIS25xP();

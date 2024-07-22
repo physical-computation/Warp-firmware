@@ -36,7 +36,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-enum {
+enum 
+{
 	kWarpI2C_AS726x_SLAVE_WRITE_REG	= 0x01,
 	kWarpI2C_AS726x_SLAVE_READ_REG	= 0x02
 };

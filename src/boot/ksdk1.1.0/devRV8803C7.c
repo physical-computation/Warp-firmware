@@ -50,14 +50,14 @@
 #include "devRV8803C7.h"
 
 extern volatile WarpI2CDeviceState	deviceRV8803C7State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
 
 
 void
 initRV8803C7(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceRV8803C7State.i2cAddress			= i2cAddress;
+	deviceRV8803C7State.i2cAddress					= i2cAddress;
 	deviceRV8803C7State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -76,7 +76,8 @@ readRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t *receiveData)
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	i2c_device_t slave = {
+	i2c_device_t slave = 
+		{
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -117,7 +118,8 @@ readRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t *  
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	i2c_device_t slave = {
+	i2c_device_t slave = 
+		{
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -159,7 +161,8 @@ writeRTCRegisterRV8803C7(uint8_t deviceRegister, uint8_t payload)
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	i2c_device_t slave = {
+	i2c_device_t slave = 
+		{
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -201,7 +204,8 @@ writeRTCRegistersRV8803C7(uint8_t deviceStartRegister, uint8_t nRegs, uint8_t pa
 		return kWarpStatusBadDeviceCommand;
 	}
 
-	i2c_device_t slave = {
+	i2c_device_t slave = 
+		{
 		.address = deviceRV8803C7State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};

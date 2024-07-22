@@ -57,16 +57,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceSI7021State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
 void
 initSI7021(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceSI7021State.i2cAddress			= i2cAddress;
+	deviceSI7021State.i2cAddress					= i2cAddress;
 	deviceSI7021State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -90,7 +90,7 @@ readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes)
 	 */
 	
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceSI7021State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -149,7 +149,7 @@ readSensorRegisterSI7021(uint8_t deviceRegister, int numberOfBytes)
 							numberOfBytes,
 							gWarpI2cTimeoutMilliseconds);
 
-	if (	(status1 != kStatus_I2C_Success) ||
+	if ((status1 != kStatus_I2C_Success) ||
 		(status2 != kStatus_I2C_Success) ||
 		(status3 != kStatus_I2C_Success) ||
 		(status4 != kStatus_I2C_Success)
