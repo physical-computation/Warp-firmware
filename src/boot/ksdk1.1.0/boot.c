@@ -124,7 +124,6 @@
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 #if (WARP_BUILD_ENABLE_DEVBNO055)
-warpPrint("hello\n");
 	#include "devBNO055.h"
 	volatile WarpI2CDeviceState			deviceBNO055State;	
 #endif
