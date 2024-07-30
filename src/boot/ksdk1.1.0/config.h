@@ -202,5 +202,5 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB      		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsICE40       		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsBNO055      		= 2500,
-	kWarpDefaultSupplyVoltageMillivoltsRF430CL331H      = 2500,
+	kWarpDefaultSupplyVoltageMillivoltsRF430CL331H      	= 2500,
 } WarpDefaults;

@@ -438,6 +438,7 @@ appendSensorDataBME680(uint8_t* buf)
 	 */
 	return index;
 }
+
 WarpStatus
 StateBME680()
 {

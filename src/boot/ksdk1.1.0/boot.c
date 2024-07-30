@@ -3976,7 +3976,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 
 			break;
 		}
-case kWarpSensorBNO055:
+		case kWarpSensorBNO055:
 			{
 			/*
 			 *	BNO055: VDD 1.95--3.6
@@ -4004,7 +4004,7 @@ case kWarpSensorBNO055:
 
 			break;
 		}
-case kWarpSensorRF430CL331H:
+		case kWarpSensorRF430CL331H:
 			{
 			/*
 			 *	BNO055: VDD 1.95--3.6

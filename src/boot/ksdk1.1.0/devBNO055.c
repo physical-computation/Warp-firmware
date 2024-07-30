@@ -127,7 +127,7 @@ readSensorRegisterBNO055(uint8_t deviceRegister, int numberOfBytes)
 
 void
 printSensorDataBNO055(bool hexModeFlag) {
-    int16_t		readSensorRegisterValueLSB;
+	int16_t		readSensorRegisterValueLSB;
 	int16_t		readSensorRegisterValueMSB;
 	int16_t		readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
@@ -139,7 +139,7 @@ printSensorDataBNO055(bool hexModeFlag) {
     accY = (int16_t)((deviceBNO055State.i2cBuffer[3] << 8) | deviceBNO055State.i2cBuffer[2]);
     accZ = (int16_t)((deviceBNO055State.i2cBuffer[5] << 8) | deviceBNO055State.i2cBuffer[4]);
 
-    if (i2cReadStatus != kWarpStatusOK)
+	if (i2cReadStatus != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -155,13 +155,13 @@ printSensorDataBNO055(bool hexModeFlag) {
 		}
 	}
 
-    i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Mag_Data_X_LSB, 6);
+	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Mag_Data_X_LSB, 6);
 
-    magX = (int16_t)((deviceBNO055State.i2cBuffer[1] << 8) | deviceBNO055State.i2cBuffer[0]);
-    magY = (int16_t)((deviceBNO055State.i2cBuffer[3] << 8) | deviceBNO055State.i2cBuffer[2]);
-    magZ = (int16_t)((deviceBNO055State.i2cBuffer[5] << 8) | deviceBNO055State.i2cBuffer[4]);
+	magX = (int16_t)((deviceBNO055State.i2cBuffer[1] << 8) | deviceBNO055State.i2cBuffer[0]);
+	magY = (int16_t)((deviceBNO055State.i2cBuffer[3] << 8) | deviceBNO055State.i2cBuffer[2]);
+	magZ = (int16_t)((deviceBNO055State.i2cBuffer[5] << 8) | deviceBNO055State.i2cBuffer[4]);
 
-    if (i2cReadStatus != kWarpStatusOK)
+	if (i2cReadStatus != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -177,14 +177,14 @@ printSensorDataBNO055(bool hexModeFlag) {
 		}
 	}
 
-    warpScaleSupplyVoltage(deviceBNO055State.operatingVoltageMillivolts);
+	warpScaleSupplyVoltage(deviceBNO055State.operatingVoltageMillivolts);
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Gyro_Data_X_LSB, 6);
 
-    gyrX = (int16_t)((deviceBNO055State.i2cBuffer[1] << 8) | deviceBNO055State.i2cBuffer[0]);
-    gyrY = (int16_t)((deviceBNO055State.i2cBuffer[3] << 8) | deviceBNO055State.i2cBuffer[2]);
-    gyrZ = (int16_t)((deviceBNO055State.i2cBuffer[5] << 8) | deviceBNO055State.i2cBuffer[4]);
+	gyrX = (int16_t)((deviceBNO055State.i2cBuffer[1] << 8) | deviceBNO055State.i2cBuffer[0]);
+	gyrY = (int16_t)((deviceBNO055State.i2cBuffer[3] << 8) | deviceBNO055State.i2cBuffer[2]);
+	gyrZ = (int16_t)((deviceBNO055State.i2cBuffer[5] << 8) | deviceBNO055State.i2cBuffer[4]);
 
-    if (i2cReadStatus != kWarpStatusOK)
+	if (i2cReadStatus != kWarpStatusOK)
 	{
 		warpPrint(" ----,");
 	}
@@ -230,9 +230,9 @@ appendSensorDataBNO055(uint8_t* buf)
 	 */
 
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Accel_Data_X_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 	
 
 	if ((i2cReadStatus != kWarpStatusOK))
@@ -254,11 +254,11 @@ appendSensorDataBNO055(uint8_t* buf)
 	}
 
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Accel_Data_Y_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -276,12 +276,12 @@ appendSensorDataBNO055(uint8_t* buf)
 
 	}
 
-    i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Accel_Data_Z_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Accel_Data_Z_LSB, 2);
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -300,11 +300,11 @@ appendSensorDataBNO055(uint8_t* buf)
 	}
 
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Mag_Data_X_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -321,12 +321,13 @@ appendSensorDataBNO055(uint8_t* buf)
 		index += 1;
 
 	}
+
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Mag_Data_Y_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -343,12 +344,13 @@ appendSensorDataBNO055(uint8_t* buf)
 		index += 1;
 
 	}
+
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Mag_Data_Z_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -365,12 +367,13 @@ appendSensorDataBNO055(uint8_t* buf)
 		index += 1;
 
 	}
+
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Gyro_Data_X_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -387,12 +390,13 @@ appendSensorDataBNO055(uint8_t* buf)
 		index += 1;
 
 	}
+
 	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Gyro_Data_Y_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
@@ -410,12 +414,13 @@ appendSensorDataBNO055(uint8_t* buf)
 		index += 1;
 
 	}
-	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Gyro_Data_Z_LSB, 2);
-    readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
-    readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
-    readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
 
-    if ((i2cReadStatus != kWarpStatusOK))
+	i2cReadStatus = readSensorRegisterBNO055(kWarpSensourOutputRegisterBNO055Gyro_Data_Z_LSB, 2);
+	readSensorRegisterValueLSB = deviceBNO055State.i2cBuffer[0];
+	readSensorRegisterValueMSB = deviceBNO055State.i2cBuffer[1];
+	readSensorRegisterValueCombined = (readSensorRegisterValueMSB << 8) | readSensorRegisterValueLSB;
+
+	if ((i2cReadStatus != kWarpStatusOK))
 	{
 		buf[index] = 0;
 		index += 1;
