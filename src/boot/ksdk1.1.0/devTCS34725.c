@@ -56,15 +56,15 @@
 #include "warp.h"
 
 extern volatile WarpI2CDeviceState	deviceTCS34725State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initTCS34725(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceTCS34725State.i2cAddress			= i2cAddress;
+	deviceTCS34725State.i2cAddress					= i2cAddress;
 	deviceTCS34725State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -82,7 +82,7 @@ readSensorRegisterTCS34725(uint8_t deviceRegister)
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceTCS34725State.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};

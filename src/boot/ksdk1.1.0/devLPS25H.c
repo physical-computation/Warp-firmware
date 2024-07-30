@@ -57,16 +57,16 @@
 
 
 extern volatile WarpI2CDeviceState	deviceLPS25HState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 
 void
 initLPS25H(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceLPS25HState.i2cAddress			= i2cAddress;
+	deviceLPS25HState.i2cAddress					= i2cAddress;
 	deviceLPS25HState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -86,7 +86,7 @@ readSensorRegisterLPS25H(uint8_t deviceRegister, int numberOfBytes)
 	}
 
 	i2c_device_t slave =
-	{
+		{
 		.address = deviceLPS25HState.i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};

@@ -63,7 +63,8 @@ enum
 };
 
 
-int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) /* W_R = 0/1 (Write/Read) */
+int 
+writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) /* W_R = 0/1 (Write/Read) */
 {
     spi_status_t status;
     
@@ -103,7 +104,9 @@ int writeCommand(uint8_t Register_Byte, uint16_t Command_Bytes, bool W_R) /* W_R
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-void read_ID(void){
+void 
+read_ID(void)
+{
     SEGGER_RTT_printf(0, "\r\t Address (R/W): 0x%x Commands: 0x%x 0x%x \n", payloadBytes[0], payloadBytes[1], payloadBytes[2]);
     OSA_TimeDelay(10);
     writeCommand(0x00, 0x0000, 1); /* READ DEVICE ID: 0x00 (1) [Read] */
@@ -113,9 +116,12 @@ void read_ID(void){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-int read_1_digit(int Lower_limit, int Higher_limit){
+int 
+read_1_digit(int Lower_limit, int Higher_limit)
+{
     int number = -1;
-    while (!(number >= Lower_limit && number <= Higher_limit)){
+    while (!(number >= Lower_limit && number <= Higher_limit))
+    {
         number = SEGGER_RTT_WaitKey() - '0';
     }
     return number;
@@ -123,11 +129,14 @@ int read_1_digit(int Lower_limit, int Higher_limit){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-int read_2_digits(int Lower_limit, int Higher_limit){
+int 
+read_2_digits(int Lower_limit, int Higher_limit)
+{
     int Digit1 = 0;
     int Digit2 = 0;
     int number = -1;
-    while (!(number >= Lower_limit && number <= Higher_limit)){
+    while (!(number >= Lower_limit && number <= Higher_limit))
+    {
         Digit1 = SEGGER_RTT_WaitKey() - '0';
         Digit2 = SEGGER_RTT_WaitKey() - '0';
         number = Digit1*10 + Digit2;
@@ -137,13 +146,16 @@ int read_2_digits(int Lower_limit, int Higher_limit){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-int read_4_digits(int Lower_limit, int Higher_limit){
+int 
+read_4_digits(int Lower_limit, int Higher_limit)
+{
     int Digit1 = 0;
     int Digit2 = 0;
     int Digit3 = 0;
     int Digit4 = 0;
     int number = -1;
-    while (!(number >= Lower_limit && number <= Higher_limit)){
+    while (!(number >= Lower_limit && number <= Higher_limit))
+    {
         Digit1 = SEGGER_RTT_WaitKey() - '0';
         Digit2 = SEGGER_RTT_WaitKey() - '0';
         Digit3 = SEGGER_RTT_WaitKey() - '0';
@@ -155,14 +167,17 @@ int read_4_digits(int Lower_limit, int Higher_limit){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-int read_5_digits(int Lower_limit, int Higher_limit){
+int 
+read_5_digits(int Lower_limit, int Higher_limit)
+{
     int Digit1 = 0;
     int Digit2 = 0;
     int Digit3 = 0;
     int Digit4 = 0;
     int Digit5 = 0;
     int number = -1;
-    while (!(number >= Lower_limit && number <= Higher_limit)){
+    while (!(number >= Lower_limit && number <= Higher_limit))
+    {
         Digit1 = SEGGER_RTT_WaitKey() - '0';
         Digit2 = SEGGER_RTT_WaitKey() - '0';
         Digit3 = SEGGER_RTT_WaitKey() - '0';
@@ -175,9 +190,12 @@ int read_5_digits(int Lower_limit, int Higher_limit){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-uint16_t assemble_Command(bool D[16]){
+uint16_t 
+assemble_Command(bool D[16])
+{
     uint16_t Command = 0;
-    for(int i=0; i<16; i++){
+    for(int i=0; i<16; i++)
+    {
        Command |= D[i] << i;
     }
     return Command;
@@ -185,7 +203,9 @@ uint16_t assemble_Command(bool D[16]){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-void SPI_Scope(void){
+void 
+SPI_Scope(void)
+{
     SEGGER_RTT_printf(0, "\r\t Address (R/W): 0x%x Commands: 0x%x 0x%x \n", payloadBytes[0], payloadBytes[1], payloadBytes[2]);
     OSA_TimeDelay(10);
     SEGGER_RTT_printf(0, "\r\t Bytes Received: 0x%x 0x%x 0x%x \n", inBuffer[0], inBuffer[1], inBuffer[2]);
@@ -194,8 +214,9 @@ void SPI_Scope(void){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-uint16_t Assemble_DAC_DAT(int Data){
-    
+uint16_t 
+Assemble_DAC_DAT(int Data)
+{
     bool D_C_DAC_DATA[12];
     for (int i = 0; i < 12; i++)
     {
@@ -211,7 +232,9 @@ uint16_t Assemble_DAC_DAT(int Data){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-uint16_t Assemble_CONF(bool FUNCPRM[12], bool FUNCid[13][4], int FUNC){
+uint16_t 
+Assemble_CONF(bool FUNCPRM[12], bool FUNCid[13][4], int FUNC)
+{
     
     bool D_C_FUNC_DAC_ID_PRM_C[16] = {  FUNCPRM[11],
                                         FUNCPRM[10],
@@ -238,29 +261,37 @@ uint16_t Assemble_CONF(bool FUNCPRM[12], bool FUNCid[13][4], int FUNC){
 
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-int read_1_char(char input[10]){
+int 
+read_1_char(char input[10])
+{
     
     char Character = '0';
-    while (!((Character == input[0] || Character == input[1]) || (Character == input[2] || Character == input[3]) || (Character == input[4] || Character == input[5]) || (Character == input[6] || Character == input[7]) || (Character == input[8] || Character == input[9]))){
+    while (!((Character == input[0] || Character == input[1]) || (Character == input[2] || Character == input[3]) || (Character == input[4] || Character == input[5]) || (Character == input[6] || Character == input[7]) || (Character == input[8] || Character == input[9])))
+    {
         
         Character = SEGGER_RTT_WaitKey();
     }
     
     int match = 0;
     
-    if(Character == input[0] || Character == input[1]){
+    if(Character == input[0] || Character == input[1])
+    {
         match = 1;
     }
-    else if(Character == input[2] || Character == input[3]){
+    else if(Character == input[2] || Character == input[3])
+    {
         match = 2;
     }
-    else if(Character == input[4] || Character == input[5]){
+    else if(Character == input[4] || Character == input[5])
+    {
         match = 3;
     }
-    else if(Character == input[6] || Character == input[7]){
+    else if(Character == input[6] || Character == input[7])
+    {
         match = 4;
     }
-    else if(Character == input[8] || Character == input[9]){
+    else if(Character == input[8] || Character == input[9])
+    {
         match = 5;
     }
     
@@ -271,7 +302,9 @@ int read_1_char(char input[10]){
 /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
 
-int devMAX11300(void){
+int 
+devMAX11300(void)
+{
     
     /*
      *    Override Warp firmware's use of these pins.
@@ -368,11 +401,13 @@ int devMAX11300(void){
     OSA_TimeDelay(10);
 
     char Character = '0';
-       while (!((Character == 'M' || Character == 'm')||(Character == 'A' || Character == 'a'))){
+       while (!((Character == 'M' || Character == 'm')||(Character == 'A' || Character == 'a')))
+       {
            Character = SEGGER_RTT_WaitKey();
        }
         
-    if (Character == 'M' || Character == 'm'){
+    if (Character == 'M' || Character == 'm')
+    {
         
         SEGGER_RTT_WriteString(0, "\r\t Manual Configutation Selected \n");
         OSA_TimeDelay(10);
@@ -465,7 +500,8 @@ int devMAX11300(void){
                     
         /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-        if(MODE == 1 || MODE == 3 || MODE == 4 || MODE == 5 || MODE == 6 || MODE == 10){
+        if(MODE == 1 || MODE == 3 || MODE == 4 || MODE == 5 || MODE == 6 || MODE == 10)
+        {
                  
             SEGGER_RTT_WriteString(0, "\r\t Configure DACREF, DACL: \n");
             OSA_TimeDelay(10);
@@ -478,11 +514,13 @@ int devMAX11300(void){
                 1: Internal Reference Voltage */
             DACREF = read_1_digit(0, 1);
                           
-            if(DACREF == 0){
+            if(DACREF == 0)
+            {
                 SEGGER_RTT_printf(0, "\r\t External Reference. \n");
                 OSA_TimeDelay(10);
             }
-            else{
+            else
+            {
                 SEGGER_RTT_printf(0, "\r\t Internal Reference. \n");
                 OSA_TimeDelay(10);
             }
@@ -519,7 +557,8 @@ int devMAX11300(void){
             
             /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-            if (!((DACL == 2) || (DACL == 3))){
+            if (!((DACL == 2) || (DACL == 3)))
+            {
                       
                 SEGGER_RTT_WriteString(0, "\r\t Enter DACDAT[i] for ports in mode 1,3,4,5,6 or 10 \n");
                 OSA_TimeDelay(10);
@@ -546,7 +585,8 @@ int devMAX11300(void){
             }
                     
                   
-            else{
+            else
+            {
                 
                 SEGGER_RTT_WriteString(0, "\r\t Enter DACPRSTDAT1 or DACPRSTDAT2 DATA \n");
                 OSA_TimeDelay(10);
@@ -580,7 +620,8 @@ int devMAX11300(void){
     
     /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-    else{
+    else
+    {
        
             /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
             BRST = 0;   /*  0: Default address incrementing mode */
@@ -685,34 +726,42 @@ int devMAX11300(void){
     int input = 0;
     
     int c = 0;
-    while(c != 1){
+    while(c != 1)
+    {
     
-        for(int i = 0; i < length; i++){
+        for(int i = 0; i < length; i++)
+        {
             input = read_1_char(input_values);
             
-            if (input == 1){
+            if (input == 1)
+            {
                 AS_number++;
                 AS_port[AS_number] = i;
             }
-            else if (input == 2){
+            else if (input == 2)
+            {
                 DAC_number++;
                 DAC_port[DAC_number] = i;
             }
-            else if (input == 3){
+            else if (input == 3)
+            {
                 DAC_WAVE_number++;
                 DAC_WAVE_port = i;
             }
-            else if (input == 4){
+            else if (input == 4)
+            {
                 HI_number++;
                 HI_port[HI_number] = i;
             }
-            else if (input == 5){
+            else if (input == 5)
+            {
                 ADC_number++;
                 ADC_port[ADC_number] = i;
             }
         }
     
-        if(DAC_WAVE_number > 1){
+        if(DAC_WAVE_number > 1)
+        {
             SEGGER_RTT_WriteString(0, "\r\t Variable DAC Output ALREADY SELECTED \n");
             OSA_TimeDelay(10);
             
@@ -724,7 +773,8 @@ int devMAX11300(void){
             DAC_WAVE_port = 0;
             
         }
-        else{
+        else
+        {
             c = 1;
         }
         
@@ -733,7 +783,8 @@ int devMAX11300(void){
     
     /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-    if (AS_number >= 1){
+    if (AS_number >= 1)
+    {
         for (int k = 0; k < AS_number; k++){
 
             /* --- --- --- AS PORT CONFIGURATION    */
@@ -747,8 +798,10 @@ int devMAX11300(void){
         
     /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-    if (HI_number >= 1){
-        for (int k = 0; k < HI_number; k++){
+    if (HI_number >= 1)
+    {
+        for (int k = 0; k < HI_number; k++)
+        {
 
             /* --- --- --- HI PORT CONFIGURATION    */
             writeCommand(PORT_Config_Addr[HI_port[k]], S_Command4_HI, 0); /*    PORT CONTROL - HI (0) [Write]  */
@@ -761,9 +814,11 @@ int devMAX11300(void){
         
     /*       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       -  */
 
-    if (DAC_number >= 1){
+    if (DAC_number >= 1)
+    {
         
-        for (int k = 1; k <= DAC_number; k++){
+        for (int k = 1; k <= DAC_number; k++)
+        {
 
             /* --- --- --- DAC PORT CONFIGURATION   */
             writeCommand(PORT_Config_Addr[DAC_port[k]], S_Command4_DAC, 0); /* PORT CONTROL - DAC (0) [Write]   */
@@ -775,7 +830,8 @@ int devMAX11300(void){
         
         SEGGER_RTT_printf(0, "\r\t DAC Configuration Starts. %d DACs selected. \n", DAC_number);
         OSA_TimeDelay(10);
-        for (int k = 1; k <= DAC_number; k++){
+        for (int k = 1; k <= DAC_number; k++)
+        {
             SEGGER_RTT_printf(0, "\r\t Select single DAC output value for DAC # %d : \n", k);
             OSA_TimeDelay(10);
             
@@ -799,7 +855,8 @@ int devMAX11300(void){
     int Period = 0;
     
  
-    if (DAC_WAVE_number == 1){
+    if (DAC_WAVE_number == 1)
+    {
             
         SEGGER_RTT_WriteString(0, "\r\t Variable DAC Output Configuration \n");
         OSA_TimeDelay(10);
@@ -833,7 +890,8 @@ int devMAX11300(void){
 
         int WAVE_INT = 0;
 
-        for(int l = 0; l <= Period; l+=1){
+        for(int l = 0; l <= Period; l+=1)
+        {
           
             float Slope = (Amplitude*4095/Period/1000);
           
@@ -851,13 +909,15 @@ int devMAX11300(void){
     }
     
         
-    if (ADC_number >= 1){
+    if (ADC_number >= 1)
+    {
         
         
         SEGGER_RTT_WriteString(0, "\r\t ADCs Configuration \n");
         OSA_TimeDelay(10);
         
-        for (int k = 1; k <= ADC_number; k++){
+        for (int k = 1; k <= ADC_number; k++)
+        {
 
             /* --- --- --- ADC PORT CONFIGURATION   */
             writeCommand(PORT_Config_Addr[ADC_port[k]], S_Command4_ADC, 0); /* PORT CONTROL - ADC (0) [Write] */

@@ -59,9 +59,9 @@
 
 
 extern volatile WarpI2CDeviceState	deviceAMG8834State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 /*
@@ -70,7 +70,7 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 void
 initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceAMG8834State.i2cAddress			= i2cAddress;
+	deviceAMG8834State.i2cAddress					= i2cAddress;
 	deviceAMG8834State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;
@@ -79,7 +79,7 @@ initAMG8834(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 WarpStatus
 writeSensorRegisterAMG8834(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
+	uint8_t			payloadByte[1], commandByte[1];
 	i2c_status_t	returnValue;
 
 
@@ -160,8 +160,9 @@ readSensorRegisterAMG8834(uint8_t deviceRegister, int numberOfBytes)
 
 	i2c_device_t slave =
 		{
-			.address       = deviceAMG8834State.i2cAddress,
-			.baudRate_kbps = gWarpI2cBaudRateKbps};
+		.address       = deviceAMG8834State.i2cAddress,
+		.baudRate_kbps = gWarpI2cBaudRateKbps
+	};
 
 	cmdBuf[0] = deviceRegister;
 
@@ -264,10 +265,10 @@ appendSensorDataAMG8834(uint8_t* buf)
 {
 	uint8_t index = 0;
 
-	uint16_t readSensorRegisterValueLSB;
-	uint16_t readSensorRegisterValueMSB;
-	int16_t readSensorRegisterValueCombined;
-	WarpStatus i2cReadStatus;
+	uint16_t 	readSensorRegisterValueLSB;
+	uint16_t 	readSensorRegisterValueMSB;
+	int16_t 	readSensorRegisterValueCombined;
+	WarpStatus 	i2cReadStatus;
 
 	warpScaleSupplyVoltage(deviceAMG8834State.operatingVoltageMillivolts);
 

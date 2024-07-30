@@ -67,7 +67,7 @@ ledOnAS726x(uint8_t i2cAddress)
 	uint8_t			cmdBuf_LEDON[2]		= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x1B};
 	
 	i2c_device_t slave =
-	{ 
+		{ 
 		.address = i2cAddress,
 		.baudRate_kbps = gWarpI2cBaudRateKbps
 	};
@@ -108,9 +108,9 @@ ledOffAS726x(uint8_t i2cAddress)
 	uint8_t		cmdBuf_LEDOFF[2]	= {kWarpI2C_AS726x_SLAVE_WRITE_REG, 0x00};
 
 	i2c_device_t slave =
-	{ 
-		.address = i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
+		{ 
+		.address 		= i2cAddress,
+		.baudRate_kbps 	= gWarpI2cBaudRateKbps
 	};
 
 	warpEnableI2Cpins();

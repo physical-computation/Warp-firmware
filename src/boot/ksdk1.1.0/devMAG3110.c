@@ -58,15 +58,15 @@
 #include "warp.h"
 
 extern volatile WarpI2CDeviceState	deviceMAG3110State;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
+extern volatile uint32_t			gWarpI2cBaudRateKbps;
+extern volatile uint32_t			gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t			gWarpSupplySettlingDelayMilliseconds;
 
 
 void
 initMAG3110(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceMAG3110State.i2cAddress			= i2cAddress;
+	deviceMAG3110State.i2cAddress					= i2cAddress;
 	deviceMAG3110State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	return;

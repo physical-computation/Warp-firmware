@@ -30,6 +30,8 @@ warp:
 	cp src/boot/ksdk1.1.0/devSI7021.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devL3GD20H.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devRF430CL331H.*				build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devBNO055.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devTCS34725.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devSI4705.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devCCS811.*				build/ksdk1.1/work/demos/Warp/src/
@@ -67,6 +69,8 @@ glaux:
 	cp src/boot/ksdk1.1.0/CMakeLists-Glaux.txt			build/ksdk1.1/work/demos/Glaux/armgcc/Glaux/CMakeLists.txt
 	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devRF430CL331H.*				build/ksdk1.1/work/demos/Glaux/src/
+	cp src/boot/ksdk1.1.0/devBNO055.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devBME680.*				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devADXL362.h				build/ksdk1.1/work/demos/Glaux/src/
 	cp src/boot/ksdk1.1.0/devAMG8834.h				build/ksdk1.1/work/demos/Glaux/src/

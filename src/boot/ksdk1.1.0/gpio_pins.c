@@ -27,7 +27,10 @@
  *
  */
 
-gpio_output_pin_user_config_t	outputPins[] = {
+
+
+gpio_output_pin_user_config_t	outputPins[] = 
+{
 	/*
 	 *	Set unused pins as outputs
 	 */
@@ -165,6 +168,8 @@ gpio_output_pin_user_config_t	outputPins[] = {
 			.config.slewRate = kPortSlowSlewRate,
 			.config.driveStrength = kPortLowDriveStrength,
 		},
+		
+		
 	#elif (WARP_BUILD_ENABLE_FRDMKL03)
 
 	#endif
@@ -192,7 +197,8 @@ gpio_output_pin_user_config_t	outputPins[] = {
  *
  *	NOTE: The semantics is that pins that are excluded are disabled (TODO: double check).
  */
-gpio_input_pin_user_config_t	inputPins[] = {
+gpio_input_pin_user_config_t	inputPins[] = 
+{
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
 	}
@@ -203,10 +209,11 @@ gpio_input_pin_user_config_t	inputPins[] = {
  *
  *	**NOTE**:	The semantics is that pins that are excluded are disabled (TODO: double check).
  */
-gpio_input_pin_user_config_t	wakeupPins[] = {
+gpio_input_pin_user_config_t	wakeupPins[] = 
+{
 	{
 		.pinName = kWarpPinUnusedPTA0,
-		.config.isPullEnable = true,
+		.config.isPullEnable = false,
 		.config.pullSelect = kPortPullUp,
 		.config.isPassiveFilterEnabled = false,
 		.config.interrupt = kPortIntDisabled,

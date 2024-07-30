@@ -94,6 +94,8 @@ ADD_EXECUTABLE(Glaux
     "${ProjDirPath}/../../src/powermodes.c"
     "${ProjDirPath}/../../src/devIS25xP.c"
     "${ProjDirPath}/../../src/devBME680.c"
+    "${ProjDirPath}/../../src/devBNO055.c"
+    "${ProjDirPath}/../../src/devRF430CL331H.c"
     "${ProjDirPath}/../../src/devRV8803C7.c"
     "${ProjDirPath}/../../src/SEGGER_RTT.c"
     "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"

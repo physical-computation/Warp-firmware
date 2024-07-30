@@ -64,10 +64,10 @@ extern uint8_t 						gWarpSpiCommonSinkBuffer[];
 extern uint16_t 					gWarpBuffAddress;
 
 uint8_t 	gFlashWriteLimit 		= 0x20;
-
 uint8_t		deviceOpsBuffer[kWarpMemoryCommonSpiBufferBytes];
 
-void initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
+void 
+initIS25xP(int chipSelectIoPinID, uint16_t operatingVoltageMillivolts)
 {
 	deviceIS25xPState.chipSelectIoPinID 			= chipSelectIoPinID;
 	deviceIS25xPState.spiSourceBuffer 				= gWarpSpiCommonSourceBuffer;
@@ -154,7 +154,8 @@ spiTransactionIS25xP(uint8_t ops[], size_t opCount)
 	return kWarpStatusOK;
 }
 
-void enableIS25xPWrite()
+void 
+enableIS25xPWrite()
 {
 	WarpStatus status;
 	uint8_t ops[1] =
@@ -168,7 +169,8 @@ void enableIS25xPWrite()
 	}
 }
 
-void disableIS25xPWrite()
+void 
+disableIS25xPWrite()
 {
 	WarpStatus status;
 	uint8_t ops[] =
@@ -203,13 +205,9 @@ programSingleIS25xPWithoutOffsetUpdate(uint16_t* pageNumber_p, uint8_t* pageOffs
 		}
 	}
 
-	if (excess > 0) {
+	if (excess > 0) 
+	{
 		status = programPageIS25xP(*pageNumber_p, *pageOffset_p, excess, buf + (nIterations * gFlashWriteLimit));
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\n\tError: programPageIS25xP failed");
-			return status;
-		}
 		*pageOffset_p += excess;
 	}
 
@@ -234,7 +232,8 @@ programMultipleIS25xPWithoutOffsetUpdate(uint16_t* pageNumber_p, uint8_t* pageOf
 		*pageOffset_p = 0;
 
 		status = programMultipleIS25xPWithoutOffsetUpdate(pageNumber_p, pageOffset_p, nbyte - nByteToWrite, buf + (nByteToWrite));
-	} else
+	} 
+	else
 	{
 		status = programSingleIS25xPWithoutOffsetUpdate(pageNumber_p, pageOffset_p, nbyte, buf);
 		if (status != kWarpStatusOK)
@@ -335,66 +334,6 @@ resetIS25xP()
 	return kWarpStatusOK;
 }
 
-// WarpStatus getCurrentPage
-
-WarpStatus readAllMemoryIS25xP()
-{
-	WarpStatus status;
-
-	uint8_t pageOffsetBuf[3];
-	status = readMemoryIS25xP(kWarpIS25xPPageOffsetStoragePage, kWarpIS25xPPageOffsetStorageOffset, kWarpIS25xPPageOffsetStorageSize, pageOffsetBuf);
-	if (status != kWarpStatusOK)
-	{
-		return status;
-	}
-
-	uint8_t pageOffset = pageOffsetBuf[2];
-	uint16_t pageNumber = pageOffsetBuf[1] | pageOffsetBuf[0] << 8;
-
-	warpPrint("\r\n\tPage number: %d\t page offset: %d\n", pageNumber, pageOffset);
-
-	uint32_t startAddress = kWarpInitialPageOffsetIS25xP | kWarpInitialPageNumberIS25xP << 8;
-
-	uint32_t endAddress = pageOffset | pageNumber << 8;
-
-	size_t n_iterations = (endAddress - startAddress) / gFlashWriteLimit;
-	size_t excess = (endAddress - startAddress) % gFlashWriteLimit;
-
-	uint8_t ops[kWarpMemoryCommonSpiBufferBytes] = {0};
-	ops[0] = 0x03; /* NORD */
-
-	warpPrint("Data start\n");
-	for (int i = 0; i < n_iterations; i++) {
-		ops[3] = (uint8_t)(startAddress);
-		ops[2] = (uint8_t)(startAddress >> 8);
-		ops[1] = (uint8_t)(startAddress >> 16);
-		status = spiTransactionIS25xP(ops, kWarpMemoryCommonSpiBufferBytes);
-		if (status != kWarpStatusOK)
-		{
-			return status;
-		}
-		for (size_t i = 0; i < gFlashWriteLimit; i++) {
-			warpPrint("%c", deviceIS25xPState.spiSinkBuffer[i + 4]);
-		}
-
-		startAddress += gFlashWriteLimit;
-	}
-
-	ops[3] = (uint8_t)(startAddress);
-	ops[2] = (uint8_t)(startAddress >> 8);
-	ops[1] = (uint8_t)(startAddress >> 16);
-	status = spiTransactionIS25xP(ops, kWarpMemoryCommonSpiBufferBytes);
-	if (status != kWarpStatusOK)
-	{
-		return status;
-	}
-	for (size_t i = 0; i < excess; i++) {
-		warpPrint("%c", deviceIS25xPState.spiSinkBuffer[i + 4]);
-	}
-	warpPrint("Data end\n");
-	return kWarpStatusOK;
-}
-
 WarpStatus
 readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte, void *buf)
 {
@@ -408,45 +347,42 @@ readMemoryIS25xP(uint16_t startPageNumber, uint8_t startPageOffset, size_t nbyte
 	size_t 		nBytesBeingRead;
 	uint16_t 	nextPageNumber;
 	uint8_t 	nextPageOffset;
-	// warpPrint("\nReading %d bytes from page %d, offset %d\n", nbyte, startPageNumber, startPageOffset);
 
 	size_t nBytesRemainingInPage 	= kWarpSizeAT45DBPageSizeBytes - startPageOffset;
 	size_t nBytesSpiLimit 			= kWarpMemoryCommonSpiBufferBytes - 4;
-	// warpPrint("nBytesRemaining: %d, nByte: %d\n", nBytesRemainingInPage, nbyte);
 
 	if (nBytesRemainingInPage < nbyte)
 	{
-		// warpPrint("nBytesRemainingInPage < nbyte\n");
 		if (nBytesRemainingInPage > nBytesSpiLimit)
 		{
 			nBytesBeingRead = nBytesSpiLimit;
 			nextPageNumber 	= startPageNumber;
 			nextPageOffset 	= startPageOffset + nBytesSpiLimit;
-		} else
+		} 
+		else
 		{
 			nBytesBeingRead = nBytesRemainingInPage;
 			nextPageNumber 	= startPageNumber + 1;
 			nextPageOffset 	= 0;
 		}
-	} else
+	} 
+	else
 	{
-		// warpPrint("nBytesRemainingInPage >= nbyte\n");
 		if (nbyte > nBytesSpiLimit)
 		{
 			nBytesBeingRead = nBytesSpiLimit;
 			nextPageNumber 	= startPageNumber;
 			nextPageOffset 	= startPageOffset + nBytesSpiLimit;
-		} else
+		} 
+		else
 		{
 			nBytesBeingRead = nbyte;
 			nextPageNumber 	= startPageNumber;
 			nextPageOffset 	= startPageOffset + nbyte;
 		}
 	}
-	// warpPrint("nBytesBeingRead: %d\n", nBytesBeingRead);
 
 	size_t nBytesRemaining	= nbyte - nBytesBeingRead;
-	// warpPrint("nBytesRemaining: %d\n", nBytesRemaining);
 
 	deviceOpsBuffer[0] = 0x03; /* NORD */
 	deviceOpsBuffer[2] = (uint8_t)(startPageNumber);
@@ -545,46 +481,6 @@ eraseSectorIS25xP(uint32_t address)
 }
 
 WarpStatus
-erase32kBlockIS25xP(uint32_t address)
-{
-	WarpStatus status;
-
-	uint8_t ops[4] = {0};
-	ops[0] = 0x52; /* BER32K (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
-
-	status = spiTransactionIS25xP(ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
-		return status;
-	}
-	return kWarpStatusOK;
-}
-
-WarpStatus
-erase64kBlockIS25xP(uint32_t address)
-{
-	WarpStatus status;
-
-	uint8_t ops[4] = {0};
-	ops[0] = 0xD8; /* BER64K (SPI Mode) */
-	ops[1] = (uint8_t)((address & 0x0F00) >> 2);
-	ops[2] = (uint8_t)((address & 0x00F0) >> 1);
-	ops[3] = (uint8_t)((address & 0x000F));
-
-	status = spiTransactionIS25xP(ops, 4);
-	if (status != kWarpStatusOK)
-	{
-		warpPrint("\r\n\tError: communication failed");
-		return status;
-	}
-	return kWarpStatusOK;
-}
-
-WarpStatus
 chipEraseIS25xP()
 {
 	warpPrint("\n%s\n", "Erasing chip. This takes about 4s.");
@@ -609,7 +505,8 @@ chipEraseIS25xP()
 WarpStatus
 flashStatusIS25xP()
 {
-	uint8_t ops4[2] = {
+	uint8_t ops4[2] = 
+	{
 			/* Read Status Register */
 			0x05, /* Byte0 */
 			0x00, /* Dummy Byte1 */
@@ -621,16 +518,17 @@ flashStatusIS25xP()
 	}
 	else
 	{
-		warpPrint("Status = [" BYTE_TO_BINARY_PATTERN "]\n",
+		warpPrint("Flash Status = [" BYTE_TO_BINARY_PATTERN "]\n",
 							BYTE_TO_BINARY(deviceIS25xPState.spiSinkBuffer[1]));
+		return kWarpStatusOK;
 	}
-	return kWarpStatusOK;
 }
 
 WarpStatus
 waitForWriteCompletion()
 {
-	uint8_t ops4[] = {
+	uint8_t ops4[] = 
+	{
 			/* Read Status Register */
 			0x05, /* Byte0 */
 			0x00, /* Dummy Byte1 */
@@ -656,4 +554,43 @@ waitForWriteCompletion()
 		}
 	}
 	return kWarpStatusOK;
+}
+WarpStatus
+deepPowerModeIS25xP()
+{
+	enableIS25xPWrite();
+	uint8_t ops[1] = {0};
+
+	ops[0] = 0xB9; /* CER (SPI Mode) */
+
+	WarpStatus status;
+	status = spiTransactionIS25xP(ops, 1);
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("\r\n\tError: communication failed");
+		return status;
+	}
+	waitForWriteCompletion();
+	
+
+	return status;
+}
+WarpStatus
+releaseDeepPowerModeIS25xP()
+{
+	enableIS25xPWrite();
+	uint8_t ops[1] = {0};
+
+	ops[0] = 0xAB; /* CER (SPI Mode) */
+
+	WarpStatus status;
+	status = spiTransactionIS25xP(ops, 1);
+	if (status != kWarpStatusOK)
+	{
+		warpPrint("\r\n\tError: communication failed");
+		return status;
+	}
+	waitForWriteCompletion();
+
+	return status;
 }
