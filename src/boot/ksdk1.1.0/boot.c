@@ -89,7 +89,7 @@
 #include "devRV8803C7.h"
 #include "devRF430CL331H.h"
 #include "devSSD1331.h"  //add header files
-#include "INA219.h" 
+#include "devINA219.h" 
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 	volatile WarpSPIDeviceState			deviceADXL362State;
@@ -125,7 +125,7 @@
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
-#if (WARP_BUILD_ENABLE_INA219)    //copy format for DEVMMA8451Q
+#if (WARP_BUILD_ENABLE_DEVINA219)    //copy format for DEVMMA8451Q
 	volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
@@ -1674,7 +1674,7 @@ main(void)
 #endif
 
 
-#if (WARP_BUILD_ENABLE_INA219)
+#if (WARP_BUILD_ENABLE_DEVINA219)
 		initINA219(	0x40	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsINA219);
 #endif
 
@@ -2408,7 +2408,7 @@ main(void)
 						break;
 					}
 #endif
-#if (WARP_BUILD_ENABLE_INA219)
+#if (WARP_BUILD_ENABLE_DEVINA219)
 					case 'l':
 					{
 						menuTargetSensor = kWarpSensorINA219;
@@ -2763,7 +2763,7 @@ main(void)
 
 					for (int i = 0; i < 1000; i++)
 					{
-						appendSensorDataINA219();
+						getCurrentINA219();
 						OSA_TimeDelay(10);
 					}
 				
@@ -3445,7 +3445,7 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
 #endif
 
-#if (WARP_BUILD_ENABLE_INA219)
+#if (WARP_BUILD_ENABLE_DEVINA219)
 		bytesWrittenIndex += appendSensorDataINA219(flashWriteBuf + bytesWrittenIndex);
 #endif
 
@@ -3732,7 +3732,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		printSensorDataMMA8451Q(hexModeFlag);
 #endif
 
-#if (WARP_BUILD_ENABLE_INA219)
+#if (WARP_BUILD_ENABLE_DEVINA219)
 		printSensorDataINA219(hexModeFlag);
 #endif
 
