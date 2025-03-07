@@ -88,7 +88,8 @@
 #include "devHDC1000.h"
 #include "devRV8803C7.h"
 #include "devRF430CL331H.h"
-
+#include "devSSD1331.h"  //add header files
+#include "INA219.h" 
 
 #if (WARP_BUILD_ENABLE_DEVADXL362)
 	volatile WarpSPIDeviceState			deviceADXL362State;
@@ -120,9 +121,15 @@
 	volatile WarpI2CDeviceState			deviceBMX055magState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
+#if (WARP_BUILD_ENABLE_DEVMMA8451Q)    
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
+
+#if (WARP_BUILD_ENABLE_INA219)    //copy format for DEVMMA8451Q
+	volatile WarpI2CDeviceState			deviceINA219State;
+#endif
+
+
 #if (WARP_BUILD_ENABLE_DEVBNO055)
 	#include "devBNO055.h"
 	volatile WarpI2CDeviceState			deviceBNO055State;	
@@ -203,6 +210,7 @@ typedef enum
 	kWarpFlashADXL362BitField 		= 0b1000,
 	kWarpFlashAMG8834BitField 		= 0b10000,
 	kWarpFlashMMA8541QBitField		= 0b100000,
+	kWarpFlashINA219BitField		= 0b1000000000000,  //initialise bit field
 	kWarpFlashMAG3110BitField		= 0b1000000,
 	kWarpFlashL3GD20HBitField		= 0b10000000,
 	kWarpFlashBME680BitField		= 0b100000000,
@@ -1662,7 +1670,12 @@ main(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-		initMMA8451Q(	0x1C	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+		initMMA8451Q(	0x1D	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+#endif
+
+
+#if (WARP_BUILD_ENABLE_INA219)
+		initINA219(	0x40	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsINA219);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVLPS25H)
@@ -1678,7 +1691,7 @@ main(void)
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVSI7021)
-		initSI7021(	0x40	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI7021	);
+		initSI7021(	0x41	/* i2cAddress */,	kWarpDefaultSupplyVoltageMillivoltsSI7021	);
 #endif
 
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
@@ -1909,8 +1922,8 @@ main(void)
 	bool _originalWarpExtraQuietMode = gWarpExtraQuietMode;
 	gWarpExtraQuietMode = false;
 	warpPrint("Press any key to show menu...\n");
-	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
-
+	gWarpExtraQuietMode = _originalWarpExtraQuietMode;  
+	devSSD1331init();
 	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
 		rttKey = SEGGER_RTT_GetKey();
@@ -1963,6 +1976,7 @@ main(void)
 	releaseDeepPowerModeIS25xP();
 	warpPrint("Press any key to show menu...\n");
 	gWarpExtraQuietMode = _originalWarpExtraQuietMode;
+
 
 	while (rttKey < 0 && timer < kWarpCsvstreamMenuWaitTimeMilliSeconds)
 	{
@@ -2056,7 +2070,8 @@ main(void)
 		 */
 		gWarpExtraQuietMode = false;
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
-
+	      
+		
 		warpPrint("\rSelect:\n");
 		warpPrint("\r- 'a': set default sensor.\n");
 		warpPrint("\r- 'b': set I2C baud rate.\n");
@@ -2069,7 +2084,7 @@ main(void)
 		warpPrint("\r- 'i': set pull-up enable value.\n");
 		warpPrint("\r- 'j': repeat read reg 0x%02x on sensor #%d.\n", menuRegisterAddress, menuTargetSensor);
 		warpPrint("\r- 'k': sleep until reset.\n");
-		warpPrint("\r- 'l': send repeated byte on I2C.\n");
+		//warpPrint("\r- 'l': send repeated byte on I2C.\n");
 		warpPrint("\r- 'm': send repeated byte on SPI.\n");
 		warpPrint("\r- 'n': enable sensor supply voltage.\n");
 		warpPrint("\r- 'o': disable sensor supply voltage.\n");
@@ -2078,6 +2093,7 @@ main(void)
 		warpPrint("\r- 's': power up all sensors.\n");
 		warpPrint("\r- 't': dump processor state.\n");
 		warpPrint("\r- 'u': set I2C address.\n");
+		warpPrint("\r- 'y': Read 1000 INA219 current values.\n");  //How to read current
 
 #if (WARP_BUILD_ENABLE_DEVAT45DB)
 		warpPrint("\r- 'R': read bytes from Flash.\n");
@@ -2214,6 +2230,13 @@ main(void)
 					warpPrint("\r\t- 'k' AS7263			(0x00--0x2B): 2.7V -- 3.6V (compiled out) \n");
 #endif
 
+/*
+#if (WARP_BUILD_ENABLE_DEVINA219)
+					warpPrint("\r\t- 'l' INA219			(): 3.3V -- 5V\n");
+#else
+					warpPrint("\r\t- 'l' INA219			(): 3.3V -- 5V (compiled out) \n");
+#endif
+*/
 				warpPrint("\r\tEnter selection> ");
 				key = warpWaitKey();
 
@@ -2385,6 +2408,14 @@ main(void)
 						break;
 					}
 #endif
+#if (WARP_BUILD_ENABLE_INA219)
+					case 'l':
+					{
+						menuTargetSensor = kWarpSensorINA219;
+						menuI2cDevice = &deviceINA219State;
+						break;
+					}
+#endif									
 					default:
 					{
 						warpPrint("\r\tInvalid selection '%c' !\n", key);
@@ -2612,10 +2643,7 @@ main(void)
 				break;
 			}
 
-			/*
-			 *	Send repeated byte on I2C or SPI
-			 */
-			case 'l':
+			
 			case 'm':
 			{
 				uint8_t		outBuffer[1];
@@ -2730,6 +2758,17 @@ main(void)
 
 				break;
 			}
+			case 'y':  //when selected will output the 1000 values
+			{	
+
+					for (int i = 0; i < 1000; i++)
+					{
+						appendSensorDataINA219();
+						OSA_TimeDelay(10);
+					}
+				
+			}			
+						
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 			case 'v':
 			{
@@ -2740,10 +2779,12 @@ main(void)
 					warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 3 /* sleep seconds : irrelevant here */)() failed...\n");
 				}
 
+
 				warpPrint("\r\n\tThis should never happen...\n");
 
 				break;
 			}
+
 #endif
 			/*
 			 *	Simply spin for 10 seconds. Since the SWD pins should only be enabled when we are waiting for key at top of loop (or toggling after printf), during this time there should be no interference from the SWD.
@@ -3404,6 +3445,10 @@ writeAllSensorsToFlash(int menuDelayBetweenEachRun, int loopForever)
 		bytesWrittenIndex += appendSensorDataADXL362(flashWriteBuf + bytesWrittenIndex);
 #endif
 
+#if (WARP_BUILD_ENABLE_INA219)
+		bytesWrittenIndex += appendSensorDataINA219(flashWriteBuf + bytesWrittenIndex);
+#endif
+
 #if (WARP_BUILD_ENABLE_DEVAMG8834)
 		bytesWrittenIndex += appendSensorDataAMG8834(flashWriteBuf + bytesWrittenIndex);
 #endif
@@ -3687,6 +3732,10 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag,
 		printSensorDataMMA8451Q(hexModeFlag);
 #endif
 
+#if (WARP_BUILD_ENABLE_INA219)
+		printSensorDataINA219(hexModeFlag);
+#endif
+
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
 		printSensorDataMAG3110(hexModeFlag);
 #endif
@@ -3943,6 +3992,35 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			);
 #else
 			warpPrint("\r\n\tMMA8451Q Read Aborted. Device Disabled :(");
+#endif
+
+			break;
+		}
+
+		case kWarpSensorINA219:
+		{
+/*
+ *	MMA8451Q: VDD 1.95--3.6
+ */
+#if (WARP_BUILD_ENABLE_INA219)
+				loopForSensor(	"\r\nINA219:\n\r",		/*	tagString			*/
+						&readSensorRegisterINA219,	/*	readSensorRegisterFunction	*/
+						&deviceINA219State,		/*	i2cDeviceState			*/
+						NULL,				/*	spiDeviceState			*/
+						baseAddress,			/*	baseAddress			*/
+						0x00,				/*	minAddress			*/
+						0x05,				/*	maxAddress			*/
+						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+						spinDelay,			/*	spinDelay			*/
+						autoIncrement,			/*	autoIncrement			*/
+						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+						referenceByte,			/*	referenceByte			*/
+						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+						chatty				/*	chatty				*/
+			);
+#else
+			warpPrint("\r\n\tINA219 Read Aborted. Device Disabled :(");
 #endif
 
 			break;
@@ -5159,6 +5237,24 @@ flashDecodeSensorBitField(uint16_t sensorBitField, uint8_t sensorIndex, uint8_t*
 			return;
 		}
 	}
+	
+	
+	/*
+	 * ina
+	*/
+	if (sensorBitField & kWarpFlashINA219BitField)
+	{
+		numberOfSensorsFound++;
+		if (numberOfSensorsFound - 1 == sensorIndex)
+		{
+			*sizePerReading		= bytesPerReadingINA219;
+			*numberOfReadings = numberOfReadingsPerMeasurementINA219;
+			return;
+		}
+	}
+
+
+
 
 	/*
 	 * Number of config errors
